@@ -3,10 +3,12 @@ import functools
 from . import cryptography
 from . import message
 
+
 def dump(msg, privkey, pubkey):
     sign = functools.partial(cryptography.ecdsa_sign, privkey)
     encrypt = functools.partial(cryptography.ECCx.encrypt, raw_pubkey=pubkey)
     return msg.serialize(sign_func=sign, encrypt_func=encrypt)
+
 
 def load(data, privkey, pubkey):
     def decrypt(payload):

@@ -84,13 +84,13 @@ def eciesKDF(key_material, key_len):
     return key[:key_len]
 
 
-def sha3(seed):                                                                 
-    """ Return sha3-256 (NOT keccak) of seed in digest                          
-    :param str seed: data that should be hashed                                 
-    :return str: binary hashed data                                             
-    """                                                                         
-    if isinstance(seed, str):                                                   
-        seed = seed.encode()                                                    
+def sha3(seed):
+    """ Return sha3-256 (NOT keccak) of seed in digest
+    :param str seed: data that should be hashed
+    :return str: binary hashed data
+    """
+    if isinstance(seed, str):
+        seed = seed.encode()
     return _sha3_256(seed).digest()
 
 
