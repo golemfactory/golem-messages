@@ -5,6 +5,4 @@ jobs:
        - image: circleci/python:3.5
      steps:
        - checkout
-       - run:
-           command: |
-             ./setup.py test
+       - run: python3 setup.py test
