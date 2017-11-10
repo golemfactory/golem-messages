@@ -84,3 +84,13 @@ class TimestampTestCase(unittest.TestCase):
         msg.timestamp = dt_to_ts(now + (self.mtd * 2) + one_second)
         with self.assertRaises(exceptions.MessageFromFutureError):
             message.verify_time(msg)
+
+    @mock.patch('golem_messages.message.verify_time')
+    def test_desserialization_with_time_verification(self, vft_mock):
+        msg = message.MessagePing()
+        payload = golem_messages.dump(msg, self.ecc.raw_privkey,
+                                      self.ecc.raw_pubkey)
+        self.assertEqual(vft_mock.call_count, 0)
+        msg2 = golem_messages.load(payload, self.ecc.raw_privkey,
+                                   self.ecc.raw_pubkey)
+        self.assertEqual(vft_mock.call_count, 1)
