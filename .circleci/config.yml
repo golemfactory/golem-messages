@@ -5,9 +5,15 @@ jobs:
        - image: circleci/python:3.5
      steps:
        - checkout
+       - restore_cache:
+           key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
        - run:
            command: |
              python3 -m venv venv
              . venv/bin/activate
        - run: sudo apt-get install -y libgmp3-dev
        - run: python3 setup.py test
+       - save_cache:
+           key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
+           paths:
+             - "venv"
