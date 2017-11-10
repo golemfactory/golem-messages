@@ -7,6 +7,8 @@ from rlp import utils as rlp_utils
 import struct
 import sys
 
+from . import exceptions
+
 # https://github.com/ethereum/pydevp2p/blob/
 # 8d7c44633ddcc9a00396c9f111f1427f89781b8b/devp2p/crypto.py
 
@@ -33,22 +35,6 @@ if 'pyelliptic' not in dir()\
         print('use homebrew or macports to install newer openssl')
         print('> brew install openssl / > sudo port install openssl')
     sys.exit(1)
-
-
-class CryptoError(RuntimeError):
-    pass
-
-
-class InvalidSignature(CryptoError):
-    pass
-
-
-class InvalidKeys(CryptoError):
-    pass
-
-
-class DecryptionError(CryptoError):
-    pass
 
 
 def privtopub(raw_privkey):
@@ -107,7 +93,7 @@ def ecdsa_verify(pubkey, signature, message):
         signature, message, hasher=None
     )
     if not pk.format(compressed=False) == b'\04' + pubkey:
-        raise InvalidSignature()
+        raise exceptions.InvalidSignature()
 
 
 class ECCx(pyelliptic.ECC):
@@ -135,7 +121,7 @@ class ECCx(pyelliptic.ECC):
             if self.raw_privkey and len(self.raw_privkey) != 32:
                 continue
             if not self.has_valid_keys():
-                raise CryptoError('Invalid privkey and/or pubkey')
+                raise exceptions.CryptoError('Invalid privkey and/or pubkey')
             break  # init ok
 
     @property
@@ -163,13 +149,13 @@ class ECCx(pyelliptic.ECC):
                 # failed for some keys
                 bitcoin.get_privkey_format(self.raw_privkey)
             except AssertionError:
-                raise CryptoError('Invalid privkey')
+                raise exceptions.CryptoError('Invalid privkey')
             assert len(self.raw_pubkey) == 64
             raw_check_result = self.raw_check_key(
                     self.raw_privkey,
                     *self._decode_pubkey(self.raw_pubkey)[1:3])
             if raw_check_result != 0:
-                raise InvalidKeys()
+                raise exceptions.InvalidKeys()
         except (AssertionError, Exception):
             return False
         return True
@@ -247,7 +233,7 @@ class ECCx(pyelliptic.ECC):
 
         """
         if data[:1] != b'\x04':
-            raise DecryptionError("wrong ecies header")
+            raise exceptions.DecryptionError("wrong ecies header")
 
         #  1) generate shared-secret = kdf( ecdhAgree(myPrivKey, msg[1:65]) )
         _shared = data[1:1 + 64]
@@ -272,7 +258,7 @@ class ECCx(pyelliptic.ECC):
             key_mac, data[1 + 64:- 32] + shared_mac_data
         )
         if not pyelliptic.equals(hmaced_data, tag):
-            raise DecryptionError("Fail to verify data")
+            raise exceptions.DecryptionError("Fail to verify data")
 
         # 3) decrypt
         blocksize = pyelliptic.OpenSSL.get_cipher(self.ecies_ciphername).get_blocksize()  # noqa
