@@ -14,13 +14,15 @@ from . import settings
 logger = logging.getLogger('golem.network.transport.message')
 
 
-def verify_time(msg):
+def verify_time(timestamp):
     """ Verify message timestamp. If message is to old or have timestamp from
     distant future raise TimestampError.
+
+    NOTE: This method deliberately ignores microseconds - precision=1s
     """
     now = datetime.datetime.utcnow()
     try:
-        msgdt = datetime.datetime.utcfromtimestamp(msg.timestamp)
+        msgdt = datetime.datetime.utcfromtimestamp(timestamp)
     except (TypeError, OSError, OverflowError):
         raise exceptions.TimestampError()
     delta = now - msgdt
@@ -187,24 +189,25 @@ class Message(object):
             logger.info("Message error: invalid data: %r", exc)
             return
 
+        msg_ts /= cls.TS_SCALE
+        try:
+            verify_time(msg_ts)
+        except exceptions.TimestampError:
+            logger.info("Message error: invalid timestamp: %r", msg_ts)
+            return
+
         if msg_type not in registered_message_types:
             logger.info('Message error: invalid type %d', msg_type)
             return
 
         instance = registered_message_types[msg_type](
-            timestamp=msg_ts / cls.TS_SCALE,
+            timestamp=msg_ts,
             encrypted=msg_enc,
             sig=sig,
             payload=payload,
             raw=msg,
             slots=slots
         )
-
-        try:
-            verify_time(instance)
-        except exceptions.TimestampError:
-            logger.info("Message error: invalid timestamp")
-            return
 
         return instance
 

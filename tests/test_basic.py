@@ -9,8 +9,10 @@ import unittest.mock as mock
 
 one_second = datetime.timedelta(seconds=1)
 
+
 def dt_to_ts(dt):
     return calendar.timegm(dt.utctimetuple())
+
 
 class BasicTestCase(unittest.TestCase):
     def setUp(self):
@@ -19,11 +21,15 @@ class BasicTestCase(unittest.TestCase):
 
     def test_total_basic(self):
         msg = message.MessagePing()
-        payload = golem_messages.dump(msg, self.ecc.raw_privkey, self.ecc.raw_pubkey)
-        msg2 = golem_messages.load(payload, self.ecc.raw_privkey, self.ecc.raw_pubkey)
+        payload = golem_messages.dump(msg, self.ecc.raw_privkey,
+                                      self.ecc.raw_pubkey)
+        msg2 = golem_messages.load(payload, self.ecc.raw_privkey,
+                                   self.ecc.raw_pubkey)
         self.assertEqual(msg, msg2)
 
+
 testnow = datetime.datetime.utcnow().replace(microsecond=0)
+
 
 @freeze_time(testnow)
 class TimestampTestCase(unittest.TestCase):
@@ -46,50 +52,45 @@ class TimestampTestCase(unittest.TestCase):
         self.mat = datetime.timedelta(minutes=2, seconds=15)
 
     def test_timestamp_within_range_low(self):
-        msg = message.MessagePing()
+        """Proper timestamp low border"""
 
-        # Proper timestamp low border
         now = datetime.datetime.utcnow()
-        msg.timestamp = dt_to_ts(
+        timestamp = dt_to_ts(
             now - (self.mtd * 2) - self.mmtt - (self.mat * 2)
         )
-        message.verify_time(msg)
+        message.verify_time(timestamp)
 
     def test_timestamp_within_range_middle(self):
-        msg = message.MessagePing()
+        """Proper timestamp inside"""
 
-        # Proper timestamp inside
         now = datetime.datetime.utcnow()
-        msg.timestamp = dt_to_ts(now)
-        message.verify_time(msg)
+        timestamp = dt_to_ts(now)
+        message.verify_time(timestamp)
 
     def test_timestamp_within_range_high(self):
-        msg = message.MessagePing()
+        """Proper timestamp high border"""
 
-        # Proper timestamp high border
         now = datetime.datetime.utcnow()
-        msg.timestamp = dt_to_ts(now + (self.mtd * 2))
-        message.verify_time(msg)
+        timestamp = dt_to_ts(now + (self.mtd * 2))
+        message.verify_time(timestamp)
 
     def test_ancient_timestamp(self):
-        msg = message.MessagePing()
+        """Message too old"""
 
-        # Message too old
         now = datetime.datetime.utcnow()
-        msg.timestamp = dt_to_ts(
+        timestamp = dt_to_ts(
             now - (self.mtd * 2) - self.mmtt - (self.mat * 2) - one_second
         )
         with self.assertRaises(exceptions.MessageTooOldError):
-            message.verify_time(msg)
+            message.verify_time(timestamp)
 
     def test_timestamp_from_future(self):
-        msg = message.MessagePing()
+        """Message from the future"""
 
-        # Message from the future
         now = datetime.datetime.utcnow()
-        msg.timestamp = dt_to_ts(now + (self.mtd * 2) + one_second)
+        timestamp = dt_to_ts(now + (self.mtd * 2) + one_second)
         with self.assertRaises(exceptions.MessageFromFutureError):
-            message.verify_time(msg)
+            message.verify_time(timestamp)
 
     @mock.patch('golem_messages.message.verify_time')
     def test_deserialization_with_time_verification(self, vft_mock):
