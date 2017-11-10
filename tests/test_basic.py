@@ -29,23 +29,23 @@ testnow = datetime.datetime.utcnow().replace(microsecond=0)
 class TimestampTestCase(unittest.TestCase):
     """Time limits verification
 
-    Based on Concent_analiza_integracji_PL Limity czasu w komunikacji chapter
+    Based on Concent_analiza_integracji_PL "Limity czasu w komunikacji" chapter
     """
 
     def setUp(self):
         self.ecc = golem_messages.ECCx(None)
-        # mmtt - Maximum Message Transport Time, maksymalny dopuszczalny
-        #        czas na przesłanie małego komunikatu (jeśli ping przekracza
-        #        ten czas to komunikacja jest niedrożna).
+        # mmtt - Maximum Message Transport Time, maximum transport time
+        #        allowed for transmission of a small message (if ping time is
+        #        greater than this, it means the communication is lagged).
         self.mmtt = datetime.timedelta(minutes=0, seconds=30)
-        # mtd - Maximum Time Difference, maksymalne dopuszczalne odchylenie
-        #       czasu od czasu rzeczywistego.
+        # mtd - Maximum Time Difference, maximum time difference from actual
+        #       time. (Time synchronisation)
         self.mtd = datetime.timedelta(minutes=2, seconds=30)
-        # mat - Maximum Action Time, maksymalny czas na wykonanie prostej
-        #       operacji na maszynie.
+        # mat - Maximum Action Time, maximum time needed to perform simple
+        #       simple machine operation.
         self.mat = datetime.timedelta(minutes=2, seconds=15)
 
-    def test_timestamp_within_range(self):
+    def test_timestamp_within_range_low(self):
         msg = message.MessagePing()
 
         # Proper timestamp low border
@@ -55,10 +55,16 @@ class TimestampTestCase(unittest.TestCase):
         )
         message.verify_time(msg)
 
+    def test_timestamp_within_range_middle(self):
+        msg = message.MessagePing()
+
         # Proper timestamp inside
         now = datetime.datetime.utcnow()
         msg.timestamp = dt_to_ts(now)
         message.verify_time(msg)
+
+    def test_timestamp_within_range_high(self):
+        msg = message.MessagePing()
 
         # Proper timestamp high border
         now = datetime.datetime.utcnow()
@@ -86,7 +92,7 @@ class TimestampTestCase(unittest.TestCase):
             message.verify_time(msg)
 
     @mock.patch('golem_messages.message.verify_time')
-    def test_desserialization_with_time_verification(self, vft_mock):
+    def test_deserialization_with_time_verification(self, vft_mock):
         msg = message.MessagePing()
         payload = golem_messages.dump(msg, self.ecc.raw_privkey,
                                       self.ecc.raw_pubkey)
