@@ -26,7 +26,8 @@ setup(
         'pytz',
     ],
     test_suite='setup.test_suite',
-    extras_require={
-        'test': ['pycodestyle', 'freezegun'],
-    },
+    tests_require=[
+        'pycodestyle',
+        'freezegun',
+    ],
 )
