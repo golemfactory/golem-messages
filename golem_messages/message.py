@@ -15,7 +15,7 @@ logger = logging.getLogger('golem.network.transport.message')
 
 
 def verify_time(timestamp):
-    """ Verify message timestamp. If message is to old or have timestamp from
+    """ Verify message timestamp. If message is to old or has timestamp from
     distant future raise TimestampError.
 
     NOTE: This method deliberately ignores microseconds - precision=1s
