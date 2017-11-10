@@ -27,10 +27,8 @@ def verify_time(msg):
     delta_future = msgdt - now
     logger.debug('msgdt %s Δ %s Δfuture %s', msgdt, delta, delta_future)
     if delta > settings.MSG_TTL:
-        # self.disconnect(BasicSafeSession.DCROldMessage)
         raise exceptions.MessageTooOldError()
     if delta_future > settings.FUTURE_TIME_TOLERANCE:
-        # self.disconnect(BasicSafeSession.DCRWrongTimestamp)
         raise exceptions.MessageFromFutureError()
 
 
