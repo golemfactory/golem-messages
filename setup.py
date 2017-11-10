@@ -27,6 +27,6 @@ setup(
     ],
     test_suite='setup.test_suite',
     extras_require={
-        'test': 'flake8',
+        'test': ['pycodestyle', 'freezegun'],
     },
 )
