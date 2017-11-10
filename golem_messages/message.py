@@ -200,7 +200,7 @@ class Message(object):
             logger.info('Message error: invalid type %d', msg_type)
             return
 
-        instance = registered_message_types[msg_type](
+        return registered_message_types[msg_type](
             timestamp=msg_ts,
             encrypted=msg_enc,
             sig=sig,
@@ -208,8 +208,6 @@ class Message(object):
             raw=msg,
             slots=slots
         )
-
-        return instance
 
     def __str__(self):
         return "{}".format(self.__class__)
