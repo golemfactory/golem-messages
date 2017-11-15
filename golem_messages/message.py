@@ -1,4 +1,5 @@
 import cbor2
+import datetime
 import hashlib
 import logging
 import pytz
@@ -6,9 +7,31 @@ import struct
 import time
 from typing import Optional
 
+from . import exceptions
 from . import serializer
+from . import settings
 
 logger = logging.getLogger('golem.network.transport.message')
+
+
+def verify_time(timestamp):
+    """ Verify message timestamp. If message is to old or has timestamp from
+    distant future raise TimestampError.
+
+    NOTE: This method deliberately ignores microseconds - precision=1s
+    """
+    now = datetime.datetime.utcnow()
+    try:
+        msgdt = datetime.datetime.utcfromtimestamp(timestamp)
+    except (TypeError, OSError, OverflowError):
+        raise exceptions.TimestampError()
+    delta = now - msgdt
+    delta_future = msgdt - now
+    logger.debug('msgdt %s Δ %s Δfuture %s', msgdt, delta, delta_future)
+    if delta > settings.MSG_TTL:
+        raise exceptions.MessageTooOldError()
+    if delta_future > settings.FUTURE_TIME_TOLERANCE:
+        raise exceptions.MessageFromFutureError()
 
 
 # Message types that are allowed to be sent in the network
@@ -166,12 +189,19 @@ class Message(object):
             logger.info("Message error: invalid data: %r", exc)
             return
 
+        msg_ts /= cls.TS_SCALE
+        try:
+            verify_time(msg_ts)
+        except exceptions.TimestampError:
+            logger.info("Message error: invalid timestamp: %r", msg_ts)
+            return
+
         if msg_type not in registered_message_types:
             logger.info('Message error: invalid type %d', msg_type)
             return
 
         return registered_message_types[msg_type](
-            timestamp=msg_ts / cls.TS_SCALE,
+            timestamp=msg_ts,
             encrypted=msg_enc,
             sig=sig,
             payload=payload,

@@ -14,7 +14,7 @@ def test_suite():
 
 setup(
     name='Golem Messages',
-    version='1.0pre0',
+    version='1.0.0',
     url='https://github.com/golemfactory/golem-messages',
     packages=['golem_messages'],
     install_requires=[
@@ -26,7 +26,8 @@ setup(
         'pytz',
     ],
     test_suite='setup.test_suite',
-    extras_require={
-        'test': 'flake8',
-    },
+    tests_require=[
+        'pycodestyle',
+        'freezegun',
+    ],
 )
