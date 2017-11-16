@@ -34,6 +34,41 @@ def verify_time(timestamp):
         raise exceptions.MessageFromFutureError()
 
 
+class FrozenDict(dict):
+    ITEMS = {}
+
+    def __missing__(self, key):
+        return self.ITEMS[key]
+
+    def __setitem__(self, key, value):
+        if key not in self.ITEMS:
+            raise KeyError("Invalid key: {}".format(key))
+        return super().__setitem__(key, value)
+
+
+class ComputeTaskDef(FrozenDict):
+    ITEMS = {
+        'task_id': '',
+        'subtask_id': '',
+        'deadline': '',
+        'src_code': '',
+        'extra_data': None,  # initialized to dict later on
+        'short_description': '',
+        'return_address': '',
+        'return_port': 0,
+        'task_owner': None,
+        'key_id': 0,
+        'working_directory': '',
+        'performance': 0,
+        'environment': '',
+        'docker_images': None,
+    }
+
+    def __init__(self, *args, **kwargs):
+        self['extra_data'] = {}
+        super().__init__(*args, **kwargs)
+
+
 # Message types that are allowed to be sent in the network
 registered_message_types = {}
 
