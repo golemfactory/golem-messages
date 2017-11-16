@@ -864,7 +864,6 @@ class MessageStartSessionResponse(Message):
         super(MessageStartSessionResponse, self).__init__(**kwargs)
 
 
-
 class MessageWaitingForResults(Message):
     TYPE = TASK_MSG_BASE + 25
 
