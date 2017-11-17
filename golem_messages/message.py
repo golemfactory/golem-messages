@@ -45,6 +45,9 @@ class FrozenDict(dict):
             raise KeyError("Invalid key: {}".format(key))
         return super().__setitem__(key, value)
 
+    def __setattr__(self, key, value):
+        raise AttributeError("Read only. Use mapping interface")
+
 
 class ComputeTaskDef(FrozenDict):
     ITEMS = {
