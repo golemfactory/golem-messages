@@ -26,3 +26,10 @@ class FrozenTestCase(unittest.TestCase):
         fd = FrozenDict()
         with self.assertRaises(KeyError):
             fd['new_key'] = 'Mexico military crime-busters join ocean...'
+
+    def test_set_attr(self):
+        fd = FrozenDict()
+        with self.assertRaises(AttributeError):
+            fd.new_attr = ('Pod moskitierą czuło się duchotę, przy oknie — '
+                           'gorąc zupełnie tropikalny.'
+                           )
