@@ -2,4 +2,8 @@
 *.egg-info
 __pycache__
 *.py[co]
-*.swp
+*.sw[ponm]
+
+build/
+dist/
+sdist/
