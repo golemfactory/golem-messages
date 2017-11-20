@@ -642,6 +642,10 @@ class MessageCannotAssignTask(Message):
         'task_id'
     ] + Message.__slots__
 
+    class REASON(enum.Enum):
+        NotMyTask = 'not_my_task'
+        NoMoreSubtasks = 'no_more_subtasks'
+
     def __init__(self, task_id=0, reason="", **kwargs):
         """
         Create message with information that node can't get task to compute
