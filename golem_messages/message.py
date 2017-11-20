@@ -895,6 +895,14 @@ class MessageCannotComputeTask(Message):
         'subtask_id'
     ] + Message.__slots__
 
+    class REASON(enum.Enum):
+        WrongCTD = 'wrong_ctd'
+        WrongKey = 'wrong_key'
+        WrongAddress = 'wrong_address'
+        WrongEnvironment = 'wrong_environment'
+        NoSourceCode = 'no_source_code'
+        WrongDockerImages = 'wrong_docker_images'
+
     def __init__(self, subtask_id=None, reason=None, **kwargs):
         """
         Message informs that the node is waiting for results
