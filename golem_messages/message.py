@@ -1,5 +1,6 @@
 import cbor2
 import datetime
+import enum
 import hashlib
 import logging
 import pytz
@@ -320,6 +321,18 @@ class MessageDisconnect(Message):
     ENCRYPT = False
 
     __slots__ = ['reason'] + Message.__slots__
+
+    class REASON(enum.Enum):
+        DuplicatePeers = 'duplicate_peers'
+        TooManyPeers = 'too_many_peers'
+        Refresh = 'refresh'
+        Unverified = 'unverified'
+        ProtocolVersion = 'protocol_version'
+        BadProtocol = 'bad_protocol'
+        Timeout = 'timeout'
+        NoMoreMessages = 'no_more_messages'
+        WrongEncryption = 'wrong_encryption'
+        ResourceHandshakeFailure = 'resource_handshake'
 
     def __init__(self, reason=-1, **kwargs):
         """
