@@ -1,5 +1,3 @@
-import collections
-
 import cbor2
 import datetime
 import hashlib
@@ -218,9 +216,15 @@ class Message(object):
         return "<{}>".format(self.__class__)
 
     def load_slots(self, slots):
-        if not isinstance(slots, collections.Iterable):
+        if not isinstance(slots, (tuple, list)):
             return
-        for slot, value in slots:
+
+        for entry in slots:
+            try:
+                slot, value = entry
+            except (TypeError, ValueError):
+                continue
+
             if self.valid_slot(slot):
                 setattr(self, slot, value)
 
