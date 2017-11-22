@@ -217,9 +217,16 @@ class Message(object):
         return "<{}>".format(self.__class__)
 
     def load_slots(self, slots):
-        if not slots:
+        if not isinstance(slots, (tuple, list)):
             return
-        for slot, value in slots:
+
+        for entry in slots:
+            try:
+                slot, value = entry
+            except (TypeError, ValueError):
+                logger.debug("Message error: invalid slot: %r", entry)
+                continue
+
             if self.valid_slot(slot):
                 setattr(self, slot, value)
 
