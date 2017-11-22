@@ -2,7 +2,7 @@ import copy
 
 
 class FrozenDict(dict):
-    """FrozenDict allows only values provided in ITEMS attribute. It also acts
+    """FrozenDict allows only keys provided in ITEMS attribute. It also acts
        as DefaultDict with values from ITEMS.
        """
 
