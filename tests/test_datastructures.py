@@ -22,6 +22,22 @@ class FrozenTestCase(unittest.TestCase):
 
         self.assertEqual(fd['default'], default_value)
 
+    def test_aliasing(self):
+        """Aliasing of objects in python is a dangerous pitfall. (SEE alising
+           in python). There is a countermeasure in __missing__(). Lets
+           test it.
+        """
+
+        class TestDict(datastructures.FrozenDict):
+            ITEMS = {
+                'dict': {},
+            }
+
+        fd = TestDict()
+        fd['dict']['watch out'] = 'for aliasing'
+        fd2 = TestDict()
+        self.assertEqual(fd2['dict'], {})
+
     def test_new_key(self):
         fd = datastructures.FrozenDict()
         with self.assertRaises(KeyError):
