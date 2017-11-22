@@ -7,6 +7,7 @@ import struct
 import time
 from typing import Optional
 
+from . import datastructures
 from . import exceptions
 from . import serializer
 from . import settings
@@ -34,22 +35,7 @@ def verify_time(timestamp):
         raise exceptions.MessageFromFutureError()
 
 
-class FrozenDict(dict):
-    ITEMS = {}
-
-    def __missing__(self, key):
-        return self.ITEMS[key]
-
-    def __setitem__(self, key, value):
-        if key not in self.ITEMS:
-            raise KeyError("Invalid key: {}".format(key))
-        return super().__setitem__(key, value)
-
-    def __setattr__(self, key, value):
-        raise AttributeError("Read only. Use mapping interface")
-
-
-class ComputeTaskDef(FrozenDict):
+class ComputeTaskDef(datastructures.FrozenDict):
     ITEMS = {
         'task_id': '',
         'subtask_id': '',

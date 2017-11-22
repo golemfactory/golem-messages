@@ -1,6 +1,6 @@
 import unittest
 
-from golem_messages.message import FrozenDict
+from golem_messages import datastructures
 
 
 class FrozenTestCase(unittest.TestCase):
@@ -11,7 +11,7 @@ class FrozenTestCase(unittest.TestCase):
                          "diverse characters who explore them in Manifesto."
                          )
 
-        class TestDict(FrozenDict):
+        class TestDict(datastructures.FrozenDict):
             ITEMS = {
                 'default': default_value,
             }
@@ -23,12 +23,12 @@ class FrozenTestCase(unittest.TestCase):
         self.assertEqual(fd['default'], default_value)
 
     def test_new_key(self):
-        fd = FrozenDict()
+        fd = datastructures.FrozenDict()
         with self.assertRaises(KeyError):
             fd['new_key'] = 'Mexico military crime-busters join ocean...'
 
     def test_set_attr(self):
-        fd = FrozenDict()
+        fd = datastructures.FrozenDict()
         with self.assertRaises(AttributeError):
             fd.new_attr = ('Pod moskitierą czuło się duchotę, przy oknie — '
                            'gorąc zupełnie tropikalny.'
