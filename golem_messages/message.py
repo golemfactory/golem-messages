@@ -41,7 +41,7 @@ class ComputeTaskDef(datastructures.FrozenDict):
         'subtask_id': '',
         'deadline': '',
         'src_code': '',
-        'extra_data': None,  # initialized to dict later on
+        'extra_data': {},  # safe because of copy in parent.__missing__()
         'short_description': '',
         'return_address': '',
         'return_port': 0,
@@ -52,10 +52,6 @@ class ComputeTaskDef(datastructures.FrozenDict):
         'environment': '',
         'docker_images': None,
     }
-
-    def __init__(self, *args, **kwargs):
-        self['extra_data'] = {}
-        super().__init__(*args, **kwargs)
 
 
 # Message types that are allowed to be sent in the network
