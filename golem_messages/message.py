@@ -223,6 +223,7 @@ class Message(object):
             try:
                 slot, value = entry
             except (TypeError, ValueError):
+                logger.debug("Message error: invalid slot: %r", entry)
                 continue
 
             if self.valid_slot(slot):
