@@ -8,6 +8,7 @@ import struct
 import time
 from typing import Optional
 
+from . import datastructures
 from . import exceptions
 from . import serializer
 from . import settings
@@ -33,6 +34,25 @@ def verify_time(timestamp):
         raise exceptions.MessageTooOldError()
     if delta_future > settings.FUTURE_TIME_TOLERANCE:
         raise exceptions.MessageFromFutureError()
+
+
+class ComputeTaskDef(datastructures.FrozenDict):
+    ITEMS = {
+        'task_id': '',
+        'subtask_id': '',
+        'deadline': '',
+        'src_code': '',
+        'extra_data': {},  # safe because of copy in parent.__missing__()
+        'short_description': '',
+        'return_address': '',
+        'return_port': 0,
+        'task_owner': None,
+        'key_id': 0,
+        'working_directory': '',
+        'performance': 0,
+        'environment': '',
+        'docker_images': None,
+    }
 
 
 # Message types that are allowed to be sent in the network
