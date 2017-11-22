@@ -8,6 +8,7 @@ import struct
 import time
 from typing import Optional
 
+from . import datastructures
 from . import exceptions
 from . import serializer
 from . import settings
@@ -33,6 +34,25 @@ def verify_time(timestamp):
         raise exceptions.MessageTooOldError()
     if delta_future > settings.FUTURE_TIME_TOLERANCE:
         raise exceptions.MessageFromFutureError()
+
+
+class ComputeTaskDef(datastructures.FrozenDict):
+    ITEMS = {
+        'task_id': '',
+        'subtask_id': '',
+        'deadline': '',
+        'src_code': '',
+        'extra_data': {},  # safe because of copy in parent.__missing__()
+        'short_description': '',
+        'return_address': '',
+        'return_port': 0,
+        'task_owner': None,
+        'key_id': 0,
+        'working_directory': '',
+        'performance': 0,
+        'environment': '',
+        'docker_images': None,
+    }
 
 
 # Message types that are allowed to be sent in the network
@@ -971,6 +991,57 @@ class MessageSubtaskPaymentRequest(Message):
         super(MessageSubtaskPaymentRequest, self).__init__(**kwargs)
 
 
+class MessageAckReportComputedTask(Message):
+    TYPE = TASK_MSG_BASE + 29
+
+    __slots__ = [
+        'subtask_id',
+    ] + Message.__slots__
+
+    def __init__(self, subtask_id=None, **kwargs):
+        self.subtask_id = subtask_id
+        super().__init__(**kwargs)
+
+
+class MessageRejectReportComputedTask(Message):
+    TYPE = TASK_MSG_BASE + 30
+
+    @enum.unique
+    class Reason(enum.Enum):
+        """
+        since python 3.6 it's possible to do this:
+
+        class StringEnum(str, enum.Enum):
+            def _generate_next_value_(name: str, *_):
+                return name
+
+        @enum.unique
+        class Reason(StringEnum):
+            TASK_TIME_LIMIT_EXCEEDED = enum.auto()
+            SUBTASK_TIME_LIMIT_EXCEEDED = enum.auto()
+            GOT_MESSAGE_CANNOT_COMPUTE_TASK = enum.auto()
+            GOT_MESSAGE_TASK_FAILURE = enum.auto()
+        """
+        TASK_TIME_LIMIT_EXCEEDED = 'TASK_TIME_LIMIT_EXCEEDED'
+        SUBTASK_TIME_LIMIT_EXCEEDED = 'SUBTASK_TIME_LIMIT_EXCEEDED'
+        GOT_MESSAGE_CANNOT_COMPUTE_TASK = 'GOT_MESSAGE_CANNOT_COMPUTE_TASK'
+        GOT_MESSAGE_TASK_FAILURE = 'GOT_MESSAGE_TASK_FAILURE'
+
+    __slots__ = [
+        'subtask_id',
+        'reason',
+    ] + Message.__slots__
+
+    def __init__(
+            self,
+            subtask_id=None,
+            reason: Reason = None,
+            **kwargs):
+        self.subtask_id = subtask_id
+        self.reason = reason
+        super().__init__(**kwargs)
+
+
 RESOURCE_MSG_BASE = 3000
 
 
@@ -1154,6 +1225,8 @@ def init_messages():
             MessageSubtaskResultAccepted,
             MessageSubtaskResultRejected,
             MessageDeltaParts,
+            MessageAckReportComputedTask,
+            MessageRejectReportComputedTask,
 
             # Resource messages
             MessageGetResource,
