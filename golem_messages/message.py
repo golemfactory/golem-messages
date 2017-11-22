@@ -1,5 +1,6 @@
 import cbor2
 import datetime
+import enum
 import hashlib
 import logging
 import pytz
@@ -321,6 +322,18 @@ class MessageDisconnect(Message):
 
     __slots__ = ['reason'] + Message.__slots__
 
+    class REASON(enum.Enum):
+        DuplicatePeers = 'duplicate_peers'
+        TooManyPeers = 'too_many_peers'
+        Refresh = 'refresh'
+        Unverified = 'unverified'
+        ProtocolVersion = 'protocol_version'
+        BadProtocol = 'bad_protocol'
+        Timeout = 'timeout'
+        NoMoreMessages = 'no_more_messages'
+        WrongEncryption = 'wrong_encryption'
+        ResourceHandshakeFailure = 'resource_handshake'
+
     def __init__(self, reason=-1, **kwargs):
         """
         Create a disconnect message
@@ -629,6 +642,10 @@ class MessageCannotAssignTask(Message):
         'task_id'
     ] + Message.__slots__
 
+    class REASON(enum.Enum):
+        NotMyTask = 'not_my_task'
+        NoMoreSubtasks = 'no_more_subtasks'
+
     def __init__(self, task_id=0, reason="", **kwargs):
         """
         Create message with information that node can't get task to compute
@@ -877,6 +894,14 @@ class MessageCannotComputeTask(Message):
         'reason',
         'subtask_id'
     ] + Message.__slots__
+
+    class REASON(enum.Enum):
+        WrongCTD = 'wrong_ctd'
+        WrongKey = 'wrong_key'
+        WrongAddress = 'wrong_address'
+        WrongEnvironment = 'wrong_environment'
+        NoSourceCode = 'no_source_code'
+        WrongDockerImages = 'wrong_docker_images'
 
     def __init__(self, subtask_id=None, reason=None, **kwargs):
         """
