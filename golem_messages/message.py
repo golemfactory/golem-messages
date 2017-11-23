@@ -360,6 +360,7 @@ class MessageDisconnect(Message):
         NoMoreMessages = 'no_more_messages'
         WrongEncryption = 'wrong_encryption'
         ResourceHandshakeFailure = 'resource_handshake'
+        KeyNotDifficult = 'key_not_difficult'
 
     def __init__(self, reason=-1, **kwargs):
         """
