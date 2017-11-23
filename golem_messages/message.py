@@ -200,6 +200,7 @@ class Message(object):
 
         try:
             msg_type, msg_ts, msg_enc = cls.deserialize_header(header)
+            logger.debug("msg_type: %r", msg_type)
             if msg_enc:
                 data = decrypt_func(payload)
             decoders = {
@@ -208,6 +209,7 @@ class Message(object):
             slots = cbor2.loads(data, semantic_decoders=decoders)
         except Exception as exc:
             logger.info("Message error: invalid data: %r", exc)
+            logger.debug("Failing message hdr: %r data: %r", header, data)
             return
 
         msg_ts /= cls.TS_SCALE

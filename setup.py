@@ -6,12 +6,6 @@ import unittest
 # ./setup.py bdist_egg
 
 
-def test_suite():
-    test_loader = unittest.TestLoader()
-    test_suite = test_loader.discover('tests', pattern='test_*.py')
-    return test_suite
-
-
 setup(
     name='Golem Messages',
     version='1.1.0',
@@ -25,7 +19,6 @@ setup(
         'pyelliptic==1.5.7',
         'pytz',
     ],
-    test_suite='setup.test_suite',
     tests_require=[
         'pycodestyle',
         'freezegun',
