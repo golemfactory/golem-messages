@@ -1,4 +1,5 @@
 import collections
+import enum
 import inspect
 import logging
 import sys
@@ -46,12 +47,29 @@ class DictCoder:
     def obj_from_dict(cls, dictionary):
         cls_path = dictionary.pop(cls.cls_key)
 
-        _idx = cls_path.rfind('.')
-        module_name, cls_name = cls_path[:_idx], cls_path[_idx+1:]
+        module_name, cls_name = cls_path.rsplit('.', 1)
+        cls_components = [cls_name, ]
+        while module_name not in sys.modules:
+            module_name, parent_name = module_name.rsplit('.', 1)
+            cls_components.append(parent_name)
         module = sys.modules[module_name]
-        sub_cls = getattr(module, cls_name)
+        sub_cls = None
+        while cls_components:
+            if sub_cls is not None:
+                sub_cls = getattr(sub_cls, cls_components.pop())
+                continue
+            sub_cls = getattr(module, cls_components.pop())
 
-        obj = sub_cls.__new__(sub_cls)
+        # Special case for enum.Enum
+        if isinstance(sub_cls, enum.Enum):
+            obj = sub_cls
+        else:
+            try:
+                obj = sub_cls.__new__(sub_cls)
+            except Exception:
+                logger.debug('Problem instantiating new %r', sub_cls,
+                             exc_info=True)
+                raise
 
         for k, v in list(dictionary.items()):
             if cls._is_class(v):
@@ -117,8 +135,14 @@ class DictCoder:
     def module_and_class(obj):
         fmt = '{}.{}'
         if inspect.isclass(obj):
-            return fmt.format(obj.__module__, obj.__name__)
-        return fmt.format(obj.__module__, obj.__class__.__name__)
+            return fmt.format(obj.__module__, obj.__qualname__)
+        # Special case for Enum metaclass
+        if isinstance(obj, enum.Enum):
+            return '.'.join((
+                fmt.format(obj.__module__, obj.__class__.__qualname__),
+                obj.name,
+            ))
+        return fmt.format(obj.__module__, obj.__class__.__qualname__)
 
 
 class CBORCoder(DictCoder):
