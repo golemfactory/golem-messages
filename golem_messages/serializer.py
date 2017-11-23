@@ -67,8 +67,8 @@ class DictCoder:
             try:
                 obj = sub_cls.__new__(sub_cls)
             except Exception:
-                # logger.debug('Problem instantiating new %r', sub_cls,
-                #              exc_info=True)
+                logger.debug('Problem instantiating new %r', sub_cls,
+                             exc_info=True)
                 raise
 
         for k, v in list(dictionary.items()):
