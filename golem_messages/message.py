@@ -37,9 +37,13 @@ def verify_time(timestamp):
 
 
 class ComputeTaskDef(datastructures.FrozenDict):
+    """Represents SUBTASK metadata."""
     ITEMS = {
         'task_id': '',
         'subtask_id': '',
+        # deadline represents subtask timeout in UTC timestamp (float or int)
+        # If you're looking for whole TASK deadline SEE: task_header.deadline
+        # Task headers are received in MessageTasks.tasks.
         'deadline': '',
         'src_code': '',
         'extra_data': {},  # safe because of copy in parent.__missing__()
@@ -439,7 +443,8 @@ class MessageTasks(Message):
     def __init__(self, tasks=None, **kwargs):
         """
         Create message containing information about tasks
-        :param list tasks: list of peers information
+        :param list tasks: list of tasks information (subset of
+                           taskserver.get_tasks_headers())
         """
         self.tasks = tasks or []
         super(MessageTasks, self).__init__(**kwargs)
