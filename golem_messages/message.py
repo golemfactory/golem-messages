@@ -1134,6 +1134,7 @@ CONCENT_MSG_BASE = 4000
 
 
 class MessageServiceRefused(Message):
+    # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE
 
     @enum.unique
@@ -1158,6 +1159,7 @@ class MessageServiceRefused(Message):
 
 
 class MessageForceReportComputedTask(Message):
+    # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 1
 
     __slots__ = [
@@ -1170,6 +1172,7 @@ class MessageForceReportComputedTask(Message):
 
 
 class MessageAckReportComputedTask(Message):
+    # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 2
 
     __slots__ = [
@@ -1182,6 +1185,7 @@ class MessageAckReportComputedTask(Message):
 
 
 class MessageRejectReportComputedTask(Message):
+    # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 3
 
     @enum.unique
@@ -1221,6 +1225,7 @@ class MessageRejectReportComputedTask(Message):
 
 
 class MessageVerdictReportComputedTask(Message):
+    # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 4
 
     __slots__ = [
