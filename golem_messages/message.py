@@ -83,9 +83,6 @@ class Message():
         :param sig: signed message hash
         :param raw: original message bytes
         """
-        if not registered_message_types:
-            init_messages()
-
         # Child message slots
         self.load_slots(slots)
 
@@ -989,57 +986,6 @@ class MessageSubtaskPaymentRequest(Message):
         super(MessageSubtaskPaymentRequest, self).__init__(**kwargs)
 
 
-class MessageAckReportComputedTask(Message):
-    TYPE = TASK_MSG_BASE + 29
-
-    __slots__ = [
-        'subtask_id',
-    ] + Message.__slots__
-
-    def __init__(self, subtask_id=None, **kwargs):
-        self.subtask_id = subtask_id
-        super().__init__(**kwargs)
-
-
-class MessageRejectReportComputedTask(Message):
-    TYPE = TASK_MSG_BASE + 30
-
-    @enum.unique
-    class Reason(enum.Enum):
-        """
-        since python 3.6 it's possible to do this:
-
-        class StringEnum(str, enum.Enum):
-            def _generate_next_value_(name: str, *_):
-                return name
-
-        @enum.unique
-        class Reason(StringEnum):
-            TASK_TIME_LIMIT_EXCEEDED = enum.auto()
-            SUBTASK_TIME_LIMIT_EXCEEDED = enum.auto()
-            GOT_MESSAGE_CANNOT_COMPUTE_TASK = enum.auto()
-            GOT_MESSAGE_TASK_FAILURE = enum.auto()
-        """
-        TASK_TIME_LIMIT_EXCEEDED = 'TASK_TIME_LIMIT_EXCEEDED'
-        SUBTASK_TIME_LIMIT_EXCEEDED = 'SUBTASK_TIME_LIMIT_EXCEEDED'
-        GOT_MESSAGE_CANNOT_COMPUTE_TASK = 'GOT_MESSAGE_CANNOT_COMPUTE_TASK'
-        GOT_MESSAGE_TASK_FAILURE = 'GOT_MESSAGE_TASK_FAILURE'
-
-    __slots__ = [
-        'subtask_id',
-        'reason',
-    ] + Message.__slots__
-
-    def __init__(
-            self,
-            subtask_id=None,
-            reason: Reason = None,
-            **kwargs):
-        self.subtask_id = subtask_id
-        self.reason = reason
-        super().__init__(**kwargs)
-
-
 RESOURCE_MSG_BASE = 3000
 
 
@@ -1177,6 +1123,113 @@ class MessageResourceHandshakeVerdict(Message):
         super().__init__(**kwargs)
 
 
+CONCENT_MSG_BASE = 4000
+
+
+class MessageServiceRefused(Message):
+    # TODO: update this once #5 is complete
+    TYPE = CONCENT_MSG_BASE
+
+    @enum.unique
+    class Reason(enum.Enum):
+        TOO_SMALL_COMMUNICATION_PAYMENT = 'TOO_SMALL_COMMUNICATION_PAYMENT'
+        TOO_SMALL_REQUESTOR_DEPOSIT = 'TOO_SMALL_REQUESTOR_DEPOSIT'
+        TOO_SMALL_PROVIDER_DEPOSIT = 'TOO_SMALL_PROVIDER_DEPOSIT'
+        SYSTEM_OVERLOADED = 'SYSTEM_OVERLOADED'
+
+    __slots__ = [
+        'subtask_id',
+        'reason'
+    ] + Message.__slots__
+
+    def __init__(self,
+                 subtask_id=None,
+                 reason: Optional[Reason] = None,
+                 **kwargs):
+        self.subtask_id = subtask_id
+        self.reason = reason
+        super().__init__(**kwargs)
+
+
+class MessageForceReportComputedTask(Message):
+    # TODO: update this once #5 is complete
+    TYPE = CONCENT_MSG_BASE + 1
+
+    __slots__ = [
+        'subtask_id',
+    ] + Message.__slots__
+
+    def __init__(self, subtask_id=None, **kwargs):
+        self.subtask_id = subtask_id
+        super().__init__(**kwargs)
+
+
+class MessageAckReportComputedTask(Message):
+    # TODO: update this once #5 is complete
+    TYPE = CONCENT_MSG_BASE + 2
+
+    __slots__ = [
+        'subtask_id',
+    ] + Message.__slots__
+
+    def __init__(self, subtask_id=None, **kwargs):
+        self.subtask_id = subtask_id
+        super().__init__(**kwargs)
+
+
+class MessageRejectReportComputedTask(Message):
+    # TODO: update this once #5 is complete
+    TYPE = CONCENT_MSG_BASE + 3
+
+    @enum.unique
+    class Reason(enum.Enum):
+        """
+        since python 3.6 it's possible to do this:
+
+        class StringEnum(str, enum.Enum):
+            def _generate_next_value_(name: str, *_):
+                return name
+
+        @enum.unique
+        class Reason(StringEnum):
+            TASK_TIME_LIMIT_EXCEEDED = enum.auto()
+            SUBTASK_TIME_LIMIT_EXCEEDED = enum.auto()
+            GOT_MESSAGE_CANNOT_COMPUTE_TASK = enum.auto()
+            GOT_MESSAGE_TASK_FAILURE = enum.auto()
+        """
+        TASK_TIME_LIMIT_EXCEEDED = 'TASK_TIME_LIMIT_EXCEEDED'
+        SUBTASK_TIME_LIMIT_EXCEEDED = 'SUBTASK_TIME_LIMIT_EXCEEDED'
+        GOT_MESSAGE_CANNOT_COMPUTE_TASK = 'GOT_MESSAGE_CANNOT_COMPUTE_TASK'
+        GOT_MESSAGE_TASK_FAILURE = 'GOT_MESSAGE_TASK_FAILURE'
+
+    __slots__ = [
+        'subtask_id',
+        'reason',
+    ] + Message.__slots__
+
+    def __init__(
+            self,
+            subtask_id=None,
+            reason: Reason = None,
+            **kwargs):
+        self.subtask_id = subtask_id
+        self.reason = reason
+        super().__init__(**kwargs)
+
+
+class MessageVerdictReportComputedTask(Message):
+    # TODO: update this once #5 is complete
+    TYPE = CONCENT_MSG_BASE + 4
+
+    __slots__ = [
+        'subtask_id',
+    ] + Message.__slots__
+
+    def __init__(self, subtask_id=None, **kwargs):
+        self.subtask_id = subtask_id
+        super().__init__(**kwargs)
+
+
 def init_messages():
     """Add supported messages to register messages list"""
     if registered_message_types:
@@ -1223,8 +1276,6 @@ def init_messages():
             MessageSubtaskResultAccepted,
             MessageSubtaskResultRejected,
             MessageDeltaParts,
-            MessageAckReportComputedTask,
-            MessageRejectReportComputedTask,
 
             # Resource messages
             MessageGetResource,
@@ -1241,6 +1292,13 @@ def init_messages():
 
             MessageSubtaskPayment,
             MessageSubtaskPaymentRequest,
+
+            # Concent messages
+            MessageServiceRefused,
+            MessageForceReportComputedTask,
+            MessageAckReportComputedTask,
+            MessageRejectReportComputedTask,
+            MessageVerdictReportComputedTask,
             ):
         if message_class.TYPE in registered_message_types:
             raise RuntimeError(
@@ -1248,3 +1306,6 @@ def init_messages():
                 .format(message_class.__name__, message_class.TYPE)
             )
         registered_message_types[message_class.TYPE] = message_class
+
+
+init_messages()
