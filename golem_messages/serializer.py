@@ -1,11 +1,33 @@
+import cbor2
+import cbor2.types
 import collections
 import enum
+import functools
 import inspect
 import logging
+import pytz
 import sys
 import types
 
 logger = logging.getLogger('golem.core.simpleserializer')
+
+
+OBJECT_TAG = 239
+MESSAGE_TAG = 1000
+
+
+def encode_message(encoder, value, fp):
+    serialized_msg = value.serialize()
+    encoder.encode(cbor2.types.CBORTag(MESSAGE_TAG, serialized_msg), fp)
+
+
+def decode_message(decoder, value, fp, shareable_index):
+    from golem_messages import message
+    return message.Message.deserialize(
+        value,
+        decrypt_func=None,
+        check_time=False
+    )
 
 
 def to_unicode(value):
@@ -150,19 +172,42 @@ class CBORCoder(DictCoder):
     deep_serialization = False
 
 
-CODER_TAG = 0xef
-
-
-def encode(encoder, value, fp):
+def encode_object(encoder, value, fp):
     if value is None:
         return None
     obj_dict = CBORCoder.obj_to_dict(value)
     encoder.encode_semantic(
-        CODER_TAG, obj_dict, fp,
+        OBJECT_TAG, obj_dict, fp,
         disable_value_sharing=True
     )
 
 
-def decode(decoder, value, fp, shareable_index=None):
+def decode_object(decoder, value, fp, shareable_index=None):
     obj = CBORCoder.obj_from_dict(value)
     return obj
+
+
+ENCODERS = collections.OrderedDict((
+    (('golem_messages.message', 'Message'), encode_message),
+    (object, encode_object),
+))
+
+DECODERS = collections.OrderedDict((
+    (MESSAGE_TAG, decode_message),
+    (OBJECT_TAG, decode_object),
+))
+
+# Public functions
+
+dumps = functools.partial(
+    cbor2.dumps,
+    encoders=ENCODERS,
+    datetime_as_timestamp=True,
+    timezone=pytz.utc,
+)
+
+
+loads = functools.partial(
+    cbor2.loads,
+    semantic_decoders=DECODERS,
+)

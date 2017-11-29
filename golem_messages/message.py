@@ -1,9 +1,7 @@
-import cbor2
 import datetime
 import enum
 import hashlib
 import logging
-import pytz
 import struct
 import time
 from typing import Optional
@@ -55,6 +53,10 @@ class ComputeTaskDef(datastructures.FrozenDict):
     }
 
 
+def _fake_sign(s):
+    return b'\0' * Message.SIG_LEN
+
+
 # Message types that are allowed to be sent in the network
 registered_message_types = {}
 
@@ -99,6 +101,8 @@ class Message():
     def __eq__(self, obj):
         if not isinstance(obj, Message):
             return False
+        if not self.TYPE == obj.TYPE:
+            return False
         return self.__slots__ == obj.__slots__
 
     @property
@@ -115,12 +119,13 @@ class Message():
         sha.update(self._payload or b'')
         return sha.digest()
 
-    def serialize(self, sign_func, encrypt_func=None):
+    def serialize(self, sign_func=None, encrypt_func=None):
         """ Return serialized message
         :return str: serialized message """
-        # XXX self.keys_auth.sign(data)
-        # XXX if public_key == 0 or public_key is None: return data
-        # XXX self.keys_auth.encrypt(data, public_key)
+
+        if sign_func is None:
+            sign_func = _fake_sign
+
         try:
             self.encrypted = self.ENCRYPT and encrypt_func
             payload = self.serialize_payload()
@@ -157,16 +162,7 @@ class Message():
                            self.encrypted)
 
     def serialize_payload(self):
-        encoders = collections.OrderedDict((
-            (Message, serializer.nested_message),
-            (object, serializer.encode),
-        ))
-        return cbor2.dumps(
-            self.slots(),
-            encoders=encoders,
-            datetime_as_timestamp=True,
-            timezone=pytz.utc,
-        )
+        return serializer.dumps(self.slots())
 
     @classmethod
     def deserialize_header(cls, data):
@@ -179,7 +175,7 @@ class Message():
         return struct.unpack('!HQ?', data)
 
     @classmethod
-    def deserialize(cls, msg, decrypt_func):
+    def deserialize(cls, msg, decrypt_func, check_time=True):
         """
         Deserialize single message
         :param str msg: serialized message
@@ -204,21 +200,20 @@ class Message():
             logger.debug("msg_type: %r", msg_type)
             if msg_enc:
                 data = decrypt_func(payload)
-            decoders = {
-                serializer.CODER_TAG: serializer.decode,
-            }
-            slots = cbor2.loads(data, semantic_decoders=decoders)
+            slots = serializer.loads(data)
         except Exception as exc:
             logger.info("Message error: invalid data: %r", exc)
             logger.debug("Failing message hdr: %r data: %r", header, data)
             return
 
         msg_ts /= cls.TS_SCALE
-        try:
-            verify_time(msg_ts)
-        except exceptions.TimestampError:
-            logger.info("Message error: invalid timestamp: %r", msg_ts)
-            return
+
+        if check_time:
+            try:
+                verify_time(msg_ts)
+            except exceptions.TimestampError:
+                logger.info("Message error: invalid timestamp: %r", msg_ts)
+                return
 
         if msg_type not in registered_message_types:
             logger.info('Message error: invalid type %d', msg_type)
