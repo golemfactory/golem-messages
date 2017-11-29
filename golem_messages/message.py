@@ -132,7 +132,10 @@ class Message():
             else:
                 self._payload = payload
 
-            self.sig = sign_func(self.get_short_hash())
+            # When nesting one message inside another it's important
+            # not to overwrite original signature.
+            if self.sig is None:
+                self.sig = sign_func(self.get_short_hash())
 
             return (
                 self.serialize_header() +
