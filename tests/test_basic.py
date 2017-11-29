@@ -27,6 +27,21 @@ class BasicTestCase(unittest.TestCase):
                                    self.ecc.raw_pubkey)
         self.assertEqual(msg, msg2)
 
+    """ Deserialization should work even if we haven't created any message first
+    """
+    @mock.patch('golem_messages.message.verify_time')
+    def test_deserialization(self, verify_time):
+        verify_time.return_value = True
+        serialized_ping = b'\x03\xe9\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
+            b'\xd8\x1c\x80'
+        deserialized = message.Message.deserialize(serialized_ping, None)
+        assert deserialized is not None
+        assert deserialized.TYPE == message.MessagePing.TYPE
+
 
 testnow = datetime.datetime.utcnow().replace(microsecond=0)
 

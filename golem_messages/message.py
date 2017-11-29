@@ -81,9 +81,6 @@ class Message(object):
         :param sig: signed message hash
         :param raw: original message bytes
         """
-        if not registered_message_types:
-            init_messages()
-
         # Child message slots
         self.load_slots(slots)
 
@@ -1313,3 +1310,6 @@ def init_messages():
                 .format(message_class.__name__, message_class.TYPE)
             )
         registered_message_types[message_class.TYPE] = message_class
+
+
+init_messages()
