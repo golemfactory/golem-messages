@@ -59,7 +59,7 @@ class ComputeTaskDef(datastructures.FrozenDict):
 registered_message_types = {}
 
 
-class Message(object):
+class Message():
     """ Communication message that is sent in all networks """
 
     __slots__ = ['timestamp', 'encrypted', 'sig', '_payload', '_raw']
@@ -157,9 +157,10 @@ class Message(object):
                            self.encrypted)
 
     def serialize_payload(self):
-        encoders = {
-            object: serializer.encode,
-        }
+        encoders = collections.OrderedDict((
+            (Message, serializer.nested_message),
+            (object, serializer.encode),
+        ))
         return cbor2.dumps(
             self.slots(),
             encoders=encoders,
