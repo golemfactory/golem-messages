@@ -266,7 +266,7 @@ class Message(object):
 ##################
 
 
-class MessageHello(Message):
+class Hello(Message):
     TYPE = 0
     ENCRYPT = False
 
@@ -328,7 +328,7 @@ class MessageHello(Message):
         super().__init__(**kwargs)
 
 
-class MessageRandVal(Message):
+class RandVal(Message):
     TYPE = 1
 
     __slots__ = ['rand_val'] + Message.__slots__
@@ -339,10 +339,10 @@ class MessageRandVal(Message):
         :param float rand_val: random value received from other side
         """
         self.rand_val = rand_val
-        super(MessageRandVal, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageDisconnect(Message):
+class Disconnect(Message):
     TYPE = 2
     ENCRYPT = False
 
@@ -366,10 +366,10 @@ class MessageDisconnect(Message):
         :param int reason: disconnection reason
         """
         self.reason = reason
-        super(MessageDisconnect, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageChallengeSolution(Message):
+class ChallengeSolution(Message):
     TYPE = 3
 
     __slots__ = ['solution'] + Message.__slots__
@@ -380,7 +380,7 @@ class MessageChallengeSolution(Message):
         :param str solution: challenge solution
         """
         self.solution = solution
-        super(MessageChallengeSolution, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
 ################
@@ -390,25 +390,25 @@ class MessageChallengeSolution(Message):
 P2P_MESSAGE_BASE = 1000
 
 
-class MessagePing(Message):
+class Ping(Message):
     TYPE = P2P_MESSAGE_BASE + 1
 
     __slots__ = Message.__slots__
 
 
-class MessagePong(Message):
+class Pong(Message):
     TYPE = P2P_MESSAGE_BASE + 2
 
     __slots__ = Message.__slots__
 
 
-class MessageGetPeers(Message):
+class GetPeers(Message):
     TYPE = P2P_MESSAGE_BASE + 3
 
     __slots__ = Message.__slots__
 
 
-class MessagePeers(Message):
+class Peers(Message):
     TYPE = P2P_MESSAGE_BASE + 4
 
     __slots__ = ['peers'] + Message.__slots__
@@ -419,16 +419,16 @@ class MessagePeers(Message):
         :param list peers: list of peers information
         """
         self.peers = peers or []
-        super(MessagePeers, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageGetTasks(Message):
+class GetTasks(Message):
     TYPE = P2P_MESSAGE_BASE + 5
 
     __slots__ = Message.__slots__
 
 
-class MessageTasks(Message):
+class Tasks(Message):
     TYPE = P2P_MESSAGE_BASE + 6
 
     __slots__ = ['tasks'] + Message.__slots__
@@ -439,10 +439,10 @@ class MessageTasks(Message):
         :param list tasks: list of peers information
         """
         self.tasks = tasks or []
-        super(MessageTasks, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageRemoveTask(Message):
+class RemoveTask(Message):
     TYPE = P2P_MESSAGE_BASE + 7
 
     __slots__ = ['task_id'] + Message.__slots__
@@ -453,17 +453,17 @@ class MessageRemoveTask(Message):
         :param str task_id: task to be removed
         """
         self.task_id = task_id
-        super(MessageRemoveTask, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageGetResourcePeers(Message):
+class GetResourcePeers(Message):
     """Request for resource peers"""
     TYPE = P2P_MESSAGE_BASE + 8
 
     __slots__ = Message.__slots__
 
 
-class MessageResourcePeers(Message):
+class ResourcePeers(Message):
     TYPE = P2P_MESSAGE_BASE + 9
 
     __slots__ = ['resource_peers'] + Message.__slots__
@@ -474,10 +474,10 @@ class MessageResourcePeers(Message):
         :param list resource_peers: list of peers information
         """
         self.resource_peers = resource_peers or []
-        super(MessageResourcePeers, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageDegree(Message):
+class Degree(Message):
     TYPE = P2P_MESSAGE_BASE + 10
 
     __slots__ = ['degree'] + Message.__slots__
@@ -488,10 +488,10 @@ class MessageDegree(Message):
         :param int degree: node degree in golem network
         """
         self.degree = degree
-        super(MessageDegree, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageGossip(Message):
+class Gossip(Message):
     TYPE = P2P_MESSAGE_BASE + 11
 
     __slots__ = ['gossip'] + Message.__slots__
@@ -502,17 +502,17 @@ class MessageGossip(Message):
         :param list gossip: gossip to be send
         """
         self.gossip = gossip or []
-        super(MessageGossip, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageStopGossip(Message):
+class StopGossip(Message):
     """Create stop gossip message"""
     TYPE = P2P_MESSAGE_BASE + 12
 
     __slots__ = Message.__slots__
 
 
-class MessageLocRank(Message):
+class LocRank(Message):
     TYPE = P2P_MESSAGE_BASE + 13
 
     __slots__ = ['node_id', 'loc_rank'] + Message.__slots__
@@ -525,10 +525,10 @@ class MessageLocRank(Message):
         """
         self.node_id = node_id
         self.loc_rank = loc_rank
-        super(MessageLocRank, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageFindNode(Message):
+class FindNode(Message):
     TYPE = P2P_MESSAGE_BASE + 14
 
     __slots__ = ['node_key_id'] + Message.__slots__
@@ -539,10 +539,10 @@ class MessageFindNode(Message):
         :param str node_key_id: key of a node to be find
         """
         self.node_key_id = node_key_id
-        super(MessageFindNode, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageWantToStartTaskSession(Message):
+class WantToStartTaskSession(Message):
     TYPE = P2P_MESSAGE_BASE + 15
 
     __slots__ = [
@@ -566,10 +566,10 @@ class MessageWantToStartTaskSession(Message):
         self.node_info = node_info
         self.conn_id = conn_id
         self.super_node_info = super_node_info
-        super(MessageWantToStartTaskSession, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageSetTaskSession(Message):
+class SetTaskSession(Message):
     TYPE = P2P_MESSAGE_BASE + 16
 
     __slots__ = [
@@ -597,13 +597,13 @@ class MessageSetTaskSession(Message):
         self.node_info = node_info
         self.conn_id = conn_id
         self.super_node_info = super_node_info
-        super(MessageSetTaskSession, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
 TASK_MSG_BASE = 2000
 
 
-class MessageWantToComputeTask(Message):
+class WantToComputeTask(Message):
     TYPE = TASK_MSG_BASE + 1
 
     __slots__ = [
@@ -642,10 +642,10 @@ class MessageWantToComputeTask(Message):
         self.max_memory_size = max_memory_size
         self.num_cores = num_cores
         self.price = price
-        super(MessageWantToComputeTask, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageTaskToCompute(Message):
+class TaskToCompute(Message):
     TYPE = TASK_MSG_BASE + 2
 
     __slots__ = ['compute_task_def'] + Message.__slots__
@@ -657,10 +657,10 @@ class MessageTaskToCompute(Message):
                                                 should be computed
         """
         self.compute_task_def = compute_task_def
-        super(MessageTaskToCompute, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageCannotAssignTask(Message):
+class CannotAssignTask(Message):
     TYPE = TASK_MSG_BASE + 3
 
     __slots__ = [
@@ -680,10 +680,10 @@ class MessageCannotAssignTask(Message):
         """
         self.task_id = task_id
         self.reason = reason
-        super(MessageCannotAssignTask, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageReportComputedTask(Message):
+class ReportComputedTask(Message):
     # FIXME this message should be simpler
     TYPE = TASK_MSG_BASE + 4
     RESULT_TYPE = {
@@ -745,7 +745,7 @@ class MessageReportComputedTask(Message):
         super().__init__(**kwargs)
 
 
-class MessageGetTaskResult(Message):
+class GetTaskResult(Message):
     TYPE = TASK_MSG_BASE + 5
 
     __slots__ = ['subtask_id'] + Message.__slots__
@@ -756,10 +756,10 @@ class MessageGetTaskResult(Message):
         :param str subtask_id: finished subtask id
         """
         self.subtask_id = subtask_id
-        super(MessageGetTaskResult, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageTaskResultHash(Message):
+class TaskResultHash(Message):
     TYPE = TASK_MSG_BASE + 7
 
     __slots__ = [
@@ -780,10 +780,10 @@ class MessageTaskResultHash(Message):
         self.multihash = multihash
         self.secret = secret
         self.options = options
-        super(MessageTaskResultHash, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageGetResource(Message):
+class GetResource(Message):
     TYPE = TASK_MSG_BASE + 8
 
     __slots__ = [
@@ -800,10 +800,10 @@ class MessageGetResource(Message):
         """
         self.task_id = task_id
         self.resource_header = resource_header
-        super(MessageGetResource, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageSubtaskResultAccepted(Message):
+class SubtaskResultAccepted(Message):
     TYPE = TASK_MSG_BASE + 10
 
     __slots__ = [
@@ -819,10 +819,10 @@ class MessageSubtaskResultAccepted(Message):
         """
         self.subtask_id = subtask_id
         self.reward = reward
-        super(MessageSubtaskResultAccepted, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageSubtaskResultRejected(Message):
+class SubtaskResultRejected(Message):
     TYPE = TASK_MSG_BASE + 11
 
     __slots__ = ['subtask_id'] + Message.__slots__
@@ -833,10 +833,10 @@ class MessageSubtaskResultRejected(Message):
         :param str subtask_id: id of rejected subtask
         """
         self.subtask_id = subtask_id
-        super(MessageSubtaskResultRejected, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageDeltaParts(Message):
+class DeltaParts(Message):
     TYPE = TASK_MSG_BASE + 12
 
     __slots__ = [
@@ -871,10 +871,10 @@ class MessageDeltaParts(Message):
         self.address = address
         self.port = port
         self.node_info = node_info
-        super(MessageDeltaParts, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageTaskFailure(Message):
+class TaskFailure(Message):
     TYPE = TASK_MSG_BASE + 15
 
     __slots__ = [
@@ -890,10 +890,10 @@ class MessageTaskFailure(Message):
         """
         self.subtask_id = subtask_id
         self.err = err
-        super(MessageTaskFailure, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageStartSessionResponse(Message):
+class StartSessionResponse(Message):
     TYPE = TASK_MSG_BASE + 16
 
     __slots__ = ['conn_id'] + Message.__slots__
@@ -904,16 +904,16 @@ class MessageStartSessionResponse(Message):
         :param uuid conn_id: connection id for reference
         """
         self.conn_id = conn_id
-        super(MessageStartSessionResponse, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageWaitingForResults(Message):
+class WaitingForResults(Message):
     TYPE = TASK_MSG_BASE + 25
 
     __slots__ = Message.__slots__
 
 
-class MessageCannotComputeTask(Message):
+class CannotComputeTask(Message):
     TYPE = TASK_MSG_BASE + 26
 
     __slots__ = [
@@ -935,10 +935,10 @@ class MessageCannotComputeTask(Message):
         """
         self.reason = reason
         self.subtask_id = subtask_id
-        super(MessageCannotComputeTask, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageSubtaskPayment(Message):
+class SubtaskPayment(Message):
     TYPE = TASK_MSG_BASE + 27
 
     __slots__ = [
@@ -951,9 +951,9 @@ class MessageSubtaskPayment(Message):
     def __init__(self, subtask_id=None, reward=None, transaction_id=None,
                  block_number=None, **kwargs):
         """Informs about payment for a subtask.
-        It succeeds MessageSubtaskResultAccepted but could
+        It succeeds SubtaskResultAccepted but could
         be sent after a delay. It is also sent in response to
-        MessageSubtaskPaymentRequest. If transaction_id is None it
+        SubtaskPaymentRequest. If transaction_id is None it
         should be interpreted as PAYMENT PENDING status.
 
         :param str subtask_id: accepted subtask id
@@ -969,10 +969,10 @@ class MessageSubtaskPayment(Message):
         self.reward = reward
         self.transaction_id = transaction_id
         self.block_number = block_number
-        super(MessageSubtaskPayment, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageSubtaskPaymentRequest(Message):
+class SubtaskPaymentRequest(Message):
     TYPE = TASK_MSG_BASE + 28
 
     __slots__ = ['subtask_id'] + Message.__slots__
@@ -987,7 +987,7 @@ class MessageSubtaskPaymentRequest(Message):
         """
 
         self.subtask_id = subtask_id
-        super(MessageSubtaskPaymentRequest, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
 RESOURCE_MSG_BASE = 3000
@@ -1004,13 +1004,12 @@ class AbstractResource(Message):
         super(AbstractResource, self).__init__(**kwargs)
 
 
-class MessagePushResource(AbstractResource):
+class PushResource(AbstractResource):
     TYPE = RESOURCE_MSG_BASE + 1
 
     __slots__ = [
-        'resource',
         'copies'
-    ] + Message.__slots__
+    ] + AbstractResource.__slots__
 
     def __init__(self, copies=0, **kwargs):
         """Create message with information that expected number of copies of
@@ -1018,31 +1017,31 @@ class MessagePushResource(AbstractResource):
         :param int copies: number of copies
         """
         self.copies = copies
-        super(MessagePushResource, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageHasResource(AbstractResource):
+class HasResource(AbstractResource):
     """Create message with information about having given resource"""
     TYPE = RESOURCE_MSG_BASE + 2
 
     __slots__ = AbstractResource.__slots__
 
 
-class MessageWantsResource(AbstractResource):
+class WantsResource(AbstractResource):
     """Send information that node wants to receive given resource"""
     TYPE = RESOURCE_MSG_BASE + 3
 
     __slots__ = AbstractResource.__slots__
 
 
-class MessagePullResource(AbstractResource):
+class PullResource(AbstractResource):
     """Create message with information that given resource is needed"""
     TYPE = RESOURCE_MSG_BASE + 4
 
     __slots__ = AbstractResource.__slots__
 
 
-class MessagePullAnswer(Message):
+class PullAnswer(Message):
     TYPE = RESOURCE_MSG_BASE + 5
 
     __slots__ = [
@@ -1058,10 +1057,10 @@ class MessagePullAnswer(Message):
         """
         self.resource = resource
         self.has_resource = has_resource
-        super(MessagePullAnswer, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageResourceList(Message):
+class ResourceList(Message):
     TYPE = RESOURCE_MSG_BASE + 7
 
     __slots__ = [
@@ -1076,10 +1075,10 @@ class MessageResourceList(Message):
         """
         self.resources = resources
         self.options = options
-        super(MessageResourceList, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
-class MessageResourceHandshakeStart(Message):
+class ResourceHandshakeStart(Message):
     TYPE = RESOURCE_MSG_BASE + 8
 
     __slots__ = [
@@ -1094,7 +1093,7 @@ class MessageResourceHandshakeStart(Message):
         super().__init__(**kwargs)
 
 
-class MessageResourceHandshakeNonce(Message):
+class ResourceHandshakeNonce(Message):
     TYPE = RESOURCE_MSG_BASE + 9
 
     __slots__ = [
@@ -1109,7 +1108,7 @@ class MessageResourceHandshakeNonce(Message):
         super().__init__(**kwargs)
 
 
-class MessageResourceHandshakeVerdict(Message):
+class ResourceHandshakeVerdict(Message):
     TYPE = RESOURCE_MSG_BASE + 10
 
     __slots__ = [
@@ -1130,7 +1129,7 @@ class MessageResourceHandshakeVerdict(Message):
 CONCENT_MSG_BASE = 4000
 
 
-class MessageServiceRefused(Message):
+class ServiceRefused(Message):
     # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE
 
@@ -1155,7 +1154,7 @@ class MessageServiceRefused(Message):
         super().__init__(**kwargs)
 
 
-class MessageForceReportComputedTask(Message):
+class ForceReportComputedTask(Message):
     # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 1
 
@@ -1168,7 +1167,7 @@ class MessageForceReportComputedTask(Message):
         super().__init__(**kwargs)
 
 
-class MessageAckReportComputedTask(Message):
+class AckReportComputedTask(Message):
     # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 2
 
@@ -1181,7 +1180,7 @@ class MessageAckReportComputedTask(Message):
         super().__init__(**kwargs)
 
 
-class MessageRejectReportComputedTask(Message):
+class RejectReportComputedTask(Message):
     # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 3
 
@@ -1221,7 +1220,7 @@ class MessageRejectReportComputedTask(Message):
         super().__init__(**kwargs)
 
 
-class MessageVerdictReportComputedTask(Message):
+class VerdictReportComputedTask(Message):
     # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 4
 
@@ -1241,68 +1240,68 @@ def init_messages():
     for message_class in \
             (
             # Basic messages
-            MessageHello,
-            MessageRandVal,
-            MessageDisconnect,
-            MessageChallengeSolution,
+            Hello,
+            RandVal,
+            Disconnect,
+            ChallengeSolution,
 
             # P2P messages
-            MessagePing,
-            MessagePong,
-            MessageGetPeers,
-            MessageGetTasks,
-            MessagePeers,
-            MessageTasks,
-            MessageRemoveTask,
-            MessageFindNode,
-            MessageGetResourcePeers,
-            MessageResourcePeers,
-            MessageWantToStartTaskSession,
-            MessageSetTaskSession,
+            Ping,
+            Pong,
+            GetPeers,
+            GetTasks,
+            Peers,
+            Tasks,
+            RemoveTask,
+            FindNode,
+            GetResourcePeers,
+            ResourcePeers,
+            WantToStartTaskSession,
+            SetTaskSession,
             # Ranking messages
-            MessageDegree,
-            MessageGossip,
-            MessageStopGossip,
-            MessageLocRank,
+            Degree,
+            Gossip,
+            StopGossip,
+            LocRank,
 
             # Task messages
-            MessageCannotAssignTask,
-            MessageCannotComputeTask,
-            MessageTaskToCompute,
-            MessageWantToComputeTask,
-            MessageReportComputedTask,
-            MessageTaskResultHash,
-            MessageTaskFailure,
-            MessageGetTaskResult,
-            MessageStartSessionResponse,
+            CannotAssignTask,
+            CannotComputeTask,
+            TaskToCompute,
+            WantToComputeTask,
+            ReportComputedTask,
+            TaskResultHash,
+            TaskFailure,
+            GetTaskResult,
+            StartSessionResponse,
 
-            MessageWaitingForResults,
-            MessageSubtaskResultAccepted,
-            MessageSubtaskResultRejected,
-            MessageDeltaParts,
+            WaitingForResults,
+            SubtaskResultAccepted,
+            SubtaskResultRejected,
+            DeltaParts,
 
             # Resource messages
-            MessageGetResource,
-            MessagePushResource,
-            MessageHasResource,
-            MessageWantsResource,
-            MessagePullResource,
-            MessagePullAnswer,
-            MessageResourceList,
+            GetResource,
+            PushResource,
+            HasResource,
+            WantsResource,
+            PullResource,
+            PullAnswer,
+            ResourceList,
 
-            MessageResourceHandshakeStart,
-            MessageResourceHandshakeNonce,
-            MessageResourceHandshakeVerdict,
+            ResourceHandshakeStart,
+            ResourceHandshakeNonce,
+            ResourceHandshakeVerdict,
 
-            MessageSubtaskPayment,
-            MessageSubtaskPaymentRequest,
+            SubtaskPayment,
+            SubtaskPaymentRequest,
 
             # Concent messages
-            MessageServiceRefused,
-            MessageForceReportComputedTask,
-            MessageAckReportComputedTask,
-            MessageRejectReportComputedTask,
-            MessageVerdictReportComputedTask,
+            ServiceRefused,
+            ForceReportComputedTask,
+            AckReportComputedTask,
+            RejectReportComputedTask,
+            VerdictReportComputedTask,
             ):
         if message_class.TYPE in registered_message_types:
             raise RuntimeError(

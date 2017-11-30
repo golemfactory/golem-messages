@@ -20,7 +20,7 @@ class BasicTestCase(unittest.TestCase):
         self.ecc2 = golem_messages.ECCx(None)
 
     def test_total_basic(self):
-        msg = message.MessagePing()
+        msg = message.Ping()
         payload = golem_messages.dump(msg, self.ecc.raw_privkey,
                                       self.ecc.raw_pubkey)
         msg2 = golem_messages.load(payload, self.ecc.raw_privkey,
@@ -40,7 +40,7 @@ class BasicTestCase(unittest.TestCase):
             b'\xd8\x1c\x80'
         deserialized = message.Message.deserialize(serialized_ping, None)
         assert deserialized is not None
-        assert deserialized.TYPE == message.MessagePing.TYPE
+        assert deserialized.TYPE == message.Ping.TYPE
 
 
 testnow = datetime.datetime.utcnow().replace(microsecond=0)
@@ -109,7 +109,7 @@ class TimestampTestCase(unittest.TestCase):
 
     @mock.patch('golem_messages.message.verify_time')
     def test_deserialization_with_time_verification(self, vft_mock):
-        msg = message.MessagePing()
+        msg = message.Ping()
         payload = golem_messages.dump(msg, self.ecc.raw_privkey,
                                       self.ecc.raw_pubkey)
         self.assertEqual(vft_mock.call_count, 0)

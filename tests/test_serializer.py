@@ -6,7 +6,7 @@ import unittest
 
 class EnumTestCase(unittest.TestCase):
     def test_disconnect_reason(self):
-        r = message.MessageDisconnect.REASON.TooManyPeers
+        r = message.Disconnect.REASON.TooManyPeers
         encoders = {
             object: serializer.encode,
         }
