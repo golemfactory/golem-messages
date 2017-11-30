@@ -138,7 +138,7 @@ class Message():
 
         try:
             self.encrypted = self.ENCRYPT and encrypt_func
-            payload = self.serialize_payload()
+            payload = serializer.dumps(self.slots())
 
             if self.encrypted:
                 self._payload = encrypt_func(payload)
@@ -173,9 +173,6 @@ class Message():
         return struct.pack('!HQ?', self.TYPE,
                            int(self.timestamp * self.TS_SCALE),
                            self.encrypted)
-
-    def serialize_payload(self):
-        return serializer.dumps(self.slots())
 
     def serialize_slot(self, key, value):
         if isinstance(value, enum.Enum):
