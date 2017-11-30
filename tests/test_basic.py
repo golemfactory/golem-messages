@@ -113,6 +113,16 @@ class TimestampTestCase(unittest.TestCase):
         payload = golem_messages.dump(msg, self.ecc.raw_privkey,
                                       self.ecc.raw_pubkey)
         self.assertEqual(vft_mock.call_count, 0)
-        msg2 = golem_messages.load(payload, self.ecc.raw_privkey,
-                                   self.ecc.raw_pubkey)
+        golem_messages.load(payload, self.ecc.raw_privkey, self.ecc.raw_pubkey)
         self.assertEqual(vft_mock.call_count, 1)
+
+
+class SlotSerializationTestCase(unittest.TestCase):
+    def test_enum_slots(self):
+        msg = message.MessageDisconnect(
+            reason=message.MessageDisconnect.REASON.DuplicatePeers
+        )
+        s = msg.serialize()
+        msg2 = message.Message.deserialize(s, decrypt_func=None)
+        self.assertIs(msg2.reason,
+                      message.MessageDisconnect.REASON.DuplicatePeers)

@@ -72,6 +72,7 @@ class Message():
 
     TYPE = None
     ENCRYPT = True
+    ENUM_SLOTS = {}
 
     def __init__(self, timestamp=None, encrypted=False, sig=None,
                  payload=None, raw=None, slots=None):
@@ -164,6 +165,16 @@ class Message():
     def serialize_payload(self):
         return serializer.dumps(self.slots())
 
+    def serialize_slot(self, key, value):
+        if isinstance(value, enum.Enum):
+            value = value.value
+        return value
+
+    def deserialize_slot(self, key, value):
+        if key in self.ENUM_SLOTS:
+            value = self.ENUM_SLOTS[key](value)
+        return value
+
     @classmethod
     def deserialize_header(cls, data):
         """ Deserialize message's header
@@ -246,15 +257,19 @@ class Message():
                 continue
 
             if self.valid_slot(slot):
+                value = self.deserialize_slot(slot, value)
                 setattr(self, slot, value)
 
     def slots(self):
         """Returns a list representation of any subclass message"""
-        return [
-            [slot, getattr(self, slot)]
-            for slot in self.__slots__
-            if self.valid_slot(slot)
-        ]
+        processed_slots = []
+        for key in self.__slots__:
+            if not self.valid_slot(key):
+                continue
+            value = getattr(self, key)
+            value = self.serialize_slot(key, value)
+            processed_slots.append([key, value])
+        return processed_slots
 
     def valid_slot(self, name):
         return hasattr(self, name) and name not in Message.__slots__
@@ -358,6 +373,10 @@ class MessageDisconnect(Message):
         NoMoreMessages = 'no_more_messages'
         WrongEncryption = 'wrong_encryption'
         ResourceHandshakeFailure = 'resource_handshake'
+
+    ENUM_SLOTS = {
+        'reason': REASON,
+    }
 
     def __init__(self, reason=-1, **kwargs):
         """
