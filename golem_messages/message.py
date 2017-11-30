@@ -230,14 +230,19 @@ class Message():
             logger.info('Message error: invalid type %d', msg_type)
             return
 
-        return registered_message_types[msg_type](
-            timestamp=msg_ts,
-            encrypted=msg_enc,
-            sig=sig,
-            payload=payload,
-            raw=msg,
-            slots=slots
-        )
+        try:
+            instance = registered_message_types[msg_type](
+                timestamp=msg_ts,
+                encrypted=msg_enc,
+                sig=sig,
+                payload=payload,
+                raw=msg,
+                slots=slots
+            )
+        except Exception as exc:
+            logger.info("Message error: invalid data: %r", exc)
+            return
+        return instance
 
     def __str__(self):
         return "{}".format(self.__class__)

@@ -126,3 +126,20 @@ class SlotSerializationTestCase(unittest.TestCase):
         msg2 = message.Message.deserialize(s, decrypt_func=None)
         self.assertIs(msg2.reason,
                       message.MessageDisconnect.REASON.DuplicatePeers)
+
+    def test_enum_slot_by_value(self):
+        msg = message.MessageDisconnect(
+            reason='duplicate_peers'
+        )
+        s = msg.serialize()
+        msg2 = message.Message.deserialize(s, decrypt_func=None)
+        self.assertIs(msg2.reason,
+                      message.MessageDisconnect.REASON.DuplicatePeers)
+
+    def test_enum_slot_invalid_value(self):
+        msg = message.MessageDisconnect(
+            reason='Every man is the builder of a temple called his body. —HDT'
+        )
+        s = msg.serialize()
+        msg2 = message.Message.deserialize(s, decrypt_func=None)
+        self.assertIs(msg2, None)
