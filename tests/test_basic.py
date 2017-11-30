@@ -143,3 +143,29 @@ class SlotSerializationTestCase(unittest.TestCase):
         s = msg.serialize()
         msg2 = message.Message.deserialize(s, decrypt_func=None)
         self.assertIs(msg2, None)
+
+
+class NestedMessageTestCase(unittest.TestCase):
+    def test_valid_task_to_compute(self):
+        TEST_SIG = b'jak przystalo na bistro czesto sie zmienia i jest wypisywane na tablicy w lokalu'[:message.Message.SIG_LEN]  # noqa
+        for class_ in message.registered_message_types.values():
+            if 'task_to_compute' not in class_.__slots__:
+                continue
+            msg = class_()
+            msg.task_to_compute = message.MessageTaskToCompute(sig=TEST_SIG)
+            s = msg.serialize()
+            msg2 = message.Message.deserialize(s, decrypt_func=None)
+            self.assertEqual(msg2.task_to_compute.sig, TEST_SIG)
+
+    def test_invalid_task_to_compute(self):
+        for class_ in message.registered_message_types.values():
+            if 'task_to_compute' not in class_.__slots__:
+                continue
+            msg = class_()
+            msg.task_to_compute = (
+                "There’s so much to learn when you’re slinging"
+                "paint and pencil"
+            )
+            s = msg.serialize()
+            msg2 = message.Message.deserialize(s, decrypt_func=None)
+            self.assertIs(msg2, None)

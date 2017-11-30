@@ -57,6 +57,18 @@ def _fake_sign(s):
     return b'\0' * Message.SIG_LEN
 
 
+def deserialize_task_to_compute(key, value):
+    if key == 'task_to_compute':
+        if not isinstance(value, (MessageTaskToCompute, type(None))):
+            raise TypeError(
+                "Invalid nested message type {} should be {}".format(
+                    type(value),
+                    MessageTaskToCompute
+                )
+            )
+    return value
+
+
 # Message types that are allowed to be sent in the network
 registered_message_types = {}
 
@@ -171,7 +183,7 @@ class Message():
         return value
 
     def deserialize_slot(self, key, value):
-        if key in self.ENUM_SLOTS:
+        if (key in self.ENUM_SLOTS) and (value is not None):
             value = self.ENUM_SLOTS[key](value)
         return value
 
@@ -244,11 +256,14 @@ class Message():
             return
         return instance
 
-    def __str__(self):
-        return "{}".format(self.__class__)
-
     def __repr__(self):
-        return "<{}>".format(self.__class__)
+        return "{}(timestamp={}, encrypted={}, sig={}, slots={})".format(
+            self.__class__.__name__,
+            self.timestamp,
+            self.encrypted,
+            self.sig,
+            self.slots(),
+        )
 
     def load_slots(self, slots):
         if not isinstance(slots, (tuple, list)):
@@ -261,9 +276,11 @@ class Message():
                 logger.debug("Message error: invalid slot: %r", entry)
                 continue
 
-            if self.valid_slot(slot):
-                value = self.deserialize_slot(slot, value)
-                setattr(self, slot, value)
+            if not self.valid_slot(slot):
+                continue
+
+            value = self.deserialize_slot(slot, value)
+            setattr(self, slot, value)
 
     def slots(self):
         """Returns a list representation of any subclass message"""
@@ -277,7 +294,7 @@ class Message():
         return processed_slots
 
     def valid_slot(self, name):
-        return hasattr(self, name) and name not in Message.__slots__
+        return (name not in Message.__slots__) and (name in self.__slots__)
 
 
 ##################
@@ -729,6 +746,7 @@ class MessageReportComputedTask(Message):
         'key_id',
         'extra_data',
         'eth_account',
+        'task_to_compute',
     ] + Message.__slots__
 
     def __init__(
@@ -770,6 +788,10 @@ class MessageReportComputedTask(Message):
         self.eth_account = eth_account
         self.node_info = node_info
         super().__init__(**kwargs)
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
 
 
 class MessageGetTaskResult(Message):
@@ -906,7 +928,8 @@ class MessageTaskFailure(Message):
 
     __slots__ = [
         'subtask_id',
-        'err'
+        'err',
+        'task_to_compute',
     ] + Message.__slots__
 
     def __init__(self, subtask_id="", err="", **kwargs):
@@ -918,6 +941,10 @@ class MessageTaskFailure(Message):
         self.subtask_id = subtask_id
         self.err = err
         super(MessageTaskFailure, self).__init__(**kwargs)
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
 
 
 class MessageStartSessionResponse(Message):
@@ -945,7 +972,8 @@ class MessageCannotComputeTask(Message):
 
     __slots__ = [
         'reason',
-        'subtask_id'
+        'subtask_id',
+        'task_to_compute',
     ] + Message.__slots__
 
     class REASON(enum.Enum):
@@ -966,7 +994,11 @@ class MessageCannotComputeTask(Message):
         """
         self.reason = reason
         self.subtask_id = subtask_id
-        super(MessageCannotComputeTask, self).__init__(**kwargs)
+        super().__init__(**kwargs)
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
 
 
 class MessageSubtaskPayment(Message):
@@ -1162,7 +1194,6 @@ CONCENT_MSG_BASE = 4000
 
 
 class MessageServiceRefused(Message):
-    # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE
 
     @enum.unique
@@ -1178,7 +1209,8 @@ class MessageServiceRefused(Message):
 
     __slots__ = [
         'subtask_id',
-        'reason'
+        'reason',
+        'task_to_compute',
     ] + Message.__slots__
 
     def __init__(self,
@@ -1189,35 +1221,46 @@ class MessageServiceRefused(Message):
         self.reason = reason
         super().__init__(**kwargs)
 
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
+
 
 class MessageForceReportComputedTask(Message):
-    # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 1
 
     __slots__ = [
         'subtask_id',
+        'task_to_compute',
     ] + Message.__slots__
 
     def __init__(self, subtask_id=None, **kwargs):
         self.subtask_id = subtask_id
         super().__init__(**kwargs)
 
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
+
 
 class MessageAckReportComputedTask(Message):
-    # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 2
 
     __slots__ = [
         'subtask_id',
+        'task_to_compute',
     ] + Message.__slots__
 
     def __init__(self, subtask_id=None, **kwargs):
         self.subtask_id = subtask_id
         super().__init__(**kwargs)
 
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
+
 
 class MessageRejectReportComputedTask(Message):
-    # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 3
 
     @enum.unique
@@ -1248,6 +1291,7 @@ class MessageRejectReportComputedTask(Message):
     __slots__ = [
         'subtask_id',
         'reason',
+        'task_to_compute',
     ] + Message.__slots__
 
     def __init__(
@@ -1259,18 +1303,26 @@ class MessageRejectReportComputedTask(Message):
         self.reason = reason
         super().__init__(**kwargs)
 
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
+
 
 class MessageVerdictReportComputedTask(Message):
-    # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 4
 
     __slots__ = [
         'subtask_id',
+        'task_to_compute',
     ] + Message.__slots__
 
     def __init__(self, subtask_id=None, **kwargs):
         self.subtask_id = subtask_id
         super().__init__(**kwargs)
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
 
 
 def init_messages():
