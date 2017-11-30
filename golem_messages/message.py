@@ -690,6 +690,10 @@ class MessageCannotAssignTask(Message):
         NotMyTask = 'not_my_task'
         NoMoreSubtasks = 'no_more_subtasks'
 
+    ENUM_SLOTS = {
+        'reason': REASON,
+    }
+
     def __init__(self, task_id=0, reason="", **kwargs):
         """
         Create message with information that node can't get task to compute
@@ -947,6 +951,10 @@ class MessageCannotComputeTask(Message):
         NoSourceCode = 'no_source_code'
         WrongDockerImages = 'wrong_docker_images'
 
+    ENUM_SLOTS = {
+        'reason': REASON,
+    }
+
     def __init__(self, subtask_id=None, reason=None, **kwargs):
         """
         Message informs that the node is waiting for results
@@ -1159,6 +1167,10 @@ class MessageServiceRefused(Message):
         TOO_SMALL_PROVIDER_DEPOSIT = 'TOO_SMALL_PROVIDER_DEPOSIT'
         SYSTEM_OVERLOADED = 'SYSTEM_OVERLOADED'
 
+    ENUM_SLOTS = {
+        'reason': Reason,
+    }
+
     __slots__ = [
         'subtask_id',
         'reason'
@@ -1223,6 +1235,10 @@ class MessageRejectReportComputedTask(Message):
         SUBTASK_TIME_LIMIT_EXCEEDED = 'SUBTASK_TIME_LIMIT_EXCEEDED'
         GOT_MESSAGE_CANNOT_COMPUTE_TASK = 'GOT_MESSAGE_CANNOT_COMPUTE_TASK'
         GOT_MESSAGE_TASK_FAILURE = 'GOT_MESSAGE_TASK_FAILURE'
+
+    ENUM_SLOTS = {
+        'reason': Reason,
+    }
 
     __slots__ = [
         'subtask_id',
