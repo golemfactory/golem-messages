@@ -23,7 +23,7 @@ class FrozenTestCase(unittest.TestCase):
         self.assertEqual(fd['default'], default_value)
 
     def test_aliasing(self):
-        """Aliasing of objects in python is a dangerous pitfall. (SEE alising
+        """Aliasing of objects in python is a dangerous pitfall. (SEE aliasing
            in python). There is a countermeasure in __missing__(). Lets
            test it.
         """
