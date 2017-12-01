@@ -12,7 +12,7 @@ class EqualityMixIn:
 
 class EnumTestCase(unittest.TestCase):
     def test_disconnect_reason(self):
-        r = message.MessageDisconnect.REASON.TooManyPeers
+        r = message.Disconnect.REASON.TooManyPeers
         s = serializer.dumps(r)
         r2 = serializer.loads(s)
         self.assertIs(r, r2)
@@ -20,13 +20,13 @@ class EnumTestCase(unittest.TestCase):
 
 class MessageTestCase(unittest.TestCase, EqualityMixIn):
     def test_message(self):
-        m = message.MessagePing()
+        m = message.Ping()
         self.equal_after_processing(m)
 
     def test_message_list(self):
-        aList = [message.MessagePing()]
+        aList = [message.Ping()]
         self.equal_after_processing(aList)
 
     def test_message_dict(self):
-        d = {'m': message.MessagePing()}
+        d = {'m': message.Ping()}
         self.equal_after_processing(d)
