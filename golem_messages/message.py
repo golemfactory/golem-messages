@@ -83,6 +83,12 @@ def deserialize_task_failure(key, value):
     return value
 
 
+def deserialize_cannot_compute_task(key, value):
+    if key == 'cannot_compute_task':
+        verify_slot_type(value, CannotComputeTask)
+    return value
+
+
 # Message types that are allowed to be sent in the network
 registered_message_types = {}
 
@@ -1311,6 +1317,7 @@ class RejectReportComputedTask(Message):
         'reason',
         'task_to_compute',
         'task_failure',
+        'cannot_compute_task',
     ] + Message.__slots__
 
     def __init__(
@@ -1326,6 +1333,7 @@ class RejectReportComputedTask(Message):
         value = super().deserialize_slot(key, value)
         value = deserialize_task_to_compute(key, value)
         value = deserialize_task_failure(key, value)
+        value = deserialize_cannot_compute_task(key, value)
         return value
 
 
