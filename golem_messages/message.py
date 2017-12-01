@@ -1,9 +1,7 @@
-import cbor2
 import datetime
 import enum
 import hashlib
 import logging
-import pytz
 import struct
 import time
 from typing import Optional
@@ -55,11 +53,27 @@ class ComputeTaskDef(datastructures.FrozenDict):
     }
 
 
+def _fake_sign(s):
+    return b'\0' * Message.SIG_LEN
+
+
+def deserialize_task_to_compute(key, value):
+    if key == 'task_to_compute':
+        if not isinstance(value, (MessageTaskToCompute, type(None))):
+            raise TypeError(
+                "Invalid nested message type {} should be {}".format(
+                    type(value),
+                    MessageTaskToCompute
+                )
+            )
+    return value
+
+
 # Message types that are allowed to be sent in the network
 registered_message_types = {}
 
 
-class Message(object):
+class Message():
     """ Communication message that is sent in all networks """
 
     __slots__ = ['timestamp', 'encrypted', 'sig', '_payload', '_raw']
@@ -70,6 +84,7 @@ class Message(object):
 
     TYPE = None
     ENCRYPT = True
+    ENUM_SLOTS = {}
 
     def __init__(self, timestamp=None, encrypted=False, sig=None,
                  payload=None, raw=None, slots=None):
@@ -96,6 +111,8 @@ class Message(object):
     def __eq__(self, obj):
         if not isinstance(obj, Message):
             return False
+        if not self.TYPE == obj.TYPE:
+            return False
         return self.__slots__ == obj.__slots__
 
     @property
@@ -112,22 +129,26 @@ class Message(object):
         sha.update(self._payload or b'')
         return sha.digest()
 
-    def serialize(self, sign_func, encrypt_func=None):
+    def serialize(self, sign_func=None, encrypt_func=None):
         """ Return serialized message
         :return str: serialized message """
-        # XXX self.keys_auth.sign(data)
-        # XXX if public_key == 0 or public_key is None: return data
-        # XXX self.keys_auth.encrypt(data, public_key)
+
+        if sign_func is None:
+            sign_func = _fake_sign
+
         try:
             self.encrypted = self.ENCRYPT and encrypt_func
-            payload = self.serialize_payload()
+            payload = serializer.dumps(self.slots())
 
             if self.encrypted:
                 self._payload = encrypt_func(payload)
             else:
                 self._payload = payload
 
-            self.sig = sign_func(self.get_short_hash())
+            # When nesting one message inside another it's important
+            # not to overwrite original signature.
+            if self.sig is None:
+                self.sig = sign_func(self.get_short_hash())
 
             return (
                 self.serialize_header() +
@@ -153,16 +174,15 @@ class Message(object):
                            int(self.timestamp * self.TS_SCALE),
                            self.encrypted)
 
-    def serialize_payload(self):
-        encoders = {
-            object: serializer.encode,
-        }
-        return cbor2.dumps(
-            self.slots(),
-            encoders=encoders,
-            datetime_as_timestamp=True,
-            timezone=pytz.utc,
-        )
+    def serialize_slot(self, key, value):
+        if isinstance(value, enum.Enum):
+            value = value.value
+        return value
+
+    def deserialize_slot(self, key, value):
+        if (key in self.ENUM_SLOTS) and (value is not None):
+            value = self.ENUM_SLOTS[key](value)
+        return value
 
     @classmethod
     def deserialize_header(cls, data):
@@ -175,7 +195,7 @@ class Message(object):
         return struct.unpack('!HQ?', data)
 
     @classmethod
-    def deserialize(cls, msg, decrypt_func):
+    def deserialize(cls, msg, decrypt_func, check_time=True):
         """
         Deserialize single message
         :param str msg: serialized message
@@ -200,40 +220,47 @@ class Message(object):
             logger.debug("msg_type: %r", msg_type)
             if msg_enc:
                 data = decrypt_func(payload)
-            decoders = {
-                serializer.CODER_TAG: serializer.decode,
-            }
-            slots = cbor2.loads(data, semantic_decoders=decoders)
+            slots = serializer.loads(data)
         except Exception as exc:
             logger.info("Message error: invalid data: %r", exc)
             logger.debug("Failing message hdr: %r data: %r", header, data)
             return
 
         msg_ts /= cls.TS_SCALE
-        try:
-            verify_time(msg_ts)
-        except exceptions.TimestampError:
-            logger.info("Message error: invalid timestamp: %r", msg_ts)
-            return
+
+        if check_time:
+            try:
+                verify_time(msg_ts)
+            except exceptions.TimestampError:
+                logger.info("Message error: invalid timestamp: %r", msg_ts)
+                return
 
         if msg_type not in registered_message_types:
             logger.info('Message error: invalid type %d', msg_type)
             return
 
-        return registered_message_types[msg_type](
-            timestamp=msg_ts,
-            encrypted=msg_enc,
-            sig=sig,
-            payload=payload,
-            raw=msg,
-            slots=slots
-        )
-
-    def __str__(self):
-        return "{}".format(self.__class__)
+        try:
+            instance = registered_message_types[msg_type](
+                timestamp=msg_ts,
+                encrypted=msg_enc,
+                sig=sig,
+                payload=payload,
+                raw=msg,
+                slots=slots
+            )
+        except Exception as exc:
+            logger.info("Message error: invalid data: %r", exc)
+            return
+        return instance
 
     def __repr__(self):
-        return "<{}>".format(self.__class__)
+        return "{}(timestamp={}, encrypted={}, sig={}, slots={})".format(
+            self.__class__.__name__,
+            self.timestamp,
+            self.encrypted,
+            self.sig,
+            self.slots(),
+        )
 
     def load_slots(self, slots):
         if not isinstance(slots, (tuple, list)):
@@ -246,19 +273,25 @@ class Message(object):
                 logger.debug("Message error: invalid slot: %r", entry)
                 continue
 
-            if self.valid_slot(slot):
-                setattr(self, slot, value)
+            if not self.valid_slot(slot):
+                continue
+
+            value = self.deserialize_slot(slot, value)
+            setattr(self, slot, value)
 
     def slots(self):
         """Returns a list representation of any subclass message"""
-        return [
-            [slot, getattr(self, slot)]
-            for slot in self.__slots__
-            if self.valid_slot(slot)
-        ]
+        processed_slots = []
+        for key in self.__slots__:
+            if not self.valid_slot(key):
+                continue
+            value = getattr(self, key)
+            value = self.serialize_slot(key, value)
+            processed_slots.append([key, value])
+        return processed_slots
 
     def valid_slot(self, name):
-        return hasattr(self, name) and name not in Message.__slots__
+        return (name not in Message.__slots__) and (name in self.__slots__)
 
 
 ##################
@@ -359,6 +392,10 @@ class MessageDisconnect(Message):
         NoMoreMessages = 'no_more_messages'
         WrongEncryption = 'wrong_encryption'
         ResourceHandshakeFailure = 'resource_handshake'
+
+    ENUM_SLOTS = {
+        'reason': REASON,
+    }
 
     def __init__(self, reason=-1, **kwargs):
         """
@@ -672,6 +709,10 @@ class MessageCannotAssignTask(Message):
         NotMyTask = 'not_my_task'
         NoMoreSubtasks = 'no_more_subtasks'
 
+    ENUM_SLOTS = {
+        'reason': REASON,
+    }
+
     def __init__(self, task_id=0, reason="", **kwargs):
         """
         Create message with information that node can't get task to compute
@@ -702,6 +743,7 @@ class MessageReportComputedTask(Message):
         'key_id',
         'extra_data',
         'eth_account',
+        'task_to_compute',
     ] + Message.__slots__
 
     def __init__(
@@ -743,6 +785,10 @@ class MessageReportComputedTask(Message):
         self.eth_account = eth_account
         self.node_info = node_info
         super().__init__(**kwargs)
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
 
 
 class MessageGetTaskResult(Message):
@@ -879,7 +925,8 @@ class MessageTaskFailure(Message):
 
     __slots__ = [
         'subtask_id',
-        'err'
+        'err',
+        'task_to_compute',
     ] + Message.__slots__
 
     def __init__(self, subtask_id="", err="", **kwargs):
@@ -891,6 +938,10 @@ class MessageTaskFailure(Message):
         self.subtask_id = subtask_id
         self.err = err
         super(MessageTaskFailure, self).__init__(**kwargs)
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
 
 
 class MessageStartSessionResponse(Message):
@@ -918,7 +969,8 @@ class MessageCannotComputeTask(Message):
 
     __slots__ = [
         'reason',
-        'subtask_id'
+        'subtask_id',
+        'task_to_compute',
     ] + Message.__slots__
 
     class REASON(enum.Enum):
@@ -929,13 +981,21 @@ class MessageCannotComputeTask(Message):
         NoSourceCode = 'no_source_code'
         WrongDockerImages = 'wrong_docker_images'
 
+    ENUM_SLOTS = {
+        'reason': REASON,
+    }
+
     def __init__(self, subtask_id=None, reason=None, **kwargs):
         """
         Message informs that the node is waiting for results
         """
         self.reason = reason
         self.subtask_id = subtask_id
-        super(MessageCannotComputeTask, self).__init__(**kwargs)
+        super().__init__(**kwargs)
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
 
 
 class MessageSubtaskPayment(Message):
@@ -1131,7 +1191,6 @@ CONCENT_MSG_BASE = 4000
 
 
 class MessageServiceRefused(Message):
-    # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE
 
     @enum.unique
@@ -1141,9 +1200,14 @@ class MessageServiceRefused(Message):
         TOO_SMALL_PROVIDER_DEPOSIT = 'TOO_SMALL_PROVIDER_DEPOSIT'
         SYSTEM_OVERLOADED = 'SYSTEM_OVERLOADED'
 
+    ENUM_SLOTS = {
+        'reason': Reason,
+    }
+
     __slots__ = [
         'subtask_id',
-        'reason'
+        'reason',
+        'task_to_compute',
     ] + Message.__slots__
 
     def __init__(self,
@@ -1154,35 +1218,46 @@ class MessageServiceRefused(Message):
         self.reason = reason
         super().__init__(**kwargs)
 
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
+
 
 class MessageForceReportComputedTask(Message):
-    # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 1
 
     __slots__ = [
         'subtask_id',
+        'task_to_compute',
     ] + Message.__slots__
 
     def __init__(self, subtask_id=None, **kwargs):
         self.subtask_id = subtask_id
         super().__init__(**kwargs)
 
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
+
 
 class MessageAckReportComputedTask(Message):
-    # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 2
 
     __slots__ = [
         'subtask_id',
+        'task_to_compute',
     ] + Message.__slots__
 
     def __init__(self, subtask_id=None, **kwargs):
         self.subtask_id = subtask_id
         super().__init__(**kwargs)
 
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
+
 
 class MessageRejectReportComputedTask(Message):
-    # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 3
 
     @enum.unique
@@ -1206,9 +1281,14 @@ class MessageRejectReportComputedTask(Message):
         GOT_MESSAGE_CANNOT_COMPUTE_TASK = 'GOT_MESSAGE_CANNOT_COMPUTE_TASK'
         GOT_MESSAGE_TASK_FAILURE = 'GOT_MESSAGE_TASK_FAILURE'
 
+    ENUM_SLOTS = {
+        'reason': Reason,
+    }
+
     __slots__ = [
         'subtask_id',
         'reason',
+        'task_to_compute',
     ] + Message.__slots__
 
     def __init__(
@@ -1220,18 +1300,26 @@ class MessageRejectReportComputedTask(Message):
         self.reason = reason
         super().__init__(**kwargs)
 
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
+
 
 class MessageVerdictReportComputedTask(Message):
-    # TODO: update this once #5 is complete
     TYPE = CONCENT_MSG_BASE + 4
 
     __slots__ = [
         'subtask_id',
+        'task_to_compute',
     ] + Message.__slots__
 
     def __init__(self, subtask_id=None, **kwargs):
         self.subtask_id = subtask_id
         super().__init__(**kwargs)
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
 
 
 def init_messages():
