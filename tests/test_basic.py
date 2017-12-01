@@ -153,6 +153,7 @@ class NestedMessageTestCase(unittest.TestCase):
                 continue
             msg = class_()
             msg.task_to_compute = message.TaskToCompute(sig=TEST_SIG)
+            msg.task_to_compute.compute_task_def = message.ComputeTaskDef()
             s = msg.serialize()
             msg2 = message.Message.deserialize(s, decrypt_func=None)
             self.assertEqual(msg2.task_to_compute.sig, TEST_SIG)

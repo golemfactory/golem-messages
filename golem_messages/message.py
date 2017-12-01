@@ -295,7 +295,7 @@ class Message():
         for key in self.__slots__:
             if not self.valid_slot(key):
                 continue
-            value = getattr(self, key)
+            value = getattr(self, key, None)
             value = self.serialize_slot(key, value)
             processed_slots.append([key, value])
         return processed_slots
