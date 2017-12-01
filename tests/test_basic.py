@@ -170,3 +170,14 @@ class NestedMessageTestCase(unittest.TestCase):
             s = msg.serialize()
             msg2 = message.Message.deserialize(s, decrypt_func=None)
             self.assertIs(msg2, None)
+
+
+class ComputeTaskDefTestCase(unittest.TestCase):
+    def test_type(self):
+        ctd = message.ComputeTaskDef()
+        ctd['src_code'] = "custom code"
+        msg = message.TaskToCompute(compute_task_def=ctd)
+        s = msg.serialize()
+        msg2 = message.Message.deserialize(s, None)
+        self.assertEqual(ctd, msg2.compute_task_def)
+        self.assertIsInstance(msg2.compute_task_def, message.ComputeTaskDef)

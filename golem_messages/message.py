@@ -707,6 +707,12 @@ class TaskToCompute(Message):
         self.compute_task_def = compute_task_def
         super().__init__(**kwargs)
 
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        if key == 'compute_task_def':
+            value = ComputeTaskDef(value)
+        return value
+
 
 class CannotAssignTask(Message):
     TYPE = TASK_MSG_BASE + 3
