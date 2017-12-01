@@ -175,11 +175,7 @@ class NestedMessageTestCase(unittest.TestCase):
 class ComputeTaskDefTestCase(unittest.TestCase):
     def test_type(self):
         ctd = message.ComputeTaskDef()
-        ctd['src_code'] = ("Nie mamy w Polsce monarchy,"
-                           "Same w niej golce lub parchy:"
-                           "Michalik został nam jeden,"
-                           "By sztuki stworzyć w niej Eden."
-                           )
+        ctd['src_code'] = "custom code"
         msg = message.TaskToCompute(compute_task_def=ctd)
         s = msg.serialize()
         msg2 = message.Message.deserialize(s, None)
