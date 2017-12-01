@@ -153,6 +153,7 @@ class NestedMessageTestCase(unittest.TestCase):
                 continue
             msg = class_()
             msg.task_to_compute = message.MessageTaskToCompute(sig=TEST_SIG)
+            msg.task_to_compute.compute_task_def = message.ComputeTaskDef()
             s = msg.serialize()
             msg2 = message.Message.deserialize(s, decrypt_func=None)
             self.assertEqual(msg2.task_to_compute.sig, TEST_SIG)
@@ -169,3 +170,18 @@ class NestedMessageTestCase(unittest.TestCase):
             s = msg.serialize()
             msg2 = message.Message.deserialize(s, decrypt_func=None)
             self.assertIs(msg2, None)
+
+
+class ComputeTaskDefTestCase(unittest.TestCase):
+    def test_type(self):
+        ctd = message.ComputeTaskDef()
+        ctd['src_code'] = ("Nie mamy w Polsce monarchy,"
+                           "Same w niej golce lub parchy:"
+                           "Michalik został nam jeden,"
+                           "By sztuki stworzyć w niej Eden."
+                           )
+        msg = message.MessageTaskToCompute(compute_task_def=ctd)
+        s = msg.serialize()
+        msg2 = message.Message.deserialize(s, None)
+        self.assertEqual(ctd, msg2.compute_task_def)
+        self.assertIsInstance(msg2.compute_task_def, message.ComputeTaskDef)
