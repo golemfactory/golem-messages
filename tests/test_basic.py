@@ -113,6 +113,59 @@ class TimestampTestCase(unittest.TestCase):
         payload = golem_messages.dump(msg, self.ecc.raw_privkey,
                                       self.ecc.raw_pubkey)
         self.assertEqual(vft_mock.call_count, 0)
-        msg2 = golem_messages.load(payload, self.ecc.raw_privkey,
-                                   self.ecc.raw_pubkey)
+        golem_messages.load(payload, self.ecc.raw_privkey, self.ecc.raw_pubkey)
         self.assertEqual(vft_mock.call_count, 1)
+
+
+class SlotSerializationTestCase(unittest.TestCase):
+    def test_enum_slots(self):
+        msg = message.MessageDisconnect(
+            reason=message.MessageDisconnect.REASON.DuplicatePeers
+        )
+        s = msg.serialize()
+        msg2 = message.Message.deserialize(s, decrypt_func=None)
+        self.assertIs(msg2.reason,
+                      message.MessageDisconnect.REASON.DuplicatePeers)
+
+    def test_enum_slot_by_value(self):
+        msg = message.MessageDisconnect(
+            reason='duplicate_peers'
+        )
+        s = msg.serialize()
+        msg2 = message.Message.deserialize(s, decrypt_func=None)
+        self.assertIs(msg2.reason,
+                      message.MessageDisconnect.REASON.DuplicatePeers)
+
+    def test_enum_slot_invalid_value(self):
+        msg = message.MessageDisconnect(
+            reason='Every man is the builder of a temple called his body. —HDT'
+        )
+        s = msg.serialize()
+        msg2 = message.Message.deserialize(s, decrypt_func=None)
+        self.assertIs(msg2, None)
+
+
+class NestedMessageTestCase(unittest.TestCase):
+    def test_valid_task_to_compute(self):
+        TEST_SIG = b'jak przystalo na bistro czesto sie zmienia i jest wypisywane na tablicy w lokalu'[:message.Message.SIG_LEN]  # noqa
+        for class_ in message.registered_message_types.values():
+            if 'task_to_compute' not in class_.__slots__:
+                continue
+            msg = class_()
+            msg.task_to_compute = message.MessageTaskToCompute(sig=TEST_SIG)
+            s = msg.serialize()
+            msg2 = message.Message.deserialize(s, decrypt_func=None)
+            self.assertEqual(msg2.task_to_compute.sig, TEST_SIG)
+
+    def test_invalid_task_to_compute(self):
+        for class_ in message.registered_message_types.values():
+            if 'task_to_compute' not in class_.__slots__:
+                continue
+            msg = class_()
+            msg.task_to_compute = (
+                "There’s so much to learn when you’re slinging"
+                "paint and pencil"
+            )
+            s = msg.serialize()
+            msg2 = message.Message.deserialize(s, decrypt_func=None)
+            self.assertIs(msg2, None)
