@@ -20,7 +20,7 @@ class BasicTestCase(unittest.TestCase):
         self.ecc2 = golem_messages.ECCx(None)
 
     def test_total_basic(self):
-        msg = message.MessagePing()
+        msg = message.Ping()
         payload = golem_messages.dump(msg, self.ecc.raw_privkey,
                                       self.ecc.raw_pubkey)
         msg2 = golem_messages.load(payload, self.ecc.raw_privkey,
@@ -40,7 +40,7 @@ class BasicTestCase(unittest.TestCase):
             b'\xd8\x1c\x80'
         deserialized = message.Message.deserialize(serialized_ping, None)
         assert deserialized is not None
-        assert deserialized.TYPE == message.MessagePing.TYPE
+        assert deserialized.TYPE == message.Ping.TYPE
 
 
 testnow = datetime.datetime.utcnow().replace(microsecond=0)
@@ -109,7 +109,7 @@ class TimestampTestCase(unittest.TestCase):
 
     @mock.patch('golem_messages.message.verify_time')
     def test_deserialization_with_time_verification(self, vft_mock):
-        msg = message.MessagePing()
+        msg = message.Ping()
         payload = golem_messages.dump(msg, self.ecc.raw_privkey,
                                       self.ecc.raw_pubkey)
         self.assertEqual(vft_mock.call_count, 0)
@@ -119,25 +119,25 @@ class TimestampTestCase(unittest.TestCase):
 
 class SlotSerializationTestCase(unittest.TestCase):
     def test_enum_slots(self):
-        msg = message.MessageDisconnect(
-            reason=message.MessageDisconnect.REASON.DuplicatePeers
+        msg = message.Disconnect(
+            reason=message.Disconnect.REASON.DuplicatePeers
         )
         s = msg.serialize()
         msg2 = message.Message.deserialize(s, decrypt_func=None)
         self.assertIs(msg2.reason,
-                      message.MessageDisconnect.REASON.DuplicatePeers)
+                      message.Disconnect.REASON.DuplicatePeers)
 
     def test_enum_slot_by_value(self):
-        msg = message.MessageDisconnect(
+        msg = message.Disconnect(
             reason='duplicate_peers'
         )
         s = msg.serialize()
         msg2 = message.Message.deserialize(s, decrypt_func=None)
         self.assertIs(msg2.reason,
-                      message.MessageDisconnect.REASON.DuplicatePeers)
+                      message.Disconnect.REASON.DuplicatePeers)
 
     def test_enum_slot_invalid_value(self):
-        msg = message.MessageDisconnect(
+        msg = message.Disconnect(
             reason='Every man is the builder of a temple called his body. —HDT'
         )
         s = msg.serialize()
@@ -152,7 +152,7 @@ class NestedMessageTestCase(unittest.TestCase):
             if 'task_to_compute' not in class_.__slots__:
                 continue
             msg = class_()
-            msg.task_to_compute = message.MessageTaskToCompute(sig=TEST_SIG)
+            msg.task_to_compute = message.TaskToCompute(sig=TEST_SIG)
             msg.task_to_compute.compute_task_def = message.ComputeTaskDef()
             s = msg.serialize()
             msg2 = message.Message.deserialize(s, decrypt_func=None)
@@ -180,7 +180,7 @@ class ComputeTaskDefTestCase(unittest.TestCase):
                            "Michalik został nam jeden,"
                            "By sztuki stworzyć w niej Eden."
                            )
-        msg = message.MessageTaskToCompute(compute_task_def=ctd)
+        msg = message.TaskToCompute(compute_task_def=ctd)
         s = msg.serialize()
         msg2 = message.Message.deserialize(s, None)
         self.assertEqual(ctd, msg2.compute_task_def)
