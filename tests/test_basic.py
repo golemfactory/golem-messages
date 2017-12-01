@@ -119,25 +119,25 @@ class TimestampTestCase(unittest.TestCase):
 
 class SlotSerializationTestCase(unittest.TestCase):
     def test_enum_slots(self):
-        msg = message.MessageDisconnect(
-            reason=message.MessageDisconnect.REASON.DuplicatePeers
+        msg = message.Disconnect(
+            reason=message.Disconnect.REASON.DuplicatePeers
         )
         s = msg.serialize()
         msg2 = message.Message.deserialize(s, decrypt_func=None)
         self.assertIs(msg2.reason,
-                      message.MessageDisconnect.REASON.DuplicatePeers)
+                      message.Disconnect.REASON.DuplicatePeers)
 
     def test_enum_slot_by_value(self):
-        msg = message.MessageDisconnect(
+        msg = message.Disconnect(
             reason='duplicate_peers'
         )
         s = msg.serialize()
         msg2 = message.Message.deserialize(s, decrypt_func=None)
         self.assertIs(msg2.reason,
-                      message.MessageDisconnect.REASON.DuplicatePeers)
+                      message.Disconnect.REASON.DuplicatePeers)
 
     def test_enum_slot_invalid_value(self):
-        msg = message.MessageDisconnect(
+        msg = message.Disconnect(
             reason='Every man is the builder of a temple called his body. —HDT'
         )
         s = msg.serialize()
@@ -152,7 +152,7 @@ class NestedMessageTestCase(unittest.TestCase):
             if 'task_to_compute' not in class_.__slots__:
                 continue
             msg = class_()
-            msg.task_to_compute = message.MessageTaskToCompute(sig=TEST_SIG)
+            msg.task_to_compute = message.TaskToCompute(sig=TEST_SIG)
             s = msg.serialize()
             msg2 = message.Message.deserialize(s, decrypt_func=None)
             self.assertEqual(msg2.task_to_compute.sig, TEST_SIG)
