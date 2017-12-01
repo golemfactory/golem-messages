@@ -402,6 +402,7 @@ class Disconnect(Message):
         NoMoreMessages = 'no_more_messages'
         WrongEncryption = 'wrong_encryption'
         ResourceHandshakeFailure = 'resource_handshake'
+        KeyNotDifficult = 'key_not_difficult'
 
     ENUM_SLOTS = {
         'reason': REASON,
