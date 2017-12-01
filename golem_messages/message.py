@@ -61,15 +61,25 @@ def _fake_sign(s):
     return b'\0' * Message.SIG_LEN
 
 
+def verify_slot_type(value, class_):
+    if not isinstance(value, (class_, type(None))):
+        raise TypeError(
+            "Invalid nested message type {} should be {}".format(
+                type(value),
+                class_
+            )
+        )
+
+
 def deserialize_task_to_compute(key, value):
     if key == 'task_to_compute':
-        if not isinstance(value, (TaskToCompute, type(None))):
-            raise TypeError(
-                "Invalid nested message type {} should be {}".format(
-                    type(value),
-                    TaskToCompute
-                )
-            )
+        verify_slot_type(value, TaskToCompute)
+    return value
+
+
+def deserialize_task_failure(key, value):
+    if key == 'task_failure':
+        verify_slot_type(value, TaskFailure)
     return value
 
 
@@ -289,7 +299,7 @@ class Message():
         for key in self.__slots__:
             if not self.valid_slot(key):
                 continue
-            value = getattr(self, key)
+            value = getattr(self, key, None)
             value = self.serialize_slot(key, value)
             processed_slots.append([key, value])
         return processed_slots
@@ -1300,6 +1310,7 @@ class RejectReportComputedTask(Message):
         'subtask_id',
         'reason',
         'task_to_compute',
+        'task_failure',
     ] + Message.__slots__
 
     def __init__(
@@ -1313,7 +1324,9 @@ class RejectReportComputedTask(Message):
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
-        return deserialize_task_to_compute(key, value)
+        value = deserialize_task_to_compute(key, value)
+        value = deserialize_task_failure(key, value)
+        return value
 
 
 class VerdictReportComputedTask(Message):
