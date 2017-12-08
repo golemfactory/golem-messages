@@ -8,7 +8,7 @@ import unittest
 
 setup(
     name='Golem Messages',
-    version='1.2.0',
+    version='1.2.1',
     url='https://github.com/golemfactory/golem-messages',
     packages=['golem_messages'],
     install_requires=[
