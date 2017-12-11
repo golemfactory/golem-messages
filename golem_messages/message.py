@@ -1255,13 +1255,9 @@ class ForceReportComputedTask(Message):
     TYPE = CONCENT_MSG_BASE + 1
 
     __slots__ = [
-        'subtask_id',
         'task_to_compute',
+        'result_hash',
     ] + Message.__slots__
-
-    def __init__(self, subtask_id=None, **kwargs):
-        self.subtask_id = subtask_id
-        super().__init__(**kwargs)
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
