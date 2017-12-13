@@ -10,10 +10,10 @@ def dump(msg, privkey, pubkey):
     return msg.serialize(sign_func=sign, encrypt_func=encrypt)
 
 
-def load(data, privkey, pubkey):
+def load(data, privkey, pubkey, check_time=True):
     def decrypt(payload):
         ecc = cryptography.ECCx(privkey)
         return ecc.decrypt(payload)
-    msg = message.Message.deserialize(data, decrypt)
+    msg = message.Message.deserialize(data, decrypt, check_time)
     cryptography.ecdsa_verify(pubkey, msg.sig, msg.get_short_hash())
     return msg
