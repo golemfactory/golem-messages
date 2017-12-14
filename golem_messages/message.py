@@ -1,5 +1,6 @@
 import datetime
 import enum
+import functools
 import hashlib
 import logging
 import struct
@@ -69,24 +70,6 @@ def verify_slot_type(value, class_):
                 class_
             )
         )
-
-
-def deserialize_task_to_compute(key, value):
-    if key == 'task_to_compute':
-        verify_slot_type(value, TaskToCompute)
-    return value
-
-
-def deserialize_task_failure(key, value):
-    if key == 'task_failure':
-        verify_slot_type(value, TaskFailure)
-    return value
-
-
-def deserialize_cannot_compute_task(key, value):
-    if key == 'cannot_compute_task':
-        verify_slot_type(value, CannotComputeTask)
-    return value
 
 
 # Message types that are allowed to be sent in the network
@@ -1338,17 +1321,46 @@ class VerdictReportComputedTask(Message):
     TYPE = CONCENT_MSG_BASE + 4
 
     __slots__ = [
-        'subtask_id',
-        'task_to_compute',
+        'force_report_computed_task',
+        'ack_report_computed_task',
     ] + Message.__slots__
-
-    def __init__(self, subtask_id=None, **kwargs):
-        self.subtask_id = subtask_id
-        super().__init__(**kwargs)
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
+        value = deserialize_force_report_computed_task(key, value)
+        value = deserialize_ack_report_computed_task(key, value)
         return deserialize_task_to_compute(key, value)
+
+
+def deserialize_verify(key, value, verify_key, verify_class):
+    if key == verify_key:
+        verify_slot_type(value, verify_class)
+    return value
+
+
+deserialize_task_to_compute = functools.partial(
+    deserialize_verify,
+    verify_key='task_to_compute',
+    verify_class=TaskToCompute,
+)
+
+deserialize_task_failure = functools.partial(
+    deserialize_verify,
+    verify_key='task_failure',
+    verify_class=TaskFailure,
+)
+
+deserialize_cannot_compute_task = functools.partial(
+    deserialize_verify,
+    verify_key='cannot_compute_task',
+    verify_class=CannotComputeTask,
+)
+
+deserialize_force_report_computed_task = functools.partial(
+    deserialize_verify,
+    verify_key='force_report_computed_task',
+    verify_class=ForceReportComputedTask,
+)
 
 
 def init_messages():
