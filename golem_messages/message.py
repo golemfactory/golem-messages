@@ -1178,14 +1178,17 @@ class ResourceHandshakeStart(Message):
     TYPE = RESOURCE_MSG_BASE + 8
 
     __slots__ = [
-        'resource'
+        'resource',
+        'options'
     ] + Message.__slots__
 
     def __init__(self,
                  resource: Optional[str]=None,
+                 options=None,
                  **kwargs):
 
         self.resource = resource
+        self.options = options
         super().__init__(**kwargs)
 
 
