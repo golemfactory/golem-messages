@@ -1329,7 +1329,7 @@ class VerdictReportComputedTask(Message):
         value = super().deserialize_slot(key, value)
         value = deserialize_force_report_computed_task(key, value)
         value = deserialize_ack_report_computed_task(key, value)
-        return deserialize_task_to_compute(key, value)
+        return value
 
 
 def deserialize_verify(key, value, verify_key, verify_class):
@@ -1360,6 +1360,12 @@ deserialize_force_report_computed_task = functools.partial(
     deserialize_verify,
     verify_key='force_report_computed_task',
     verify_class=ForceReportComputedTask,
+)
+
+deserialize_ack_report_computed_task = functools.partial(
+    deserialize_verify,
+    verify_key='ack_report_computed_task',
+    verify_class=AckReportComputedTask,
 )
 
 
