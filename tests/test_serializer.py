@@ -34,6 +34,8 @@ class MessageTestCase(unittest.TestCase, EqualityMixIn):
         self.equal_after_processing(d)
 
     def test_message_sig(self):
+        """Signed message inside a signed message"""
+
         concent_keys = cryptography.ECCx(None)
         provider_keys = cryptography.ECCx(None)
         requestor_keys = cryptography.ECCx(None)
