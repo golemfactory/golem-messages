@@ -96,7 +96,7 @@ registered_message_types = {}
 class Message():
     """ Communication message that is sent in all networks """
 
-    __slots__ = ['timestamp', 'encrypted', 'sig', '_payload', '_raw']
+    __slots__ = ['timestamp', 'encrypted', 'sig', '_raw']
 
     TS_SCALE = 10 ** 6
     HDR_LEN = 11
@@ -125,7 +125,6 @@ class Message():
         self.sig = sig
 
         # Encoded data
-        self._payload = payload  # child's payload only (may be encrypted)
         self._raw = raw  # whole message
 
     def __eq__(self, obj):
@@ -140,13 +139,23 @@ class Message():
         """Returns a raw copy of the message"""
         return self._raw[:]
 
-    def get_short_hash(self):
+    def get_short_hash(self, payload=None):
         """Return short message representation for signature
         :return bytes: sha1(TYPE, timestamp, encrypted, payload)
         """
+        if payload is None:
+            payload = serializer.dumps(self.slots())
         sha = hashlib.sha1()
-        sha.update(self.serialize_header())
-        sha.update(self._payload or b'')
+
+        # We can't use self.serialize_header() because it includes
+        # self.encrypted. And nested messages are decrypted, but they
+        # still need to have a valid signature.
+        # SEE: test_serializer.MessageTestCase.test_message_sig()
+        hash_header = serializer.dumps(
+            [self.TYPE, int(self.timestamp * self.TS_SCALE), ]
+        )
+        sha.update(hash_header)
+        sha.update(payload or b'')
         return sha.digest()
 
     def serialize(self, sign_func=None, encrypt_func=None):
@@ -160,20 +169,18 @@ class Message():
             self.encrypted = self.ENCRYPT and encrypt_func
             payload = serializer.dumps(self.slots())
 
-            if self.encrypted:
-                self._payload = encrypt_func(payload)
-            else:
-                self._payload = payload
-
             # When nesting one message inside another it's important
             # not to overwrite original signature.
             if self.sig is None:
-                self.sig = sign_func(self.get_short_hash())
+                self.sig = sign_func(self.get_short_hash(payload))
+
+            if self.encrypted:
+                payload = encrypt_func(payload)
 
             return (
                 self.serialize_header() +
                 self.sig +
-                self._payload
+                payload
             )
 
         except Exception as exc:

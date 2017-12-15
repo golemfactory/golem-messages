@@ -56,6 +56,9 @@ class MessageTestCase(unittest.TestCase, EqualityMixIn):
             requestor_keys.raw_pubkey,
         )
 
+        first_sig = task_to_compute.sig
+        first_hash = task_to_compute.get_short_hash()
+
         # Task TaskToCompute is verified correctly
         cryptography.ecdsa_verify(
             requestor_keys.raw_pubkey,
@@ -77,6 +80,12 @@ class MessageTestCase(unittest.TestCase, EqualityMixIn):
             concent_keys.raw_privkey,
             provider_keys.raw_pubkey,
         )
+
+        second_sig = force_report.task_to_compute.sig
+        second_hash = force_report.task_to_compute.get_short_hash()
+
+        self.assertEqual(first_sig, second_sig)
+        self.assertEqual(first_hash, second_hash)
 
         # Now, attached TaskToCompute should still be verified using
         # original key
