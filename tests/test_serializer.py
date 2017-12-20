@@ -90,7 +90,8 @@ class MessageTestCase(unittest.TestCase, EqualityMixIn):
         self.assertEqual(first_hash, second_hash)
 
         # Now, attached TaskToCompute should still be verified using
-        # original key
+        # original key. ecdsa_verify will raise InvalidSignature on
+        # failure.
         cryptography.ecdsa_verify(
             requestor_keys.raw_pubkey,
             force_report.task_to_compute.sig,
