@@ -107,12 +107,11 @@ class Message():
     ENUM_SLOTS = {}
 
     def __init__(self, timestamp=None, encrypted=False, sig=None,
-                 payload=None, raw=None, slots=None):
+                 raw=None, slots=None):
 
         """Create a new message
         :param timestamp: message timestamp
         :param encrypted: whether message was encrypted
-        :param payload: payload bytes
         :param sig: signed message hash
         :param raw: original message bytes
         """
@@ -222,7 +221,7 @@ class Message():
         return struct.unpack('!HQ?', data)
 
     @classmethod
-    def deserialize(cls, msg, decrypt_func, check_time=True):
+    def deserialize(cls, msg, decrypt_func, check_time=True, verify_func=None):
         """
         Deserialize single message
         :param str msg: serialized message
@@ -271,13 +270,14 @@ class Message():
                 timestamp=msg_ts,
                 encrypted=msg_enc,
                 sig=sig,
-                payload=payload,
                 raw=msg,
                 slots=slots
             )
         except Exception as exc:
             logger.info("Message error: invalid data: %r", exc)
             return
+        if verify_func is not None:
+            verify_func(instance.get_short_hash(data), sig)
         return instance
 
     def __repr__(self):
