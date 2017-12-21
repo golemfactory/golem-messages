@@ -996,6 +996,32 @@ class VerdictReportComputedTask(Message):
         return value
 
 
+class FileTransferToken(Message):
+    TYPE = CONCENT_MSG_BASE + 5
+
+    __slots__ = [
+        'token_expiration_deadline',
+        'storage_cluster_address',
+        'authorized_client_public_key',
+        'operation',
+        'files',
+    ] + Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        if key == 'files':
+            value = [FileTransferToken.FileInfo(f) for f in value]
+        return value
+
+    class FileInfo(datastructures.FrozenDict):
+        """Represents SUBTASK metadata."""
+        ITEMS = {
+            'path': '',
+            'checksum': '',
+            'size': 0,
+        }
+
+
 def deserialize_verify(key, value, verify_key, verify_class):
     if key == verify_key:
         verify_slot_type(value, verify_class)
@@ -1102,6 +1128,7 @@ def init_messages():
             AckReportComputedTask,
             RejectReportComputedTask,
             VerdictReportComputedTask,
+            FileTransferToken,
             ):
         if message_class.TYPE in registered_message_types:
             raise RuntimeError(
