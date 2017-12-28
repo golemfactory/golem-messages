@@ -7,3 +7,5 @@ __pycache__
 build/
 dist/
 sdist/
+
+golem_messages/RELEASE-VERSION
