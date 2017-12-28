@@ -58,6 +58,37 @@ class BasicTestCase(unittest.TestCase):
         # One call for hash_header
         dumps_mock.assert_called_once_with(mock.ANY)
 
+    def test_deserialize_verify(self):
+        """Basic verificating deserializer"""
+        ping = message.Ping()
+        result = message.deserialize_verify(
+            key='ping',
+            verify_key='ping',
+            value=ping,
+            verify_class=message.Ping,
+        )
+        self.assertEqual(result, ping)
+
+    def test_deserialize_verify_different_key(self):
+        task_to_compute = message.TaskToCompute()
+        result = message.deserialize_verify(
+            key='abracadabra',
+            verify_key='ping',
+            value=task_to_compute,
+            verify_class=message.Ping,
+        )
+        self.assertEqual(result, task_to_compute)
+
+    def test_deserialize_verify_fail(self):
+        task_to_compute = message.TaskToCompute()
+        with self.assertRaises(TypeError):
+            result = message.deserialize_verify(
+                key='ping',
+                verify_key='ping',
+                value=task_to_compute,
+                verify_class=message.Ping,
+            )
+
 
 testnow = datetime.datetime.utcnow().replace(microsecond=0)
 
