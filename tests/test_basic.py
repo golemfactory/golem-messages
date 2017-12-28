@@ -4,6 +4,7 @@ from freezegun import freeze_time
 import golem_messages
 from golem_messages import exceptions
 from golem_messages import message
+from golem_messages import serializer
 import unittest
 import unittest.mock as mock
 
@@ -41,6 +42,21 @@ class BasicTestCase(unittest.TestCase):
         deserialized = message.Message.deserialize(serialized_ping, None)
         assert deserialized is not None
         assert deserialized.TYPE == message.Ping.TYPE
+
+    @mock.patch('golem_messages.serializer.dumps', wraps=serializer.dumps)
+    def test_slots_reselialization_optimization(self, dumps_mock):
+        """Don't reserialize message slots immediately after deserialization"""
+        msg = message.Ping()
+        payload = golem_messages.dump(msg, self.ecc.raw_privkey,
+                                      self.ecc.raw_pubkey)
+        # One call for slots and second for hash_header
+        self.assertEqual(dumps_mock.call_count, 2)
+
+        dumps_mock.reset_mock()
+        msg2 = golem_messages.load(payload, self.ecc.raw_privkey,
+                                   self.ecc.raw_pubkey)
+        # One call for hash_header
+        dumps_mock.assert_called_once_with(mock.ANY)
 
     def test_deserialize_verify(self):
         """Basic verificating deserializer"""
