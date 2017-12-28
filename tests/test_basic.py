@@ -45,7 +45,7 @@ class BasicTestCase(unittest.TestCase):
 
     @mock.patch('golem_messages.serializer.dumps', wraps=serializer.dumps)
     def test_slots_reselialization_optimization(self, dumps_mock):
-        """Don't reserialize message slots immidiately after deserialization"""
+        """Don't reserialize message slots immediately after deserialization"""
         msg = message.Ping()
         payload = golem_messages.dump(msg, self.ecc.raw_privkey,
                                       self.ecc.raw_pubkey)
