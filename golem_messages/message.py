@@ -7,6 +7,8 @@ import struct
 import time
 from typing import Optional
 
+import golem_messages
+
 from . import datastructures
 from . import exceptions
 from . import serializer
@@ -265,7 +267,11 @@ class Message():
             logger.info("Message error: invalid data: %r", exc)
             return
         if verify_func is not None:
-            verify_func(instance.get_short_hash(data), sig)
+            try:
+                verify_func(instance.get_short_hash(data), sig)
+            except Exception:
+                logger.debug('Failed to verify signature: %r', instance)
+                raise
         return instance
 
     def __repr__(self):
@@ -321,6 +327,7 @@ class Hello(Message):
     __slots__ = [
         'rand_val',
         'proto_id',
+        'golem_messages_version',
         'node_name',
         'node_info',
         'port',
@@ -331,6 +338,10 @@ class Hello(Message):
         'difficulty',
         'metadata',
     ] + Message.__slots__
+
+    def __init__(self, **kwargs):
+        self.golem_messages_version = golem_messages.__version__
+        super().__init__(**kwargs)
 
 
 class RandVal(Message):
