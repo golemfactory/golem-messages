@@ -877,17 +877,15 @@ class SubtaskResultAccepted(Message):
 
     __slots__ = [
         'subtask_id',
-        'reward'
+        'payment_ts'
     ] + Message.__slots__
 
-    def __init__(self, subtask_id=0, reward=0, **kwargs):
+    def __init__(self, subtask_id: str="", payment_ts: int=0, **kwargs):
         """
         Create message with information that subtask result was accepted
-        :param str subtask_id: accepted subtask id
-        :param float reward: payment for computations
         """
         self.subtask_id = subtask_id
-        self.reward = reward
+        self.payment_ts = payment_ts
         super().__init__(**kwargs)
 
 

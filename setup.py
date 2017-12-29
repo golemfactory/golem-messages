@@ -3,7 +3,13 @@
 import pathlib
 
 from setuptools import setup
-from version import get_version
+try:
+    from version import get_version
+except ImportError:
+    def get_version(cwd, **kwargs):
+        p = pathlib.Path(cwd) / 'RELEASE-VERSION'
+        with p.open('r') as f:
+            return f.read()
 
 version_cwd = str(pathlib.Path(__file__).parent / 'golem_messages')
 
@@ -11,9 +17,11 @@ version_cwd = str(pathlib.Path(__file__).parent / 'golem_messages')
 
 
 setup(
-    name='Golem Messages',
+    name='Golem-Messages',
     version=get_version(prefix='v', cwd=version_cwd),
     url='https://github.com/golemfactory/golem-messages',
+    maintainer='The Golem team',
+    maintainer_email='tech@golem.network',
     packages=['golem_messages'],
     package_data={
         'golem_messages': [
