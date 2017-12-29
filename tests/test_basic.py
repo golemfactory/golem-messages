@@ -89,6 +89,11 @@ class BasicTestCase(unittest.TestCase):
                 verify_class=message.Ping,
             )
 
+    @mock.patch('golem_messages.__version__')
+    def test_hello_version(self, v_mock):
+        msg = message.Hello()
+        self.assertEqual(msg.golem_messages_version, v_mock)
+
 
 testnow = datetime.datetime.utcnow().replace(microsecond=0)
 
