@@ -262,7 +262,11 @@ class Message():
             logger.info("Message error: invalid data: %r", exc)
             return
         if verify_func is not None:
-            verify_func(instance.get_short_hash(data), sig)
+            try:
+                verify_func(instance.get_short_hash(data), sig)
+            except Exception:
+                logger.debug('Failed to verify signature: %r', instance)
+                raise
         return instance
 
     def __repr__(self):
