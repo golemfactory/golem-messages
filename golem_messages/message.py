@@ -7,6 +7,8 @@ import struct
 import time
 from typing import Optional
 
+import golem_messages
+
 from . import datastructures
 from . import exceptions
 from . import serializer
@@ -316,6 +318,7 @@ class Hello(Message):
     __slots__ = [
         'rand_val',
         'proto_id',
+        'golem_messages_version',
         'node_name',
         'node_info',
         'port',
@@ -368,6 +371,7 @@ class Hello(Message):
         self.challenge = challenge
         self.difficulty = difficulty
         self.metadata = metadata
+        self.golem_messages_version = golem_messages.__version__
         super().__init__(**kwargs)
 
 
