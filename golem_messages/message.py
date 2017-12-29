@@ -90,7 +90,7 @@ class Message():
     ENUM_SLOTS = {}
 
     def __init__(self, timestamp=None, encrypted=False, sig=None,
-                 raw=None, slots=None):
+                 raw=None, slots=None, **kwargs):
 
         """Create a new message
         :param timestamp: message timestamp
@@ -98,6 +98,11 @@ class Message():
         :param sig: signed message hash
         :param raw: original message bytes
         """
+
+        # Set attributes
+        for key in kwargs:
+            setattr(self, key, kwargs[key])
+
         # Child message slots
         self.load_slots(slots)
 
@@ -327,62 +332,13 @@ class Hello(Message):
         'metadata',
     ] + Message.__slots__
 
-    def __init__(
-            self,
-            port=0,
-            node_name=None,
-            client_key_id=None,
-            node_info=None,
-            rand_val=0,
-            metadata=None,
-            solve_challenge=False,
-            challenge=None,
-            difficulty=0,
-            proto_id=0,
-            client_ver=0,
-            **kwargs):
-        """
-        Create new introduction message
-        :param int port: listening port
-        :param str node_name: uid
-        :param str client_key_id: public key
-        :param NodeInfo node_info: information about node
-        :param float rand_val: random value that should be signed by other site
-        :param metadata dict_repr: metadata
-        :param boolean solve_challenge: should other client solve given
-                                        challenge
-        :param str challenge: challenge to solve
-        :param int difficulty: difficulty of a challenge
-        :param int proto_id: protocol id
-        :param str client_ver: application version
-        """
-
-        self.proto_id = proto_id
-        self.client_ver = client_ver
-        self.port = port
-        self.node_name = node_name
-        self.client_key_id = client_key_id
-        self.rand_val = rand_val
-        self.node_info = node_info
-        self.solve_challenge = solve_challenge
-        self.challenge = challenge
-        self.difficulty = difficulty
-        self.metadata = metadata
-        super().__init__(**kwargs)
-
 
 class RandVal(Message):
+    """Message with signed random value"""
+
     TYPE = 1
 
     __slots__ = ['rand_val'] + Message.__slots__
-
-    def __init__(self, rand_val=0, **kwargs):
-        """
-        Create a message with signed random value.
-        :param float rand_val: random value received from other side
-        """
-        self.rand_val = rand_val
-        super().__init__(**kwargs)
 
 
 class Disconnect(Message):
@@ -409,27 +365,11 @@ class Disconnect(Message):
         'reason': REASON,
     }
 
-    def __init__(self, reason=-1, **kwargs):
-        """
-        Create a disconnect message
-        :param int reason: disconnection reason
-        """
-        self.reason = reason
-        super().__init__(**kwargs)
-
 
 class ChallengeSolution(Message):
     TYPE = 3
 
     __slots__ = ['solution'] + Message.__slots__
-
-    def __init__(self, solution="", **kwargs):
-        """
-        Create a message with signed cryptographic challenge solution
-        :param str solution: challenge solution
-        """
-        self.solution = solution
-        super().__init__(**kwargs)
 
 
 ################
@@ -462,14 +402,6 @@ class Peers(Message):
 
     __slots__ = ['peers'] + Message.__slots__
 
-    def __init__(self, peers=None, **kwargs):
-        """
-        Create message containing information about peers
-        :param list peers: list of peers information
-        """
-        self.peers = peers or []
-        super().__init__(**kwargs)
-
 
 class GetTasks(Message):
     TYPE = P2P_MESSAGE_BASE + 5
@@ -496,14 +428,6 @@ class RemoveTask(Message):
     TYPE = P2P_MESSAGE_BASE + 7
 
     __slots__ = ['task_id'] + Message.__slots__
-
-    def __init__(self, task_id=None, **kwargs):
-        """
-        Create message with request to remove given task
-        :param str task_id: task to be removed
-        """
-        self.task_id = task_id
-        super().__init__(**kwargs)
 
 
 class GetResourcePeers(Message):
@@ -532,14 +456,6 @@ class Degree(Message):
 
     __slots__ = ['degree'] + Message.__slots__
 
-    def __init__(self, degree=None, **kwargs):
-        """
-        Create message with information about node degree
-        :param int degree: node degree in golem network
-        """
-        self.degree = degree
-        super().__init__(**kwargs)
-
 
 class Gossip(Message):
     TYPE = P2P_MESSAGE_BASE + 11
@@ -567,29 +483,11 @@ class LocRank(Message):
 
     __slots__ = ['node_id', 'loc_rank'] + Message.__slots__
 
-    def __init__(self, node_id='', loc_rank='', **kwargs):
-        """
-        Create message with local opinion about given node
-        :param uuid node_id: message contain opinion about node with this id
-        :param LocalRank loc_rank: opinion about node
-        """
-        self.node_id = node_id
-        self.loc_rank = loc_rank
-        super().__init__(**kwargs)
-
 
 class FindNode(Message):
     TYPE = P2P_MESSAGE_BASE + 14
 
     __slots__ = ['node_key_id'] + Message.__slots__
-
-    def __init__(self, node_key_id='', **kwargs):
-        """
-        Create find node message
-        :param str node_key_id: key of a node to be find
-        """
-        self.node_key_id = node_key_id
-        super().__init__(**kwargs)
 
 
 class WantToStartTaskSession(Message):
@@ -601,23 +499,6 @@ class WantToStartTaskSession(Message):
         'super_node_info'
     ] + Message.__slots__
 
-    def __init__(
-            self,
-            node_info=None,
-            conn_id=None,
-            super_node_info=None,
-            **kwargs):
-        """
-        Create request for starting task session with given node
-        :param Node node_info: information about this node
-        :param uuid conn_id: connection id for reference
-        :param Node|None super_node_info: information about known supernode
-        """
-        self.node_info = node_info
-        self.conn_id = conn_id
-        self.super_node_info = super_node_info
-        super().__init__(**kwargs)
-
 
 class SetTaskSession(Message):
     TYPE = P2P_MESSAGE_BASE + 16
@@ -628,26 +509,6 @@ class SetTaskSession(Message):
         'conn_id',
         'super_node_info',
     ] + Message.__slots__
-
-    def __init__(
-            self,
-            key_id=None,
-            node_info=None,
-            conn_id=None,
-            super_node_info=None,
-            **kwargs):
-        """Create message with information that node from node_info wants
-           to start task session with key_id node
-        :param key_id: target node key
-        :param Node node_info: information about requestor
-        :param uuid conn_id: connection id for reference
-        :param Node|None super_node_info: information about known supernode
-        """
-        self.key_id = key_id
-        self.node_info = node_info
-        self.conn_id = conn_id
-        self.super_node_info = super_node_info
-        super().__init__(**kwargs)
 
 
 TASK_MSG_BASE = 2000
@@ -666,48 +527,11 @@ class WantToComputeTask(Message):
         'price'
     ] + Message.__slots__
 
-    def __init__(
-            self,
-            node_name=0,
-            task_id=0,
-            perf_index=0,
-            price=0,
-            max_resource_size=0,
-            max_memory_size=0,
-            num_cores=0,
-            **kwargs):
-        """
-        Create message with information that node wants to compute given task
-        :param str node_name: id of that node
-        :param uuid task_id: if of a task that node wants to compute
-        :param float perf_index: benchmark result for this task type
-        :param int max_resource_size: how much disk space can this node offer
-        :param int max_memory_size: how much ram can this node offer
-        :param int num_cores: how many cpu cores this node can offer
-        """
-        self.node_name = node_name
-        self.task_id = task_id
-        self.perf_index = perf_index
-        self.max_resource_size = max_resource_size
-        self.max_memory_size = max_memory_size
-        self.num_cores = num_cores
-        self.price = price
-        super().__init__(**kwargs)
-
 
 class TaskToCompute(Message):
     TYPE = TASK_MSG_BASE + 2
 
     __slots__ = ['compute_task_def'] + Message.__slots__
-
-    def __init__(self, compute_task_def=None, **kwargs):
-        """
-        Create message with information about subtask to compute
-        :param ComputeTaskDef compute_task_def: definition of a subtask that
-                                                should be computed
-        """
-        self.compute_task_def = compute_task_def
-        super().__init__(**kwargs)
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
@@ -732,16 +556,6 @@ class CannotAssignTask(Message):
         'reason': REASON,
     }
 
-    def __init__(self, task_id=0, reason="", **kwargs):
-        """
-        Create message with information that node can't get task to compute
-        :param task_id: task that cannot be assigned
-        :param str reason: reason why task cannot be assigned to asking node
-        """
-        self.task_id = task_id
-        self.reason = reason
-        super().__init__(**kwargs)
-
 
 class ReportComputedTask(Message):
     # FIXME this message should be simpler
@@ -753,6 +567,7 @@ class ReportComputedTask(Message):
 
     __slots__ = [
         'subtask_id',
+        # TODO why do we need the type here?
         'result_type',
         'computation_time',
         'node_name',
@@ -765,63 +580,16 @@ class ReportComputedTask(Message):
         'task_to_compute',
     ] + Message.__slots__
 
-    def __init__(
-            self,
-            subtask_id=0,
-            result_type=RESULT_TYPE['DATA'],
-            computation_time='',
-            node_name='',
-            address='',
-            port='',
-            key_id='',
-            node_info=None,
-            eth_account='',
-            extra_data=None,
-            **kwargs):
-        """
-        Create message with information about finished computation
-        :param str subtask_id: finished subtask id
-        :param int result_type: type of a result
-        :param float computation_time: how long does it take to  compute this
-                                       subtask
-        :param node_name: task result owner name
-        :param str address: task result owner address
-        :param int port: task result owner port
-        :param key_id: task result owner key
-        :param Node node_info: information about this node
-        :param str eth_account: ethereum address (bytes20) of task result owner
-        :param extra_data: additional information, eg. list of files
-        """
-        self.subtask_id = subtask_id
-        # TODO why do we need the type here?
-        self.result_type = result_type
-        self.extra_data = extra_data
-        self.computation_time = computation_time
-        self.node_name = node_name
-        self.address = address
-        self.port = port
-        self.key_id = key_id
-        self.eth_account = eth_account
-        self.node_info = node_info
-        super().__init__(**kwargs)
-
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
         return deserialize_task_to_compute(key, value)
 
 
 class GetTaskResult(Message):
+    """Request task result"""
     TYPE = TASK_MSG_BASE + 5
 
     __slots__ = ['subtask_id'] + Message.__slots__
-
-    def __init__(self, subtask_id="", **kwargs):
-        """
-        Create request for task result
-        :param str subtask_id: finished subtask id
-        """
-        self.subtask_id = subtask_id
-        super().__init__(**kwargs)
 
 
 class TaskResultHash(Message):
@@ -834,38 +602,15 @@ class TaskResultHash(Message):
         'options'
     ] + Message.__slots__
 
-    def __init__(
-            self,
-            subtask_id=0,
-            multihash="",
-            secret="",
-            options=None,
-            **kwargs):
-        self.subtask_id = subtask_id
-        self.multihash = multihash
-        self.secret = secret
-        self.options = options
-        super().__init__(**kwargs)
-
 
 class GetResource(Message):
+    """Request a resource for a given task"""
     TYPE = TASK_MSG_BASE + 8
 
     __slots__ = [
         'task_id',
         'resource_header'
     ] + Message.__slots__
-
-    def __init__(self, task_id="", resource_header=None, **kwargs):
-        """
-        Send request for resource to given task
-        :param uuid task_id: given task id
-        :param ResourceHeader resource_header: description of resources that
-                                               current node has
-        """
-        self.task_id = task_id
-        self.resource_header = resource_header
-        super().__init__(**kwargs)
 
 
 class SubtaskResultAccepted(Message):
@@ -876,65 +621,28 @@ class SubtaskResultAccepted(Message):
         'payment_ts'
     ] + Message.__slots__
 
-    def __init__(self, subtask_id: str="", payment_ts: int=0, **kwargs):
-        """
-        Create message with information that subtask result was accepted
-        """
-        self.subtask_id = subtask_id
-        self.payment_ts = payment_ts
-        super().__init__(**kwargs)
-
 
 class SubtaskResultRejected(Message):
     TYPE = TASK_MSG_BASE + 11
 
     __slots__ = ['subtask_id'] + Message.__slots__
 
-    def __init__(self, subtask_id=0, **kwargs):
-        """
-        Create message with information that subtask result was rejected
-        :param str subtask_id: id of rejected subtask
-        """
-        self.subtask_id = subtask_id
-        super().__init__(**kwargs)
-
 
 class DeltaParts(Message):
+    """Message with resource description in form of "delta parts".
+
+    :param task_id: resources are for task with this id
+    :param TaskResourceHeader delta_header: resource header containing
+                                            only parts that computing
+                                            node doesn't have
+    :param list parts: list of all files that are needed to create
+                       resources
+    :param str node_name: resource owner name
+    :param Node node_info: information about resource owner
+    :param address: resource owner address
+    :param port: resource owner port
+    """
     TYPE = TASK_MSG_BASE + 12
-
-    __slots__ = [
-        'task_id',
-        'delta_header',
-        'parts',
-        'node_name',
-        'address',
-        'port',
-        'node_info',
-    ] + Message.__slots__
-
-    def __init__(self, task_id=0, delta_header=None, parts=None, node_name='',
-                 node_info=None, address='', port='', **kwargs):
-        """
-        Create message with resource description in form of "delta parts".
-        :param task_id: resources are for task with this id
-        :param TaskResourceHeader delta_header: resource header containing
-                                                only parts that computing
-                                                node doesn't have
-        :param list parts: list of all files that are needed to create
-                           resources
-        :param str node_name: resource owner name
-        :param Node node_info: information about resource owner
-        :param address: resource owner address
-        :param port: resource owner port
-        """
-        self.task_id = task_id
-        self.delta_header = delta_header
-        self.parts = parts
-        self.node_name = node_name
-        self.address = address
-        self.port = port
-        self.node_info = node_info
-        super().__init__(**kwargs)
 
 
 class TaskFailure(Message):
@@ -945,16 +653,6 @@ class TaskFailure(Message):
         'err',
         'task_to_compute',
     ] + Message.__slots__
-
-    def __init__(self, subtask_id="", err="", **kwargs):
-        """
-        Create message with information about task computation failure
-        :param str subtask_id: id of a failed subtask
-        :param str err: error message that occur during computations
-        """
-        self.subtask_id = subtask_id
-        self.err = err
-        super().__init__(**kwargs)
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
@@ -1002,20 +700,25 @@ class CannotComputeTask(Message):
         'reason': REASON,
     }
 
-    def __init__(self, subtask_id=None, reason=None, **kwargs):
-        """
-        Message informs that the node is waiting for results
-        """
-        self.reason = reason
-        self.subtask_id = subtask_id
-        super().__init__(**kwargs)
-
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
         return deserialize_task_to_compute(key, value)
 
 
 class SubtaskPayment(Message):
+    """Informs about payment for a subtask.
+    It succeeds SubtaskResultAccepted but could
+    be sent after a delay. It is also sent in response to
+    SubtaskPaymentRequest. If transaction_id is None it
+    should be interpreted as PAYMENT PENDING status.
+
+    :param str subtask_id: accepted subtask id
+    :param float reward: payment for computations
+    :param str transaction_id: eth transaction id
+    :param int block_number: eth blockNumber
+    :param dict dict_repr: dictionary representation of a message
+    """
+
     TYPE = TASK_MSG_BASE + 27
 
     __slots__ = [
@@ -1025,76 +728,40 @@ class SubtaskPayment(Message):
         'block_number'
     ] + Message.__slots__
 
-    def __init__(self, subtask_id=None, reward=None, transaction_id=None,
-                 block_number=None, **kwargs):
-        """Informs about payment for a subtask.
-        It succeeds SubtaskResultAccepted but could
-        be sent after a delay. It is also sent in response to
-        SubtaskPaymentRequest. If transaction_id is None it
-        should be interpreted as PAYMENT PENDING status.
-
-        :param str subtask_id: accepted subtask id
-        :param float reward: payment for computations
-        :param str transaction_id: eth transaction id
-        :param int block_number: eth blockNumber
-        :param dict dict_repr: dictionary representation of a message
-
-        Additional params are described in Message().
-        """
-
-        self.subtask_id = subtask_id
-        self.reward = reward
-        self.transaction_id = transaction_id
-        self.block_number = block_number
-        super().__init__(**kwargs)
-
 
 class SubtaskPaymentRequest(Message):
+    """Requests information about payment for a subtask.
+
+    :param str subtask_id: accepted subtask id
+    :param dict dict_repr: dictionary representation of a message
+    """
+
     TYPE = TASK_MSG_BASE + 28
 
     __slots__ = ['subtask_id'] + Message.__slots__
-
-    def __init__(self, subtask_id=None, **kwargs):
-        """Requests information about payment for a subtask.
-
-        :param str subtask_id: accepted subtask id
-        :param dict dict_repr: dictionary representation of a message
-
-        Additional params are described in Message().
-        """
-
-        self.subtask_id = subtask_id
-        super().__init__(**kwargs)
 
 
 RESOURCE_MSG_BASE = 3000
 
 
 class AbstractResource(Message):
+    """
+    :param str resource: resource name
+    """
     __slots__ = ['resource'] + Message.__slots__
-
-    def __init__(self, resource=None, **kwargs):
-        """
-        :param str resource: resource name
-        """
-        self.resource = resource
-        super(AbstractResource, self).__init__(**kwargs)
 
 
 class PushResource(AbstractResource):
+    """Message with information that expected number of copies of
+       given resource should be pushed to the network
+    :param int copies: number of copies
+    """
+
     TYPE = RESOURCE_MSG_BASE + 1
 
     __slots__ = [
         'copies'
     ] + AbstractResource.__slots__
-
-    def __init__(self, copies=0, **kwargs):
-        """Create message with information that expected number of copies of
-           given resource should be pushed to the network
-        :param int copies: number of copies
-        """
-        self.copies = copies
-        super().__init__(**kwargs)
 
 
 class HasResource(AbstractResource):
@@ -1119,6 +786,12 @@ class PullResource(AbstractResource):
 
 
 class PullAnswer(Message):
+    """Message with information whether current peer has given
+       resource and may send it
+    :param str resource: resource name
+    :param bool has_resource: information if user has resource
+    """
+
     TYPE = RESOURCE_MSG_BASE + 5
 
     __slots__ = [
@@ -1126,33 +799,18 @@ class PullAnswer(Message):
         'has_resource'
     ] + Message.__slots__
 
-    def __init__(self, resource=None, has_resource=False, **kwargs):
-        """Create message with information whether current peer has given
-           resource and may send it
-        :param str resource: resource name
-        :param bool has_resource: information if user has resource
-        """
-        self.resource = resource
-        self.has_resource = has_resource
-        super().__init__(**kwargs)
-
 
 class ResourceList(Message):
+    """Message with resource request
+    :param str resources: resource list
+    """
+
     TYPE = RESOURCE_MSG_BASE + 7
 
     __slots__ = [
         'resources',
         'options'
     ] + Message.__slots__
-
-    def __init__(self, resources=None, options=None, **kwargs):
-        """
-        Create message with resource request
-        :param str resources: resource list
-        """
-        self.resources = resources
-        self.options = options
-        super().__init__(**kwargs)
 
 
 class ResourceHandshakeStart(Message):
@@ -1162,13 +820,6 @@ class ResourceHandshakeStart(Message):
         'resource'
     ] + Message.__slots__
 
-    def __init__(self,
-                 resource: Optional[str]=None,
-                 **kwargs):
-
-        self.resource = resource
-        super().__init__(**kwargs)
-
 
 class ResourceHandshakeNonce(Message):
     TYPE = RESOURCE_MSG_BASE + 9
@@ -1176,13 +827,6 @@ class ResourceHandshakeNonce(Message):
     __slots__ = [
         'nonce'
     ] + Message.__slots__
-
-    def __init__(self,
-                 nonce: Optional[str]=None,
-                 **kwargs):
-
-        self.nonce = nonce
-        super().__init__(**kwargs)
 
 
 class ResourceHandshakeVerdict(Message):
@@ -1192,15 +836,6 @@ class ResourceHandshakeVerdict(Message):
         'accepted',
         'nonce'
     ] + Message.__slots__
-
-    def __init__(self,
-                 nonce: Optional[str]=None,
-                 accepted: Optional[bool] = False,
-                 **kwargs):
-
-        self.nonce = nonce
-        self.accepted = accepted
-        super().__init__(**kwargs)
 
 
 CONCENT_MSG_BASE = 4000
@@ -1225,14 +860,6 @@ class ServiceRefused(Message):
         'reason',
         'task_to_compute',
     ] + Message.__slots__
-
-    def __init__(self,
-                 subtask_id=None,
-                 reason: Optional[Reason] = None,
-                 **kwargs):
-        self.subtask_id = subtask_id
-        self.reason = reason
-        super().__init__(**kwargs)
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
@@ -1259,10 +886,6 @@ class AckReportComputedTask(Message):
         'subtask_id',
         'task_to_compute',
     ] + Message.__slots__
-
-    def __init__(self, subtask_id=None, **kwargs):
-        self.subtask_id = subtask_id
-        super().__init__(**kwargs)
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
@@ -1304,15 +927,6 @@ class RejectReportComputedTask(Message):
         'task_failure',
         'cannot_compute_task',
     ] + Message.__slots__
-
-    def __init__(
-            self,
-            subtask_id=None,
-            reason: Reason = None,
-            **kwargs):
-        self.subtask_id = subtask_id
-        self.reason = reason
-        super().__init__(**kwargs)
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
