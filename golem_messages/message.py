@@ -263,7 +263,7 @@ class Message():
             try:
                 verify_func(instance.get_short_hash(data), sig)
             except Exception:
-                logger.warning('Failed to verify signature: %r', instance)
+                logger.debug('Failed to verify signature: %r', instance)
                 raise
         return instance
 
