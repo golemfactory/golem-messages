@@ -189,6 +189,14 @@ class TimestampTestCase(unittest.TestCase):
         golem_messages.load(payload, self.ecc.raw_privkey, self.ecc.raw_pubkey)
         self.assertEqual(vft_mock.call_count, 1)
 
+    @mock.patch('datetime.datetime.utcfromtimestamp')
+    def test_year_is_out_of_range(self, timestamp_mock):
+        for err in (TypeError, OSError, OverflowError, ValueError):
+            timestamp_mock.side_effect = err
+            with self.assertRaises(exceptions.TimestampError):
+                msg = message.Ping()
+                message.verify_time(msg.timestamp)
+
 
 class SlotSerializationTestCase(unittest.TestCase):
     def test_enum_slots(self):

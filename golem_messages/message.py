@@ -1,3 +1,4 @@
+import calendar
 import datetime
 import enum
 import functools
@@ -26,8 +27,9 @@ def verify_time(timestamp):
     now = datetime.datetime.utcnow()
     try:
         msgdt = datetime.datetime.utcfromtimestamp(timestamp)
-    except (TypeError, OSError, OverflowError):
-        raise exceptions.TimestampError()
+    except (TypeError, OSError, OverflowError, ValueError) as e:
+        logger.debug('Error parsing timestamp: %r', timestamp, exc_info=True)
+        raise exceptions.TimestampError(str(e))
     delta = now - msgdt
     delta_future = msgdt - now
     logger.debug('msgdt %s Δ %s Δfuture %s', msgdt, delta, delta_future)
@@ -83,7 +85,6 @@ class Message():
 
     __slots__ = ['timestamp', 'encrypted', 'sig', '_raw']
 
-    TS_SCALE = 10 ** 6
     HDR_LEN = 11
     SIG_LEN = 65
 
@@ -109,7 +110,10 @@ class Message():
         self.load_slots(slots)
 
         # Header
-        self.timestamp = timestamp or round(time.time(), 6)
+        # Since epoch differs between OS, we use calendar.timegm() to unify it
+        if not timestamp:
+            timestamp = calendar.timegm(time.gmtime())
+        self.timestamp = int(timestamp)
         self.encrypted = encrypted
         self.sig = sig
 
@@ -141,7 +145,7 @@ class Message():
         # still need to have a valid signature.
         # SEE: test_serializer.MessageTestCase.test_message_sig()
         hash_header = serializer.dumps(
-            [self.TYPE, int(self.timestamp * self.TS_SCALE), ]
+            [self.TYPE, self.timestamp, ]
         )
         sha.update(hash_header)
         sha.update(payload or b'')
@@ -187,7 +191,7 @@ class Message():
         :return: serialized header
         """
         return struct.pack('!HQ?', self.TYPE,
-                           int(self.timestamp * self.TS_SCALE),
+                           self.timestamp,
                            self.encrypted)
 
     def serialize_slot(self, key, value):
@@ -242,7 +246,10 @@ class Message():
             logger.debug("Failing message hdr: %r data: %r", header, data)
             return
 
-        msg_ts /= cls.TS_SCALE
+        if msg_ts > 10**10:
+            # Old timestamp format. Remove after 0.11 golem core release
+            msg_ts /= 10**6
+            msg_ts = int(msg_ts)
 
         if check_time:
             try:
