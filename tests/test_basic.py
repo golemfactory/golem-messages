@@ -94,6 +94,27 @@ class BasicTestCase(unittest.TestCase):
         msg = message.Hello()
         self.assertEqual(msg.golem_messages_version, v_mock)
 
+    @mock.patch("golem_messages.message.RandVal")
+    def test_init_messages_error(self, mock_message_rand_val):
+        copy_registered = dict(message.registered_message_types)
+        message.registered_message_types = {}
+        mock_message_rand_val.__name__ = "randvalmessage"
+        mock_message_rand_val.TYPE = message.Hello.TYPE
+        with self.assertRaises(RuntimeError):
+            message.init_messages()
+        message.registered_message_types = copy_registered
+
+    def test_slots(self):
+        for cls in message.registered_message_types.values():
+            # only __slots__ can be present in objects
+            self.assertFalse(
+                hasattr(cls(), '__dict__'),
+                "{} instance has __dict__".format(cls)
+            )
+            assert not hasattr(cls.__new__(cls), '__dict__')
+            # slots are properly set in class definition
+            assert len(cls.__slots__) >= len(message.Message.__slots__)
+
 
 testnow = datetime.datetime.utcnow().replace(microsecond=0)
 

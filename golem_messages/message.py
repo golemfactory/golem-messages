@@ -420,6 +420,10 @@ class Peers(Message):
 
     __slots__ = ['peers'] + Message.__slots__
 
+    def __init__(self, peers=None, **kwargs):
+        self.peers = peers or []
+        super().__init__(**kwargs)
+
 
 class GetTasks(Message):
     TYPE = P2P_MESSAGE_BASE + 5
@@ -661,6 +665,16 @@ class DeltaParts(Message):
     :param port: resource owner port
     """
     TYPE = TASK_MSG_BASE + 12
+
+    __slots__ = [
+        'task_id',
+        'delta_header',
+        'parts',
+        'node_name',
+        'address',
+        'port',
+        'node_info',
+    ] + Message.__slots__
 
 
 class TaskFailure(Message):
