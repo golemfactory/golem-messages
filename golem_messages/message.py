@@ -246,6 +246,11 @@ class Message():
             logger.debug("Failing message hdr: %r data: %r", header, data)
             return
 
+        if msg_ts > 10**10:
+            # Old timestamp format. Remove after 0.11 golem core release
+            msg_ts /= 10**6
+            msg_ts = int(msg_ts)
+
         if check_time:
             try:
                 verify_time(msg_ts)
