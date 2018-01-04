@@ -10,6 +10,35 @@ from golem_messages import shortcuts
 
 
 class MessagesTestCase(unittest.TestCase):
+    def test_default_slots(self):
+        """Slots initialization to None"""
+        msg = message.Hello()
+        for key in msg.__slots__:
+            if key in message.Message.__slots__:
+                continue
+            if key == 'golem_messages_version':
+                continue
+            self.assertIsNone(getattr(msg, key))
+
+    def test_kwarg(self):
+        node_name = 'Tuż nad Bugiem, z lewej strony,'
+        msg = message.Hello(node_name=node_name)
+        self.assertEqual(msg.node_name, node_name)
+
+    def test_slot(self):
+        node_name = 'Tuż nad Bugiem, z lewej strony,'
+        msg = message.Hello(slots=[('node_name', node_name), ])
+        self.assertEqual(msg.node_name, node_name)
+
+    def test_kwarg_and_slot(self):
+        node_name_kwarg = 'Tuż nad Bugiem, z lewej strony,'
+        node_name_slot = 'Stoi wielki bór zielony.'
+        msg = message.Hello(
+            node_name=node_name_kwarg,
+            slots=[('node_name', node_name_slot), ],
+        )
+        self.assertEqual(msg.node_name, node_name_slot)
+
     def test_message_want_to_compute_task(self):
         node_id = 'test-ni-{}'.format(uuid.uuid4())
         task_id = 'test-ti-{}'.format(uuid.uuid4())
