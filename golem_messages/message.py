@@ -254,8 +254,12 @@ class Message():
         if check_time:
             try:
                 verify_time(msg_ts)
-            except exceptions.TimestampError:
-                logger.info("Message error: invalid timestamp: %r", msg_ts)
+            except exceptions.TimestampError as e:
+                logger.info(
+                    "Message error: invalid timestamp: %r %s",
+                    msg_ts,
+                    e,
+                )
                 return
 
         if msg_type not in registered_message_types:
