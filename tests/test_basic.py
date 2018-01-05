@@ -94,6 +94,19 @@ class BasicTestCase(unittest.TestCase):
         msg = message.Hello()
         self.assertEqual(msg.golem_messages_version, v_mock)
 
+        msg = message.Hello(deserialized=True)
+        self.assertIsNone(msg.golem_messages_version)
+
+        version_kwarg = object()
+        msg_kwarg = message.Hello(golem_messages_version=version_kwarg)
+        self.assertEqual(msg_kwarg.golem_messages_version, version_kwarg)
+
+        version_slot = object()
+        msg_slot = message.Hello(
+            slots=[('golem_messages_version', version_slot), ],
+        )
+        self.assertEqual(msg_slot.golem_messages_version, version_slot)
+
     @mock.patch("golem_messages.message.RandVal")
     def test_init_messages_error(self, mock_message_rand_val):
         copy_registered = dict(message.registered_message_types)

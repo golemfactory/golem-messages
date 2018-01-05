@@ -93,21 +93,23 @@ class Message():
     ENUM_SLOTS = {}
 
     def __init__(self, timestamp=None, encrypted=False, sig=None,
-                 raw=None, slots=None, **kwargs):
+                 raw=None, slots=None, deserialized=False, **kwargs):
 
         """Create a new message
         :param timestamp: message timestamp
         :param encrypted: whether message was encrypted
         :param sig: signed message hash
         :param raw: original message bytes
+        :param deserialized: was message created by .deserialize()?
         """
-
-        # Set attributes
-        for key in kwargs:
-            setattr(self, key, kwargs[key])
 
         # Child message slots
         self.load_slots(slots)
+
+        # Set attributes
+        for key in kwargs:
+            if getattr(self, key, None) is None:
+                setattr(self, key, kwargs[key])
 
         # Header
         # Since epoch differs between OS, we use calendar.timegm() to unify it
@@ -272,7 +274,8 @@ class Message():
                 encrypted=msg_enc,
                 sig=sig,
                 raw=msg,
-                slots=slots
+                slots=slots,
+                deserialized=True,
             )
         except Exception as exc:
             logger.info("Message error: invalid data: %r", exc)
@@ -295,21 +298,24 @@ class Message():
         )
 
     def load_slots(self, slots):
-        if not isinstance(slots, (tuple, list)):
-            return
+        try:
+            slots_dict = dict(slots)
+        except (TypeError, ValueError):
+            slots_dict = {}
 
-        for entry in slots:
+        for name in self.__slots__:
+            if hasattr(self, name):
+                continue
+            if not self.valid_slot(name):
+                continue
+
             try:
-                slot, value = entry
-            except (TypeError, ValueError):
-                logger.debug("Message error: invalid slot: %r", entry)
-                continue
-
-            if not self.valid_slot(slot):
-                continue
-
-            value = self.deserialize_slot(slot, value)
-            setattr(self, slot, value)
+                value = slots_dict[name]
+            except KeyError:
+                value = None
+            else:
+                value = self.deserialize_slot(name, value)
+            setattr(self, name, value)
 
     def slots(self):
         """Returns a list representation of any subclass message"""
@@ -351,8 +357,10 @@ class Hello(Message):
     ] + Message.__slots__
 
     def __init__(self, **kwargs):
-        self.golem_messages_version = golem_messages.__version__
         super().__init__(**kwargs)
+        deserialized = kwargs.pop('deserialized', False)
+        if not deserialized and self.golem_messages_version is None:
+            self.golem_messages_version = golem_messages.__version__
 
 
 class RandVal(Message):
