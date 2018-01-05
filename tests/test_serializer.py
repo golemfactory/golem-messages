@@ -52,6 +52,7 @@ class MessageTestCase(unittest.TestCase, EqualityMixIn):
         )
 
         # Load TaskToCompute back to its original format
+        # Task TaskToCompute is verified correctly
         task_to_compute = shortcuts.load(
             s_task_to_compute,
             provider_keys.raw_privkey,
@@ -60,13 +61,6 @@ class MessageTestCase(unittest.TestCase, EqualityMixIn):
 
         first_sig = task_to_compute.sig
         first_hash = task_to_compute.get_short_hash()
-
-        # Task TaskToCompute is verified correctly
-        cryptography.ecdsa_verify(
-            requestor_keys.raw_pubkey,
-            task_to_compute.sig,
-            task_to_compute.get_short_hash(),
-        )
 
         force_report = message.ForceReportComputedTask()
         force_report.task_to_compute = task_to_compute

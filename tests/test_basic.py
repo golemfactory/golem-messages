@@ -4,6 +4,7 @@ from freezegun import freeze_time
 import golem_messages
 from golem_messages import exceptions
 from golem_messages import message
+from golem_messages import serializer
 import unittest
 import unittest.mock as mock
 
@@ -41,6 +42,91 @@ class BasicTestCase(unittest.TestCase):
         deserialized = message.Message.deserialize(serialized_ping, None)
         assert deserialized is not None
         assert deserialized.TYPE == message.Ping.TYPE
+
+    @mock.patch('golem_messages.serializer.dumps', wraps=serializer.dumps)
+    def test_slots_reselialization_optimization(self, dumps_mock):
+        """Don't reserialize message slots immediately after deserialization"""
+        msg = message.Ping()
+        payload = golem_messages.dump(msg, self.ecc.raw_privkey,
+                                      self.ecc.raw_pubkey)
+        # One call for slots and second for hash_header
+        self.assertEqual(dumps_mock.call_count, 2)
+
+        dumps_mock.reset_mock()
+        msg2 = golem_messages.load(payload, self.ecc.raw_privkey,
+                                   self.ecc.raw_pubkey)
+        # One call for hash_header
+        dumps_mock.assert_called_once_with(mock.ANY)
+
+    def test_deserialize_verify(self):
+        """Basic verificating deserializer"""
+        ping = message.Ping()
+        result = message.deserialize_verify(
+            key='ping',
+            verify_key='ping',
+            value=ping,
+            verify_class=message.Ping,
+        )
+        self.assertEqual(result, ping)
+
+    def test_deserialize_verify_different_key(self):
+        task_to_compute = message.TaskToCompute()
+        result = message.deserialize_verify(
+            key='abracadabra',
+            verify_key='ping',
+            value=task_to_compute,
+            verify_class=message.Ping,
+        )
+        self.assertEqual(result, task_to_compute)
+
+    def test_deserialize_verify_fail(self):
+        task_to_compute = message.TaskToCompute()
+        with self.assertRaises(TypeError):
+            result = message.deserialize_verify(
+                key='ping',
+                verify_key='ping',
+                value=task_to_compute,
+                verify_class=message.Ping,
+            )
+
+    @mock.patch('golem_messages.__version__')
+    def test_hello_version(self, v_mock):
+        msg = message.Hello()
+        self.assertEqual(msg.golem_messages_version, v_mock)
+
+        msg = message.Hello(deserialized=True)
+        self.assertIsNone(msg.golem_messages_version)
+
+        version_kwarg = object()
+        msg_kwarg = message.Hello(golem_messages_version=version_kwarg)
+        self.assertEqual(msg_kwarg.golem_messages_version, version_kwarg)
+
+        version_slot = object()
+        msg_slot = message.Hello(
+            slots=[('golem_messages_version', version_slot), ],
+        )
+        self.assertEqual(msg_slot.golem_messages_version, version_slot)
+
+    @mock.patch("golem_messages.message.RandVal")
+    def test_init_messages_error(self, mock_message_rand_val):
+        copy_registered = dict(message.registered_message_types)
+        message.registered_message_types = {}
+        mock_message_rand_val.__name__ = "randvalmessage"
+        mock_message_rand_val.TYPE = message.Hello.TYPE
+        with self.assertRaises(RuntimeError):
+            message.init_messages()
+        message.registered_message_types = copy_registered
+
+    def test_slots(self):
+        for cls in message.registered_message_types.values():
+            # only __slots__ can be present in objects
+            self.assertFalse(
+                hasattr(cls(), '__dict__'),
+                "{} instance has __dict__".format(cls)
+            )
+            assert not hasattr(cls.__new__(cls), '__dict__')
+            # slots are properly set in class definition
+            assert len(cls.__slots__) >= len(message.Message.__slots__)
 
 
 testnow = datetime.datetime.utcnow().replace(microsecond=0)
@@ -115,6 +201,14 @@ class TimestampTestCase(unittest.TestCase):
         self.assertEqual(vft_mock.call_count, 0)
         golem_messages.load(payload, self.ecc.raw_privkey, self.ecc.raw_pubkey)
         self.assertEqual(vft_mock.call_count, 1)
+
+    @mock.patch('datetime.datetime.utcfromtimestamp')
+    def test_year_is_out_of_range(self, timestamp_mock):
+        for err in (TypeError, OSError, OverflowError, ValueError):
+            timestamp_mock.side_effect = err
+            with self.assertRaises(exceptions.TimestampError):
+                msg = message.Ping()
+                message.verify_time(msg.timestamp)
 
 
 class SlotSerializationTestCase(unittest.TestCase):
