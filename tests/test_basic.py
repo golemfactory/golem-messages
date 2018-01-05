@@ -94,6 +94,9 @@ class BasicTestCase(unittest.TestCase):
         msg = message.Hello()
         self.assertEqual(msg.golem_messages_version, v_mock)
 
+        msg = message.Hello(deserialized=True)
+        self.assertIsNone(msg.golem_messages_version)
+
         version_kwarg = object()
         msg_kwarg = message.Hello(golem_messages_version=version_kwarg)
         self.assertEqual(msg_kwarg.golem_messages_version, version_kwarg)

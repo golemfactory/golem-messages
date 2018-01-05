@@ -93,13 +93,14 @@ class Message():
     ENUM_SLOTS = {}
 
     def __init__(self, timestamp=None, encrypted=False, sig=None,
-                 raw=None, slots=None, **kwargs):
+                 raw=None, slots=None, deserialized=False, **kwargs):
 
         """Create a new message
         :param timestamp: message timestamp
         :param encrypted: whether message was encrypted
         :param sig: signed message hash
         :param raw: original message bytes
+        :param deserialized: was message created by .deserialize()?
         """
 
         # Child message slots
@@ -273,7 +274,8 @@ class Message():
                 encrypted=msg_enc,
                 sig=sig,
                 raw=msg,
-                slots=slots
+                slots=slots,
+                deserialized=True,
             )
         except Exception as exc:
             logger.info("Message error: invalid data: %r", exc)
@@ -356,7 +358,8 @@ class Hello(Message):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if self.golem_messages_version is None:
+        deserialized = kwargs.pop('deserialized', False)
+        if not deserialized and self.golem_messages_version is None:
             self.golem_messages_version = golem_messages.__version__
 
 
