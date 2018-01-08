@@ -125,10 +125,20 @@ class MessagesTestCase(unittest.TestCase):
                 (message.Gossip, 'gossip'),
                 ):
             msg = message_class()
+            value = []
             expected = [
-                [key, []]
+                [key, value]
             ]
             self.assertEqual(expected, msg.slots())
+
+            value = [object()]
+            msg_kwarg = message_class(**{key: value})
+            expected = [
+                [key, value]
+            ]
+            self.assertEqual(expected, msg_kwarg.slots())
+            msg_slots = message_class(slots=[(key, value)])
+            self.assertEqual(expected, msg_slots.slots())
 
     def test_int_messages(self):
         for message_class, key in (
