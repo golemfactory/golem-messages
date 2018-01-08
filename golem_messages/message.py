@@ -448,14 +448,14 @@ class Tasks(Message):
 
     __slots__ = ['tasks'] + Message.__slots__
 
-    def __init__(self, tasks=None, **kwargs):
+    def __init__(self, **kwargs):
         """
         Create message containing information about tasks
         :param list tasks: list of tasks information (subset of
                            taskserver.get_tasks_headers())
         """
-        kwargs['tasks'] = tasks or []
         super().__init__(**kwargs)
+        self.tasks = self.tasks or []
 
 
 class RemoveTask(Message):
