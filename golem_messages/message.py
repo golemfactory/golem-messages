@@ -432,9 +432,9 @@ class Peers(Message):
 
     __slots__ = ['peers'] + Message.__slots__
 
-    def __init__(self, peers=None, **kwargs):
-        self.peers = peers or []
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.peers = self.peers or []
 
 
 class GetTasks(Message):
@@ -454,7 +454,7 @@ class Tasks(Message):
         :param list tasks: list of tasks information (subset of
                            taskserver.get_tasks_headers())
         """
-        self.tasks = tasks or []
+        kwargs['tasks'] = tasks or []
         super().__init__(**kwargs)
 
 
@@ -476,13 +476,13 @@ class ResourcePeers(Message):
 
     __slots__ = ['resource_peers'] + Message.__slots__
 
-    def __init__(self, resource_peers=None, **kwargs):
+    def __init__(self, **kwargs):
         """
         Create message containing information about resource peers
         :param list resource_peers: list of peers information
         """
-        self.resource_peers = resource_peers or []
         super().__init__(**kwargs)
+        self.resource_peers = self.resource_peers or []
 
 
 class Degree(Message):
@@ -496,13 +496,13 @@ class Gossip(Message):
 
     __slots__ = ['gossip'] + Message.__slots__
 
-    def __init__(self, gossip=None, **kwargs):
+    def __init__(self, **kwargs):
         """
         Create gossip message
         :param list gossip: gossip to be send
         """
-        self.gossip = gossip or []
         super().__init__(**kwargs)
+        self.gossip = self.gossip or []
 
 
 class StopGossip(Message):
