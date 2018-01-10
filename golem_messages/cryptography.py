@@ -305,7 +305,7 @@ class ECCx(pyelliptic.ECC):
     decrypt = ecies_decrypt
 
     def sign(self, data):
-        signature = ecdsa_sign(data, self.raw_privkey)
+        signature = ecdsa_sign(self.raw_privkey, data)
         assert len(signature) == 65
         return signature
 
