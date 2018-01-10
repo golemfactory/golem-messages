@@ -28,7 +28,8 @@
 
 from unittest import TestCase
 
-from golem_messages.cryptography import ECCx, mk_privkey, privtopub
+from golem_messages.cryptography import ECCx, mk_privkey, privtopub, sha3, \
+        ecdsa_verify
 
 from golem_messages import exceptions
 
@@ -46,6 +47,21 @@ class TestCrypto(TestCase):
         plaintext = b"Hello Bob"
         ciphertext = ECCx.encrypt(plaintext, bob.raw_pubkey)
         assert bob.decrypt(ciphertext) == plaintext
+
+    def test_signature(self):
+        bob = get_ecc('secret2')
+
+        # sign
+        message = sha3("Hello Alice")
+        signature = bob.sign(message)
+
+        # verify signature
+        assert ecdsa_verify(bob.raw_pubkey, signature, message) is True
+
+        # wrong signature
+        message = sha3("Hello Alicf")
+        with self.assertRaises(exceptions.InvalidSignature):
+            ecdsa_verify(bob.raw_pubkey, signature, message)
 
     def test_en_decrypt(self):
         alice = ECCx(None)
