@@ -302,3 +302,12 @@ class ECCx(pyelliptic.ECC):
         return ctx.ciphering(ciphertext)
     encrypt = ecies_encrypt
     decrypt = ecies_decrypt
+
+    def sign(self, data):
+        signature = ecdsa_sign(data, self.raw_privkey)
+        assert len(signature) == 65
+        return signature
+
+    def verify(self, signature, message):
+        assert len(signature) == 65
+        return ecdsa_verify(self.raw_pubkey, signature, message)
