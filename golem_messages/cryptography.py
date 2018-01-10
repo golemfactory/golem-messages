@@ -126,6 +126,7 @@ def ecdsa_verify(pubkey, signature, message):
     )
     if not pk.format(compressed=False) == b'\04' + pubkey:
         raise exceptions.InvalidSignature()
+    return True
 
 
 class ECCx(pyelliptic.ECC):
