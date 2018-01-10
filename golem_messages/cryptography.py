@@ -109,6 +109,11 @@ def sha3(seed):
 
 
 def mk_privkey(seed):
+    """ Return sha3-256 (keccak) of seed in digest
+    TODO: Remove keccak when decoupled from ethereum privatekey
+    :param str seed: data that should be hashed
+    :return str: binary hashed data
+    """
     def sha3_256_kec(x):
         from Crypto.Hash import keccak
         return keccak.new(digest_bits=256, data=rlp_utils.str_to_bytes(x))
