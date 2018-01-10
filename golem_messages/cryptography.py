@@ -109,7 +109,10 @@ def sha3(seed):
 
 
 def mk_privkey(seed):
-    return sha3(seed)
+    def sha3_256_kec(x):
+        from Crypto.Hash import keccak
+        return keccak.new(digest_bits=256, data=rlp_utils.str_to_bytes(x))
+    return sha3_256_kec(seed).digest()
 
 
 def ecdsa_sign(privkey, msghash):
