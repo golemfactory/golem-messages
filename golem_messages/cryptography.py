@@ -2,7 +2,6 @@ import os
 import sys
 import struct
 import hashlib
-
 import bitcoin
 import coincurve
 from rlp import utils as rlp_utils
