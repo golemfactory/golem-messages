@@ -1,11 +1,11 @@
-from _pysha3 import sha3_256 as _sha3_256
+import os
+import sys
+import struct
+import hashlib
 import bitcoin
 import coincurve
-import hashlib
-import os
 from rlp import utils as rlp_utils
-import struct
-import sys
+from _pysha3 import sha3_256 as _sha3_256
 
 from . import exceptions
 
@@ -13,8 +13,9 @@ from . import exceptions
 # 8d7c44633ddcc9a00396c9f111f1427f89781b8b/devp2p/crypto.py
 
 CIPHERNAMES = set(('aes-128-ctr',))
-
-if sys.platform in ('darwin',):
+if sys.platform not in ('darwin', 'win32'):
+    import pyelliptic
+elif sys.platform == 'darwin':
     # FIX PATH ON OS X ()
     # https://github.com/yann2192/pyelliptic/issues/11
     _openssl_lib_paths = ['/usr/local/Cellar/openssl/']
@@ -25,10 +26,36 @@ if sys.platform in ('darwin',):
             import pyelliptic
             if CIPHERNAMES.issubset(set(pyelliptic.Cipher.get_all_cipher())):
                 break
-else:
-    import pyelliptic
+elif sys.platform == 'win32':
+    has_openssl = True
+    try:
+        import pyelliptic
+        if not CIPHERNAMES.issubset(set(pyelliptic.Cipher.get_all_cipher())):
+            raise Exception("Required cyphers not found")
+    except Exception as e:
+        has_openssl = False
 
-if 'pyelliptic' not in dir()\
+    if not has_openssl:
+        if not getattr(sys, 'frozen', False):
+            # Running source
+            print('Failed to load openssl, please add it to your PATH.')
+            sys.exit(1)
+        # USE APP DIR FOR WINDOWS DLL ()
+        # https://github.com/golemfactory/golem/issues/1612
+        _openssl_lib_paths = [os.path.dirname(sys.executable)]
+        for p in _openssl_lib_paths:
+            if os.path.exists(p):
+                tmp_path = os.environ['PATH'].split(';')
+                if p in tmp_path:
+                    tmp_path.remove(p)
+                tmp_path.insert(0, p)
+                os.environ['PATH'] = ';'.join(tmp_path)
+                import pyelliptic
+                if CIPHERNAMES.issubset(
+                        set(pyelliptic.Cipher.get_all_cipher())):
+                    break
+
+if 'pyelliptic' not in dir() \
         or not CIPHERNAMES.issubset(set(pyelliptic.Cipher.get_all_cipher())):
     print('required ciphers %r not available in openssl library' % CIPHERNAMES)
     if sys.platform == 'darwin':
@@ -80,6 +107,18 @@ def sha3(seed):
     return _sha3_256(seed).digest()
 
 
+def mk_privkey(seed):
+    """ Return sha3-256 (keccak) of seed in digest
+    TODO: Remove keccak when decoupled from ethereum privatekey
+    :param str seed: data that should be hashed
+    :return str: binary hashed data
+    """
+    def sha3_256_kec(x):
+        from Crypto.Hash import keccak
+        return keccak.new(digest_bits=256, data=rlp_utils.str_to_bytes(x))
+    return sha3_256_kec(seed).digest()
+
+
 def ecdsa_sign(privkey, msghash):
     pk = coincurve.PrivateKey(privkey)
     msghash = sha3(msghash)
@@ -94,6 +133,7 @@ def ecdsa_verify(pubkey, signature, message):
     )
     if not pk.format(compressed=False) == b'\04' + pubkey:
         raise exceptions.InvalidSignature()
+    return True
 
 
 class ECCx(pyelliptic.ECC):
@@ -270,3 +310,12 @@ class ECCx(pyelliptic.ECC):
         return ctx.ciphering(ciphertext)
     encrypt = ecies_encrypt
     decrypt = ecies_decrypt
+
+    def sign(self, data):
+        signature = ecdsa_sign(self.raw_privkey, data)
+        assert len(signature) == 65
+        return signature
+
+    def verify(self, signature, message):
+        assert len(signature) == 65
+        return ecdsa_verify(self.raw_pubkey, signature, message)
