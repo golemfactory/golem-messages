@@ -40,7 +40,7 @@ def get_ecc(secret=''):
 
 class TestCrypto(TestCase):
 
-    def test_asymetric(self):
+    def test_asymmetric(self):
         bob = get_ecc('secret2')
 
         # enc / dec
