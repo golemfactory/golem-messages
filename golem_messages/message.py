@@ -6,7 +6,6 @@ import hashlib
 import logging
 import struct
 import time
-from typing import Optional
 
 import golem_messages
 
@@ -62,7 +61,7 @@ class ComputeTaskDef(datastructures.FrozenDict):
     }
 
 
-def _fake_sign(s):
+def _fake_sign(s):  # pylint: disable=unused-argument
     return b'\0' * Message.SIG_LEN
 
 
@@ -112,6 +111,8 @@ class Message():
                 setattr(self, key, kwargs[key])
 
         # Header
+        if deserialized and not timestamp:
+            logger.warning('Message without timestamp %r', self)
         # Since epoch differs between OS, we use calendar.timegm() to unify it
         if not timestamp:
             timestamp = calendar.timegm(time.gmtime())
@@ -196,7 +197,7 @@ class Message():
                            self.timestamp,
                            self.encrypted)
 
-    def serialize_slot(self, key, value):
+    def serialize_slot(self, key, value):  # noqa pylint: disable=unused-argument, no-self-use
         if isinstance(value, enum.Enum):
             value = value.value
         return value
@@ -230,7 +231,7 @@ class Message():
 
         if not msg or len(msg) <= payload_idx:
             logger.info("Message error: message too short")
-            return
+            return  # TODO: #52 pylint: disable=inconsistent-return-statements
 
         header = msg[:cls.HDR_LEN]
         sig = msg[cls.HDR_LEN:payload_idx]
@@ -246,7 +247,7 @@ class Message():
         except Exception as exc:
             logger.info("Message error: invalid data: %r", exc)
             logger.debug("Failing message hdr: %r data: %r", header, data)
-            return
+            return  # TODO: #52 pylint: disable=inconsistent-return-statements
 
         if msg_ts > 10**10:
             # Old timestamp format. Remove after 0.11 golem core release
@@ -262,11 +263,11 @@ class Message():
                     msg_ts,
                     e,
                 )
-                return
+                return  # noqa TODO: #52 pylint: disable=inconsistent-return-statements
 
         if msg_type not in registered_message_types:
             logger.info('Message error: invalid type %d', msg_type)
-            return
+            return  # TODO: #52 pylint: disable=inconsistent-return-statements
 
         try:
             instance = registered_message_types[msg_type](
@@ -279,7 +280,7 @@ class Message():
             )
         except Exception as exc:
             logger.info("Message error: invalid data: %r", exc)
-            return
+            return  # TODO: #52 pylint: disable=inconsistent-return-statements
         if verify_func is not None:
             try:
                 verify_func(instance.get_short_hash(data), sig)
@@ -1063,8 +1064,7 @@ def init_messages():
     """Add supported messages to register messages list"""
     if registered_message_types:
         return
-    for message_class in \
-            (
+    for message_class in (
             # Basic messages
             Hello,
             RandVal,
@@ -1128,8 +1128,7 @@ def init_messages():
             AckReportComputedTask,
             RejectReportComputedTask,
             VerdictReportComputedTask,
-            FileTransferToken,
-            ):
+            FileTransferToken, ):
         if message_class.TYPE in registered_message_types:
             raise RuntimeError(
                 "Duplicated message {}.TYPE: {}"
