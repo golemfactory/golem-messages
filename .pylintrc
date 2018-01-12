@@ -1,0 +1,3 @@
+[MESSAGES CONTROL]
+disable=invalid-name,                   # Pylint is overzealous here
+        missing-docstring,              # We don't need a docstring for obvious things!
