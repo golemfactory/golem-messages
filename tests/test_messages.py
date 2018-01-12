@@ -312,3 +312,24 @@ class MessagesTestCase(unittest.TestCase):
             ['options', options],
         ]
         self.assertEqual(expected, msg.slots())
+
+    def test_task_to_compute_validate_compute_task_def(self):
+        requestor_id = 'such as epidemiology'
+        # Shoudn't raise
+        message.TaskToCompute(slots=(
+            ('requestor_id', requestor_id),
+        ))
+
+        compute_task_def = message.ComputeTaskDef(
+            task_owner={'key': requestor_id}
+        )
+        message.TaskToCompute(slots=(
+            ('requestor_id', requestor_id),
+            ('compute_task_def', compute_task_def),
+        ))
+
+        with self.assertRaises(ValueError):
+            message.TaskToCompute(slots=(
+                ('requestor_id', 'staple of research'),
+                ('compute_task_def', compute_task_def),
+            ))
