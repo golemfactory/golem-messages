@@ -1018,6 +1018,7 @@ class FileTransferToken(Message):
     TYPE = CONCENT_MSG_BASE + 5
 
     __slots__ = [
+        'subtask_id',
         'token_expiration_deadline',
         'storage_cluster_address',
         'authorized_client_public_key',
