@@ -117,7 +117,7 @@ class Message():
         if not timestamp:
             timestamp = calendar.timegm(time.gmtime())
         self.timestamp = int(timestamp)
-        self.encrypted = encrypted
+        self.encrypted = bool(encrypted)
         self.sig = sig
 
         # Encoded data
@@ -162,7 +162,7 @@ class Message():
             sign_func = _fake_sign
 
         try:
-            self.encrypted = self.ENCRYPT and encrypt_func
+            self.encrypted = bool(self.ENCRYPT and encrypt_func)
             payload = serializer.dumps(self.slots())
 
             # When nesting one message inside another it's important
@@ -292,9 +292,9 @@ class Message():
     def __repr__(self):
         return "{}(timestamp={}, encrypted={}, sig={}, slots={})".format(
             self.__class__.__name__,
-            self.timestamp,
-            self.encrypted,
-            self.sig,
+            getattr(self, 'timestamp', None),
+            getattr(self, 'encrypted', None),
+            getattr(self, 'sig', None),
             self.slots(),
         )
 
