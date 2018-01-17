@@ -630,6 +630,8 @@ class ReportComputedTask(Message):
         'extra_data',
         'eth_account',
         'task_to_compute',
+        'checksum',
+        'size',
     ] + Message.__slots__
 
     def deserialize_slot(self, key, value):
@@ -1041,6 +1043,67 @@ class FileTransferToken(Message):
         }
 
 
+class ForceGetTaskResult(Message):
+    TYPE = CONCENT_MSG_BASE + 6
+
+    __slots__ = [
+        'report_computed_task',
+    ] + Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_report_computed_task(key, value)
+
+
+class ForceGetTaskResultAck(Message):
+    TYPE = CONCENT_MSG_BASE + 7
+
+    __slots__ = Message.__slots__
+
+
+class ForceGetTaskResultFailed(Message):
+    TYPE = CONCENT_MSG_BASE + 8
+
+    __slots__ = [
+        'task_to_compute',
+    ] + Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_task_to_compute(key, value)
+
+
+class ForceGetTaskResultRejected(Message):
+    TYPE = CONCENT_MSG_BASE + 9
+
+    __slots__ = [
+        'reason',
+    ] + Message.__slots__
+
+    class REASON(enum.Enum):
+        OperationAlreadyInitiated = 'operation_already_initiated'
+        AcceptanceTimeLimitExceeded = 'acceptance_time_limit_exceeded'
+
+    ENUM_SLOTS = {
+        'reason': REASON,
+    }
+
+
+class ForceGetTaskResultUpload(Message):
+    TYPE = CONCENT_MSG_BASE + 10
+
+    __slots__ = [
+        'force_get_task_result',
+        'file_transfer_token',
+    ] + Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        value = deserialize_force_get_task_result(key, value)
+        value = deserialize_file_transfer_token(key, value)
+        return value
+
+
 def deserialize_verify(key, value, verify_key, verify_class):
     if key == verify_key:
         verify_slot_type(value, verify_class)
@@ -1075,6 +1138,24 @@ deserialize_ack_report_computed_task = functools.partial(
     deserialize_verify,
     verify_key='ack_report_computed_task',
     verify_class=AckReportComputedTask,
+)
+
+deserialize_report_computed_task = functools.partial(
+    deserialize_verify,
+    verify_key='report_computed_task',
+    verify_class=ReportComputedTask,
+)
+
+deserialize_force_get_task_result = functools.partial(
+    deserialize_verify,
+    verify_key='force_get_task_result',
+    verify_class=ForceGetTaskResult,
+)
+
+deserialize_file_transfer_token = functools.partial(
+    deserialize_verify,
+    verify_key='file_transfer_token',
+    verify_class=FileTransferToken,
 )
 
 
@@ -1148,6 +1229,13 @@ def init_messages():
             RejectReportComputedTask,
             VerdictReportComputedTask,
             FileTransferToken,
+
+            # Concent messages - Force Get Task Result
+            ForceGetTaskResult,
+            ForceGetTaskResultAck,
+            ForceGetTaskResultFailed,
+            ForceGetTaskResultRejected,
+            ForceGetTaskResultUpload
             ):
         if message_class.TYPE in registered_message_types:
             raise RuntimeError(
