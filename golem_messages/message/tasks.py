@@ -22,6 +22,8 @@ class ComputeTaskDef(datastructures.FrozenDict):
         'short_description': '',
         'return_address': '',
         'return_port': 0,
+        # task_owner is a dict from golem.network.p2p.node.Node.to_dict()
+        # - requestor
         'task_owner': None,
         'key_id': 0,
         'working_directory': '',
@@ -48,7 +50,24 @@ class WantToComputeTask(base.Message):
 class TaskToCompute(base.Message):
     TYPE = TASK_MSG_BASE + 2
 
-    __slots__ = ['compute_task_def'] + base.Message.__slots__
+    __slots__ = [
+        'requestor_id',
+        'provider_id',
+        'compute_task_def',
+    ] + base.Message.__slots__
+
+    def load_slots(self, slots):
+        super().load_slots(slots)
+        self.validate_compute_task_def(self.compute_task_def)
+
+    def validate_compute_task_def(self, value):
+        try:
+            node_key = value['task_owner']['key']
+        except (TypeError, KeyError):
+            return
+        if node_key != self.requestor_id:
+            errmsg = "requestor_id: {} != compute_task_def['task_owner']['key']"
+            raise ValueError(errmsg.format(self.requestor_id, node_key))
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
