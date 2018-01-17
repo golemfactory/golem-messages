@@ -114,6 +114,8 @@ class ReportComputedTask(base.Message):
         'extra_data',
         'eth_account',
         'task_to_compute',
+        'size',
+        'checksum',
     ] + base.Message.__slots__
 
     def deserialize_slot(self, key, value):
