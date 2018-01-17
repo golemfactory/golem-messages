@@ -54,12 +54,14 @@ from golem_messages.message.concents import AckReportComputedTask  # noqa
 from golem_messages.message.concents import RejectReportComputedTask  # noqa
 from golem_messages.message.concents import VerdictReportComputedTask  # noqa
 from golem_messages.message.concents import FileTransferToken  # noqa
+# pylint: enable=unused-import
 
 from . import base
 from . import concents
 from . import p2p
 from . import resources
 from . import tasks
+# pylint: enable=cyclic-import
 
 
 # Message types that are allowed to be sent in the network

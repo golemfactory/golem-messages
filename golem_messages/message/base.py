@@ -37,7 +37,7 @@ def verify_time(timestamp):
         raise exceptions.MessageFromFutureError()
 
 
-def _fake_sign(s):  # pylint: disable=unused-argument
+def _fake_sign(_):
     return b'\0' * Message.SIG_LEN
 
 
