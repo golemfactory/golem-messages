@@ -1,7 +1,7 @@
 import functools
 
+from golem_messages.message import base
 from . import cryptography
-from . import message
 
 
 def dump(msg, privkey, pubkey):
@@ -35,5 +35,5 @@ def load(data, privkey, pubkey, check_time=True):
             message=msg_hash
         )
 
-    msg = message.Message.deserialize(data, decrypt, check_time, verify)
+    msg = base.Message.deserialize(data, decrypt, check_time, verify)
     return msg

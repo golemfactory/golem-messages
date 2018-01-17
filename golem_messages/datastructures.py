@@ -1,4 +1,11 @@
+import collections
 import copy
+
+
+MessageHeader = collections.namedtuple(
+    "MessageHeader",
+    ["type_", "timestamp", "encrypted"],
+)
 
 
 class FrozenDict(dict):
