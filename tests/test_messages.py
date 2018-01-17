@@ -9,7 +9,7 @@ from golem_messages import message
 from golem_messages import shortcuts
 
 
-class MessagesTestCase(unittest.TestCase):
+class InitializationTestCase(unittest.TestCase):
     def test_default_slots(self):
         """Slots initialization to None"""
         msg = message.Hello()
@@ -39,6 +39,8 @@ class MessagesTestCase(unittest.TestCase):
         )
         self.assertEqual(msg.node_name, node_name_slot)
 
+
+class MessagesTestCase(unittest.TestCase):
     def test_message_want_to_compute_task(self):
         node_id = 'test-ni-{}'.format(uuid.uuid4())
         task_id = 'test-ti-{}'.format(uuid.uuid4())
@@ -66,8 +68,8 @@ class MessagesTestCase(unittest.TestCase):
         ]
         self.assertEqual(expected, msg.slots())
 
-    @mock.patch('golem_messages.message.verify_time')
-    def test_timestamp_and_timezones(self, vft_mock):
+    @mock.patch('golem_messages.message.base.verify_time')
+    def test_timestamp_and_timezones(self, vft_mock):  # noqa pylint: disable=unused-argument
         epoch_t = 1475238345.0
 
         def set_tz(tz):
@@ -96,7 +98,30 @@ class MessagesTestCase(unittest.TestCase):
         self.assertEqual(expected, msg.slots())
 
     def test_message_challenge_solution(self):
-        solution = 'O gajach świętych, z których i drew zwalonych wichrem uprzątnąć się nie godziło, opowiada Długosz (XIII, 160), że świętymi były i zwierzęta chroniące się w nich, tak iż przez ciągły ów zwyczaj czworonożne i ptactwo tych lasów, jakby domowe jakie, nie stroniło od ludzi. Skoro zważymy, że dla Litwina gaje takie były rzeczywiście nietykalnymi, że sam Mindowg nie ważył się w nie wchodzić lub różdżkę w nich ułamać, zrozumiemy to podanie. Toż samo donosi w starożytności Strabon o Henetach: były u nich dwa gaje, Hery i Artemidy, „w gajach tych ułaskawiły się zwierzęta i jelenie z wilkami się kupiły; gdy się ludzie zbliżali i dotykali ich, nie uciekały; skoro gonione od psów tu się schroniły, ustawała pogoń”. I bardzo trzeźwi mitografowie uznawali w tych gajach heneckich tylko symbole, „pojęcia o kraju bogów i o czasach rajskich”; przykład litewski poucza zaś dostatecznie, że podanie to, jak tyle innych, które najmylniej symbolicznie tłumaczą, należy rozumieć dosłownie, o prawdziwych gajach i zwierzętach, nie o jakimś raju i towarzyszach Adama; przesada w podaniu naturalnie razić nie może. Badania mitologiczne byłyby już od dawna o wiele głębiej dotarły, gdyby mania symbolizowania wszelkich szczegółów, i dziś jeszcze nie wykorzeniona, nie odwracała ich na manowce.\n-- Aleksander Brückner "Starożytna Litwa"'  # noqa
+        solution = (
+            'O gajach świętych, z których i drew zwalonych wichrem uprzątnąć'
+            ' się nie godziło, opowiada Długosz (XIII, 160), że świętymi'
+            ' były i zwierzęta chroniące się w nich, tak iż przez'
+            ' ciągły ów zwyczaj czworonożne i ptactwo tych lasów, jakby domowe'
+            ' jakie, nie stroniło od ludzi. Skoro zważymy, że dla Litwina gaje'
+            ' takie były rzeczywiście nietykalnymi, że sam Mindowg nie ważył'
+            ' się w nie wchodzić lub różdżkę w nich ułamać,'
+            ' zrozumiemy to podanie. Toż samo donosi w starożytności'
+            ' Strabon o Henetach: były u nich dwa gaje, Hery i Artemidy,'
+            ' „w gajach tych ułaskawiły się zwierzęta i jelenie z wilkami'
+            ' się kupiły; gdy się ludzie zbliżali i dotykali ich, nie uciekały;'
+            ' skoro gonione od psów tu się schroniły, ustawała pogoń”. I bardzo'
+            ' trzeźwi mitografowie uznawali w tych gajach heneckich tylko'
+            ' symbole, „pojęcia o kraju bogów i o czasach rajskich”; przykład'
+            ' litewski poucza zaś dostatecznie, że podanie to, jak tyle innych,'
+            ' które najmylniej symbolicznie tłumaczą, należy rozumieć'
+            ' dosłownie, o prawdziwych gajach i zwierzętach, nie o jakimś'
+            ' raju i towarzyszach Adama; przesada w podaniu naturalnie razić'
+            ' nie może. Badania mitologiczne byłyby już od dawna o wiele'
+            ' głębiej dotarły, gdyby mania symbolizowania wszelkich'
+            ' szczegółów, i dziś jeszcze nie wykorzeniona, nie odwracała ich'
+            ' na manowce.\n-- Aleksander Brückner "Starożytna Litwa"'
+        )
         msg = message.ChallengeSolution(solution=solution)
         expected = [
             ['solution', solution],
@@ -111,8 +136,7 @@ class MessagesTestCase(unittest.TestCase):
                 message.GetTasks,
                 message.GetResourcePeers,
                 message.StopGossip,
-                message.WaitingForResults,
-                ):
+                message.WaitingForResults, ):
             msg = message_class()
             expected = []
             self.assertEqual(expected, msg.slots())
@@ -122,8 +146,7 @@ class MessagesTestCase(unittest.TestCase):
                 (message.Peers, 'peers'),
                 (message.Tasks, 'tasks'),
                 (message.ResourcePeers, 'resource_peers'),
-                (message.Gossip, 'gossip'),
-                ):
+                (message.Gossip, 'gossip'), ):
             msg = message_class()
             value = []
             expected = [
@@ -142,9 +165,8 @@ class MessagesTestCase(unittest.TestCase):
 
     def test_int_messages(self):
         for message_class, key in (
-                    (message.Disconnect, 'reason'),
-                    (message.Degree, 'degree'),
-                ):
+                (message.Disconnect, 'reason'),
+                (message.Degree, 'degree'), ):
             value = random.randint(-10**10, 10**10)
             msg = message_class(**{key: value})
             expected = [
@@ -160,8 +182,7 @@ class MessagesTestCase(unittest.TestCase):
                 (message.StartSessionResponse, 'conn_id'),
                 (message.HasResource, 'resource'),
                 (message.WantsResource, 'resource'),
-                (message.PullResource, 'resource'),
-                ):
+                (message.PullResource, 'resource'), ):
             value = 'test-{}'.format(uuid.uuid4())
             msg = message_class(**{key: value})
             expected = [
@@ -271,7 +292,18 @@ class MessagesTestCase(unittest.TestCase):
 
     def test_message_cannot_compute_task(self):
         subtask_id = 'test-si-{}'.format(uuid.uuid4())
-        reason = "Opowiada Hieronim praski o osobliwszej czci, jaką w głębi Litwy cieszył się żelazny młot niezwykłej wielkości; „znaki zodiaka” rozbiły nim wieżę, w której potężny król słońce więził; należy się więc cześć narzędziu, co nam światło odzyskało. Już Mannhardt zwrócił uwagę na kult młotów (kamiennych) na północy; młoty „Tora” (pioruna) wyrabiano w Skandynawii dla czarów jeszcze w nowszych czasach; znajdujemy po grobach srebrne młoteczki jako amulety; hr. Tyszkiewicz opowiadał, jak wysoko chłop litewski cenił własności „kopalnego” młota (zeskrobany proszek z wodą przeciw chorobom służył itd.)."  # noqa
+        reason = (
+            "Opowiada Hieronim praski o osobliwszej czci, jaką w głębi Litwy"
+            " cieszył się żelazny młot niezwykłej wielkości; „znaki zodiaka”"
+            " rozbiły nim wieżę, w której potężny król słońce więził;"
+            " należy się więc cześć narzędziu, co nam światło odzyskało."
+            " Już Mannhardt zwrócił uwagę na kult młotów (kamiennych)"
+            " na północy; młoty „Tora” (pioruna) wyrabiano w Skandynawii"
+            " dla czarów jeszcze w nowszych czasach; znajdujemy po grobach"
+            " srebrne młoteczki jako amulety; hr. Tyszkiewicz opowiadał,"
+            " jak wysoko chłop litewski cenił własności „kopalnego” młota"
+            " (zeskrobany proszek z wodą przeciw chorobom służył itd.)."
+        )
         msg = message.CannotComputeTask(subtask_id=subtask_id, reason=reason)
         expected = sorted([
             ['reason', reason],

@@ -1,15 +1,9 @@
+import unittest
+
 from golem_messages import cryptography
 from golem_messages import message
 from golem_messages import serializer
 from golem_messages import shortcuts
-import unittest
-
-
-class EqualityMixIn:
-    def equal_after_processing(self, o):
-        s = serializer.dumps(o)
-        o2 = serializer.loads(s)
-        self.assertEqual(o, o2)
 
 
 class EnumTestCase(unittest.TestCase):
@@ -20,7 +14,12 @@ class EnumTestCase(unittest.TestCase):
         self.assertIs(r, r2)
 
 
-class MessageTestCase(unittest.TestCase, EqualityMixIn):
+class MessageTestCase(unittest.TestCase):
+    def equal_after_processing(self, o):
+        s = serializer.dumps(o)
+        o2 = serializer.loads(s)
+        self.assertEqual(o, o2)
+
     def test_message(self):
         m = message.Ping()
         self.equal_after_processing(m)

@@ -32,7 +32,7 @@ elif sys.platform == 'win32':
         import pyelliptic
         if not CIPHERNAMES.issubset(set(pyelliptic.Cipher.get_all_cipher())):
             raise Exception("Required cyphers not found")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         has_openssl = False
 
     if not has_openssl:

@@ -13,6 +13,7 @@ import cbor2.encoder
 import cbor2.types
 import pytz
 
+
 logger = logging.getLogger('golem.core.simpleserializer')
 
 
@@ -25,9 +26,9 @@ def encode_message(encoder, value, fp):
     encoder.encode(cbor2.types.CBORTag(MESSAGE_TAG, serialized_msg), fp)
 
 
-def decode_message(decoder, value, fp, shareable_index):
-    from golem_messages import message
-    return message.Message.deserialize(
+def decode_message(decoder, value, fp, shareable_index):  # noqa pylint: disable=unused-argument
+    from golem_messages.message import base  # pylint: disable=cyclic-import
+    return base.Message.deserialize(
         value,
         decrypt_func=None,
         check_time=False
@@ -164,7 +165,7 @@ class DictCoder:
 
     @classmethod
     def _is_builtin(cls, obj):
-        if not type(obj) in cls.builtin_types:
+        if not type(obj) in cls.builtin_types:  # noqa This class will be refactored out in v1.6 pylint: disable=unidiomatic-typecheck
             return False
         return not isinstance(obj, types.InstanceType)
 
@@ -196,7 +197,7 @@ def encode_object(encoder, value, fp):
         DeprecationWarning
     )
     if value is None:
-        return None
+        return
     obj_dict = CBORCoder.obj_to_dict(value)
     encoder.encode_semantic(
         OBJECT_TAG, obj_dict, fp,
@@ -204,7 +205,7 @@ def encode_object(encoder, value, fp):
     )
 
 
-def decode_object(decoder, value, fp, shareable_index=None):
+def decode_object(decoder, value, fp, shareable_index=None):  # noqa pylint: disable=unused-argument
     obj = CBORCoder.obj_from_dict(value)
     return obj
 
