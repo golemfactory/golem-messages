@@ -1,10 +1,17 @@
 import collections
+import collections.abc
 import enum
 import functools
 import inspect
 import logging
 import sys
 import types
+import warnings
+
+import cbor2
+import cbor2.encoder
+import cbor2.types
+import pytz
 
 import cbor2
 import cbor2.types
@@ -29,6 +36,17 @@ def decode_message(decoder, value, fp, shareable_index):  # noqa pylint: disable
         decrypt_func=None,
         check_time=False
     )
+
+
+def encode_dict(encoder, value, fp):
+    """Modified cbor2.CBOREncoder.encode_map that encodes dicts sorted by keys
+
+       This is needed for correct signing and verification."""
+
+    fp.write(cbor2.encoder.encode_length(0xa0, len(value)))
+    for key in sorted(value):
+        encoder.encode(key, fp)
+        encoder.encode(value[key], fp)
 
 
 def to_unicode(value):
@@ -174,6 +192,13 @@ class CBORCoder(DictCoder):
 
 
 def encode_object(encoder, value, fp):
+    warnings.warn(
+        "Serialization of custom objects({class_}) is deprecated"
+        " and will be removed in 1.6".format(
+            class_=type(value),
+        ),
+        DeprecationWarning
+    )
     if value is None:
         return
     obj_dict = CBORCoder.obj_to_dict(value)
@@ -189,6 +214,8 @@ def decode_object(decoder, value, fp, shareable_index=None):  # noqa pylint: dis
 
 
 ENCODERS = collections.OrderedDict((
+    (dict, encode_dict),
+    (collections.abc.Mapping, encode_dict),
     (('golem_messages.message', 'Message'), encode_message),
     (object, encode_object),
 ))
