@@ -6,7 +6,6 @@ import hashlib
 import logging
 import struct
 import time
-from typing import Optional
 
 import golem_messages
 
@@ -53,6 +52,8 @@ class ComputeTaskDef(datastructures.FrozenDict):
         'short_description': '',
         'return_address': '',
         'return_port': 0,
+        # task_owner is a dict from golem.network.p2p.node.Node.to_dict()
+        # - requestor
         'task_owner': None,
         'key_id': 0,
         'working_directory': '',
@@ -62,7 +63,7 @@ class ComputeTaskDef(datastructures.FrozenDict):
     }
 
 
-def _fake_sign(s):
+def _fake_sign(s):  # pylint: disable=unused-argument
     return b'\0' * Message.SIG_LEN
 
 
@@ -432,9 +433,9 @@ class Peers(Message):
 
     __slots__ = ['peers'] + Message.__slots__
 
-    def __init__(self, peers=None, **kwargs):
-        self.peers = peers or []
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.peers = self.peers or []
 
 
 class GetTasks(Message):
@@ -448,14 +449,14 @@ class Tasks(Message):
 
     __slots__ = ['tasks'] + Message.__slots__
 
-    def __init__(self, tasks=None, **kwargs):
+    def __init__(self, **kwargs):
         """
         Create message containing information about tasks
         :param list tasks: list of tasks information (subset of
                            taskserver.get_tasks_headers())
         """
-        self.tasks = tasks or []
         super().__init__(**kwargs)
+        self.tasks = self.tasks or []
 
 
 class RemoveTask(Message):
@@ -476,13 +477,13 @@ class ResourcePeers(Message):
 
     __slots__ = ['resource_peers'] + Message.__slots__
 
-    def __init__(self, resource_peers=None, **kwargs):
+    def __init__(self, **kwargs):
         """
         Create message containing information about resource peers
         :param list resource_peers: list of peers information
         """
-        self.resource_peers = resource_peers or []
         super().__init__(**kwargs)
+        self.resource_peers = self.resource_peers or []
 
 
 class Degree(Message):
@@ -496,13 +497,13 @@ class Gossip(Message):
 
     __slots__ = ['gossip'] + Message.__slots__
 
-    def __init__(self, gossip=None, **kwargs):
+    def __init__(self, **kwargs):
         """
         Create gossip message
         :param list gossip: gossip to be send
         """
-        self.gossip = gossip or []
         super().__init__(**kwargs)
+        self.gossip = self.gossip or []
 
 
 class StopGossip(Message):
@@ -565,7 +566,24 @@ class WantToComputeTask(Message):
 class TaskToCompute(Message):
     TYPE = TASK_MSG_BASE + 2
 
-    __slots__ = ['compute_task_def'] + Message.__slots__
+    __slots__ = [
+        'requestor_id',
+        'provider_id',
+        'compute_task_def',
+    ] + Message.__slots__
+
+    def load_slots(self, *args, **kwargs):
+        super().load_slots(*args, **kwargs)
+        self.validate_compute_task_def(self.compute_task_def)
+
+    def validate_compute_task_def(self, value):
+        try:
+            node_key = self.compute_task_def['task_owner']['key']
+        except (TypeError, KeyError):
+            return
+        if node_key != self.requestor_id:
+            errmsg = "requestor_id: {} != compute_task_def['task_owner']['key']"
+            raise ValueError(errmsg.format(self.requestor_id, node_key))
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
@@ -861,7 +879,8 @@ class ResourceHandshakeStart(Message):
     TYPE = RESOURCE_MSG_BASE + 8
 
     __slots__ = [
-        'resource'
+        'resource',
+        'options'
     ] + Message.__slots__
 
 
@@ -995,6 +1014,33 @@ class VerdictReportComputedTask(Message):
         return value
 
 
+class FileTransferToken(Message):
+    TYPE = CONCENT_MSG_BASE + 5
+
+    __slots__ = [
+        'subtask_id',
+        'token_expiration_deadline',
+        'storage_cluster_address',
+        'authorized_client_public_key',
+        'operation',
+        'files',
+    ] + Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        if key == 'files':
+            value = [FileTransferToken.FileInfo(f) for f in value]
+        return value
+
+    class FileInfo(datastructures.FrozenDict):
+        """Represents SUBTASK metadata."""
+        ITEMS = {
+            'path': '',
+            'checksum': '',
+            'size': 0,
+        }
+
+
 def deserialize_verify(key, value, verify_key, verify_class):
     if key == verify_key:
         verify_slot_type(value, verify_class)
@@ -1101,6 +1147,7 @@ def init_messages():
             AckReportComputedTask,
             RejectReportComputedTask,
             VerdictReportComputedTask,
+            FileTransferToken,
             ):
         if message_class.TYPE in registered_message_types:
             raise RuntimeError(

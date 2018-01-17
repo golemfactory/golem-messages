@@ -204,6 +204,7 @@ dumps = functools.partial(
     encoders=ENCODERS,
     datetime_as_timestamp=True,
     timezone=pytz.utc,
+    value_sharing=False,
 )
 
 
