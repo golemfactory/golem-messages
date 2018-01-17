@@ -66,7 +66,7 @@ class MessagesTestCase(unittest.TestCase):
         ]
         self.assertEqual(expected, msg.slots())
 
-    @mock.patch('golem_messages.message.verify_time')
+    @mock.patch('golem_messages.message.base.verify_time')
     def test_timestamp_and_timezones(self, vft_mock):
         epoch_t = 1475238345.0
 

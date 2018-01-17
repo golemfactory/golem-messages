@@ -1,3 +1,7 @@
+[MASTER]
+
+ignore=cryptography.py
+
 [MESSAGES CONTROL]
 disable=invalid-name,                   # Pylint is overzealous here
         missing-docstring,              # We don't need a docstring for obvious things!
@@ -15,3 +19,4 @@ ignored-classes=optparse.Values,
                 _thread._local,
                 twisted.internet.reactor,
                 pathlib.PurePath,
+                types,
