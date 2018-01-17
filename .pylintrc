@@ -1,5 +1,6 @@
 [MASTER]
 
+# https://github.com/golemfactory/golem-messages/issues/89
 ignore=cryptography.py
 
 [MESSAGES CONTROL]
