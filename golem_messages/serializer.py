@@ -13,9 +13,6 @@ import cbor2.encoder
 import cbor2.types
 import pytz
 
-import cbor2
-import cbor2.types
-import pytz
 
 logger = logging.getLogger('golem.core.simpleserializer')
 
