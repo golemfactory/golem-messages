@@ -188,8 +188,15 @@ class Message():
         :return: datastructures.MessageHeader
         """
         assert len(data) == cls.HDR_LEN
-        result = datastructures.MessageHeader(*struct.unpack('!HQ?', data))
-        return result
+        header = datastructures.MessageHeader(*struct.unpack('!HQ?', data))
+
+        if header.timestamp > 10**10:
+            # Old timestamp format. Remove after 0.11 golem core release
+            timestamp = header.timestamp // 10**6
+            header = datastructures.MessageHeader(header[0], timestamp,
+                                                  header[2])
+
+        return header
 
     @classmethod
     def deserialize(cls, msg, decrypt_func, check_time=True, verify_func=None): # noqa TODO: #52 pylint: disable=inconsistent-return-statements
@@ -221,11 +228,6 @@ class Message():
             logger.info("Message error: invalid data: %r", exc)
             logger.debug("Failing message hdr: %r data: %r", raw_header, data)
             return  # TODO: #52 pylint: disable=inconsistent-return-statements
-
-        if header.timestamp > 10**10:
-            # Old timestamp format. Remove after 0.11 golem core release
-            header.timestamp /= 10**6
-            header.timestamp = int(header.timestamp)
 
         if check_time:
             try:
