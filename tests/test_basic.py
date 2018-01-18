@@ -1,12 +1,13 @@
 import calendar
 import datetime
+import unittest
+import unittest.mock as mock
+
 from freezegun import freeze_time
 import golem_messages
 from golem_messages import exceptions
 from golem_messages import message
 from golem_messages import serializer
-import unittest
-import unittest.mock as mock
 
 one_second = datetime.timedelta(seconds=1)
 
@@ -28,10 +29,10 @@ class BasicTestCase(unittest.TestCase):
                                    self.ecc.raw_pubkey)
         self.assertEqual(msg, msg2)
 
-    """ Deserialization should work even if we haven't created any message first
-    """
-    @mock.patch('golem_messages.message.verify_time')
-    def test_deserialization(self, verify_time):
+    @mock.patch('golem_messages.message.base.verify_time')
+    def test_deserialization(self, verify_time):  # pylint: disable=no-self-use
+        """Deserialization should work even if we haven't created any messages
+        """
         verify_time.return_value = True
         serialized_ping = b'\x03\xe9\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
             b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
@@ -53,15 +54,14 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(dumps_mock.call_count, 2)
 
         dumps_mock.reset_mock()
-        msg2 = golem_messages.load(payload, self.ecc.raw_privkey,
-                                   self.ecc.raw_pubkey)
+        golem_messages.load(payload, self.ecc.raw_privkey, self.ecc.raw_pubkey)
         # One call for hash_header
         dumps_mock.assert_called_once_with(mock.ANY)
 
     def test_deserialize_verify(self):
         """Basic verificating deserializer"""
         ping = message.Ping()
-        result = message.deserialize_verify(
+        result = message.base.deserialize_verify(
             key='ping',
             verify_key='ping',
             value=ping,
@@ -71,7 +71,7 @@ class BasicTestCase(unittest.TestCase):
 
     def test_deserialize_verify_different_key(self):
         task_to_compute = message.TaskToCompute()
-        result = message.deserialize_verify(
+        result = message.base.deserialize_verify(
             key='abracadabra',
             verify_key='ping',
             value=task_to_compute,
@@ -82,7 +82,7 @@ class BasicTestCase(unittest.TestCase):
     def test_deserialize_verify_fail(self):
         task_to_compute = message.TaskToCompute()
         with self.assertRaises(TypeError):
-            result = message.deserialize_verify(
+            message.base.deserialize_verify(
                 key='ping',
                 verify_key='ping',
                 value=task_to_compute,
@@ -107,7 +107,7 @@ class BasicTestCase(unittest.TestCase):
         )
         self.assertEqual(msg_slot.golem_messages_version, version_slot)
 
-    @mock.patch("golem_messages.message.RandVal")
+    @mock.patch("golem_messages.message.base.RandVal")
     def test_init_messages_error(self, mock_message_rand_val):
         copy_registered = dict(message.registered_message_types)
         message.registered_message_types = {}
@@ -159,21 +159,21 @@ class TimestampTestCase(unittest.TestCase):
         timestamp = dt_to_ts(
             now - (self.mtd * 2) - self.mmtt - (self.mat * 2)
         )
-        message.verify_time(timestamp)
+        message.base.verify_time(timestamp)
 
-    def test_timestamp_within_range_middle(self):
+    def test_timestamp_within_range_middle(self):  # pylint: disable=no-self-use
         """Proper timestamp inside"""
 
         now = datetime.datetime.utcnow()
         timestamp = dt_to_ts(now)
-        message.verify_time(timestamp)
+        message.base.verify_time(timestamp)
 
     def test_timestamp_within_range_high(self):
         """Proper timestamp high border"""
 
         now = datetime.datetime.utcnow()
         timestamp = dt_to_ts(now + (self.mtd * 2))
-        message.verify_time(timestamp)
+        message.base.verify_time(timestamp)
 
     def test_ancient_timestamp(self):
         """Message too old"""
@@ -183,7 +183,7 @@ class TimestampTestCase(unittest.TestCase):
             now - (self.mtd * 2) - self.mmtt - (self.mat * 2) - one_second
         )
         with self.assertRaises(exceptions.MessageTooOldError):
-            message.verify_time(timestamp)
+            message.base.verify_time(timestamp)
 
     def test_timestamp_from_future(self):
         """Message from the future"""
@@ -191,9 +191,9 @@ class TimestampTestCase(unittest.TestCase):
         now = datetime.datetime.utcnow()
         timestamp = dt_to_ts(now + (self.mtd * 2) + one_second)
         with self.assertRaises(exceptions.MessageFromFutureError):
-            message.verify_time(timestamp)
+            message.base.verify_time(timestamp)
 
-    @mock.patch('golem_messages.message.verify_time')
+    @mock.patch('golem_messages.message.base.verify_time')
     def test_deserialization_with_time_verification(self, vft_mock):
         msg = message.Ping()
         payload = golem_messages.dump(msg, self.ecc.raw_privkey,
@@ -208,7 +208,7 @@ class TimestampTestCase(unittest.TestCase):
             timestamp_mock.side_effect = err
             with self.assertRaises(exceptions.TimestampError):
                 msg = message.Ping()
-                message.verify_time(msg.timestamp)
+                message.base.verify_time(msg.timestamp)
 
 
 class SlotSerializationTestCase(unittest.TestCase):
@@ -241,7 +241,9 @@ class SlotSerializationTestCase(unittest.TestCase):
 
 class NestedMessageTestCase(unittest.TestCase):
     def test_valid_task_to_compute(self):
-        TEST_SIG = b'jak przystalo na bistro czesto sie zmienia i jest wypisywane na tablicy w lokalu'[:message.Message.SIG_LEN]  # noqa
+        TEST_SIG = (b'jak przystalo na bistro czesto sie zmienia'
+                    b'i jest wypisywane na tablicy w lokalu'
+                   )[:message.Message.SIG_LEN]  # noqa
         for class_ in message.registered_message_types.values():
             if 'task_to_compute' not in class_.__slots__:
                 continue

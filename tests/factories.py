@@ -1,10 +1,12 @@
 import factory
 import uuid
 
-from golem_messages.message import (
-    ComputeTaskDef, TaskToCompute,
-    SubtaskResultRejected, SubtaskResultVerify, AckSubtaskResultVerify,
-    SubtaskResultSettled,
+from golem_messages.message.tasks import (
+    ComputeTaskDef, TaskToCompute, SubtaskResultRejected
+)
+
+from golem_messages.message.concents import (
+    SubtaskResultVerify, AckSubtaskResultVerify, SubtaskResultSettled,
 )
 
 class SlotsFactory(factory.Factory):

@@ -1,3 +1,4 @@
+# pylint: disable=no-self-use
 # Based on:
 # https://github.com/ethereum/pydevp2p/blob/develop/devp2p/tests/test_crypto.py
 #

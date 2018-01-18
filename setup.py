@@ -22,7 +22,10 @@ setup(
     url='https://github.com/golemfactory/golem-messages',
     maintainer='The Golem team',
     maintainer_email='tech@golem.network',
-    packages=['golem_messages'],
+    packages=[
+        'golem_messages',
+        'golem_messages.message',
+    ],
     package_data={
         'golem_messages': [
             'RELEASE-VERSION',
@@ -39,6 +42,7 @@ setup(
     ],
     tests_require=[
         'pycodestyle',
+        'pylint',
         'freezegun',
     ],
 )
