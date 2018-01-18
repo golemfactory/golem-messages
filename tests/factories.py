@@ -9,6 +9,7 @@ from golem_messages.message.concents import (
     SubtaskResultVerify, AckSubtaskResultVerify, SubtaskResultSettled,
 )
 
+
 class SlotsFactory(factory.Factory):
     """
     Generic factory that produces a tuple representing the slots dictionary
@@ -23,6 +24,7 @@ class SlotsFactory(factory.Factory):
     SubtaskResultVerifyFactory(slots__subtask_id='some-id')
 
     """
+
     class Meta:
         model = tuple
 
@@ -30,8 +32,10 @@ class SlotsFactory(factory.Factory):
     def _create(cls, model_class, *args, **kwargs):
         return kwargs.items()
 
+
 class TaskOwnerFactory(factory.DictFactory):
     key = factory.Sequence(lambda n: 'node {}'.format(n))
+
 
 class ComputeTaskDefFactory(factory.DictFactory):
     class Meta:
@@ -39,9 +43,10 @@ class ComputeTaskDefFactory(factory.DictFactory):
 
     task_owner = factory.SubFactory(TaskOwnerFactory)
 
+
 class TaskToComputeSlotsFactory(SlotsFactory):
-    requestor_id = factory.Sequence(lambda n:'master {}'.format(n))
-    provider_id = factory.Sequence(lambda n:'servant {}'.format(n))
+    requestor_id = factory.Sequence(lambda n: 'master {}'.format(n))
+    provider_id = factory.Sequence(lambda n: 'servant {}'.format(n))
 
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
 
@@ -58,17 +63,21 @@ class TaskToComputeSlotsFactory(SlotsFactory):
                                          ComputeTaskDefFactory())
             kwargs['requestor_id'] = task_def.get('task_owner').get('key')
 
+
 class TaskToComputeFactory(factory.Factory):
     class Meta:
         model = TaskToCompute
 
     slots = factory.SubFactory(TaskToComputeSlotsFactory)
 
+
 class SubtaskResultRejectedFactory(factory.Factory):
     class Meta:
         model = SubtaskResultRejected
 
-    slots = factory.SubFactory(SlotsFactory, subtask_id='test-si-{}'.format(uuid.uuid4()))
+    slots = factory.SubFactory(SlotsFactory,
+                               subtask_id='test-si-{}'.format(uuid.uuid4()))
+
 
 class SubtaskResultVerifySlotsFactory(SlotsFactory):
     class Meta:
@@ -76,17 +85,20 @@ class SubtaskResultVerifySlotsFactory(SlotsFactory):
 
     subtask_result_rejected = factory.SubFactory(SubtaskResultRejectedFactory)
 
+
 class SubtaskResultVerifyFactory(factory.Factory):
     class Meta:
         model = SubtaskResultVerify
 
     slots = factory.SubFactory(SubtaskResultVerifySlotsFactory)
 
+
 class AckSubtaskResultVerifySlotsFactory(SlotsFactory):
     class Meta:
         model = tuple
 
-    subtask_result_verify  = factory.SubFactory(SubtaskResultVerifyFactory)
+    subtask_result_verify = factory.SubFactory(SubtaskResultVerifyFactory)
+
 
 class AckSubtaskResultVerifyFactory(factory.Factory):
     class Meta:
@@ -94,12 +106,14 @@ class AckSubtaskResultVerifyFactory(factory.Factory):
 
     slots = factory.SubFactory(AckSubtaskResultVerifySlotsFactory)
 
+
 class SubtaskResultSettledSlotsFactory(SlotsFactory):
     class Meta:
         model = tuple
 
     origin = SubtaskResultSettled.Origin.ResultsAcceptedTimeout
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
+
 
 class SubtaskResultSettledFactory(factory.Factory):
     class Meta:
