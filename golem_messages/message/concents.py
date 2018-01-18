@@ -152,17 +152,26 @@ class ForceGetTaskResult(base.Message):
 
     __slots__ = [
         'report_computed_task',
+        'force_report_computed_task',
     ] + base.Message.__slots__
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
-        return tasks.deserialize_report_computed_task(key, value)
+        value = tasks.deserialize_report_computed_task(key, value)
+        value = deserialize_force_report_computed_task(key, value)
+        return value
 
 
 class ForceGetTaskResultAck(base.Message):
     TYPE = CONCENT_MSG_BASE + 7
 
-    __slots__ = base.Message.__slots__
+    __slots__ = [
+        'force_get_task_result',
+    ] + base.Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_force_get_task_result(key, value)
 
 
 class ForceGetTaskResultFailed(base.Message):
@@ -182,6 +191,7 @@ class ForceGetTaskResultRejected(base.Message):
 
     __slots__ = [
         'reason',
+        'force_get_task_result',
     ] + base.Message.__slots__
 
     class REASON(enum.Enum):
@@ -191,6 +201,10 @@ class ForceGetTaskResultRejected(base.Message):
     ENUM_SLOTS = {
         'reason': REASON,
     }
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_force_get_task_result(key, value)
 
 
 class ForceGetTaskResultUpload(base.Message):

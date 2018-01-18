@@ -54,11 +54,6 @@ from golem_messages.message.concents import AckReportComputedTask  # noqa
 from golem_messages.message.concents import RejectReportComputedTask  # noqa
 from golem_messages.message.concents import VerdictReportComputedTask  # noqa
 from golem_messages.message.concents import FileTransferToken  # noqa
-from golem_messages.message.concents import ForceGetTaskResult  # noqa
-from golem_messages.message.concents import ForceGetTaskResultAck  # noqa
-from golem_messages.message.concents import ForceGetTaskResultFailed  # noqa
-from golem_messages.message.concents import ForceGetTaskResultRejected  # noqa
-from golem_messages.message.concents import ForceGetTaskResultUpload  # noqa
 # pylint: enable=unused-import
 
 from . import base
@@ -142,11 +137,11 @@ def init_messages():
             concents.RejectReportComputedTask,
             concents.VerdictReportComputedTask,
             concents.FileTransferToken,
-            ForceGetTaskResult,
-            ForceGetTaskResultAck,
-            ForceGetTaskResultFailed,
-            ForceGetTaskResultRejected,
-            ForceGetTaskResultUpload, ):
+            concents.ForceGetTaskResult,
+            concents.ForceGetTaskResultAck,
+            concents.ForceGetTaskResultFailed,
+            concents.ForceGetTaskResultRejected,
+            concents.ForceGetTaskResultUpload, ):
         if message_class.TYPE in registered_message_types:
             raise RuntimeError(
                 "Duplicated message {}.TYPE: {}"
