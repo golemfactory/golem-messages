@@ -15,6 +15,7 @@ from .factories import (
     AckSubtaskResultVerifyFactory, SubtaskResultSettledFactory
 )
 
+
 class InitializationTestCase(unittest.TestCase):
     def test_default_slots(self):
         """Slots initialization to None"""
@@ -372,6 +373,8 @@ class MessagesTestCase(unittest.TestCase):
                 ('compute_task_def', compute_task_def),
             ))
 
+
+class ConcentsTest(unittest.TestCase):
 
     def test_subtask_result_verify(self):
         srr = SubtaskResultRejectedFactory()

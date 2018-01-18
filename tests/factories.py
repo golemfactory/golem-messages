@@ -1,5 +1,5 @@
-import factory
 import uuid
+import factory
 
 from golem_messages.message.tasks import (
     ComputeTaskDef, TaskToCompute, SubtaskResultRejected
@@ -8,6 +8,8 @@ from golem_messages.message.tasks import (
 from golem_messages.message.concents import (
     SubtaskResultVerify, AckSubtaskResultVerify, SubtaskResultSettled,
 )
+
+# pylint: disable=too-few-public-methods,unnecessary-lambda
 
 
 class SlotsFactory(factory.Factory):
@@ -29,7 +31,7 @@ class SlotsFactory(factory.Factory):
         model = tuple
 
     @classmethod
-    def _create(cls, model_class, *args, **kwargs):
+    def _create(cls, *args, **kwargs):  # noqa pylint:disable=unused-argument
         return kwargs.items()
 
 
@@ -51,10 +53,10 @@ class TaskToComputeSlotsFactory(SlotsFactory):
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
 
     @classmethod
-    def _create(cls, model_class, *args, **kwargs):
+    def _create(cls, *args, **kwargs):
         # ensure the `requestor_id` is the same as `task_owner['key']`
         # unless they're explicitly set
-        if 'requestor_id' in kwargs and not 'compute_task_def' in kwargs:
+        if 'requestor_id' in kwargs and 'compute_task_def' not in kwargs:
             kwargs['compute_task_def'] = ComputeTaskDefFactory(
                 task_owner__key=kwargs['requestor_id']
             )
@@ -62,6 +64,8 @@ class TaskToComputeSlotsFactory(SlotsFactory):
             task_def = kwargs.setdefault('compute_task_def',
                                          ComputeTaskDefFactory())
             kwargs['requestor_id'] = task_def.get('task_owner').get('key')
+
+        return super()._create(*args, **kwargs)
 
 
 class TaskToComputeFactory(factory.Factory):
