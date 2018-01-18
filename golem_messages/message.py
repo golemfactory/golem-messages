@@ -673,7 +673,10 @@ class SubtaskResultAccepted(Message):
         'payment_ts'
     ] + Message.__slots__
 
-
+#
+# @todo for consistency's sake, the name of this message class should be:
+#       `SubtaskResultsRejected` (+ that's what's specified in the docs)
+#
 class SubtaskResultRejected(Message):
     TYPE = TASK_MSG_BASE + 11
 
@@ -1041,11 +1044,97 @@ class FileTransferToken(Message):
         }
 
 
+class SubtaskResultVerify(Message):
+    """
+    Message sent from a Provider to the Concent, requesting additional
+    verification in case the result had been rejected by the Requestor
+
+    :param (slot)SubtaskResultRejected subtask_result_rejected:
+           the original reject message
+
+    """
+    TYPE = CONCENT_MSG_BASE + 6
+
+    __slots__ = [
+        'subtask_result_rejected',
+    ] + Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        return deserialize_verify(
+            key,
+            super().deserialize_slot(key, value),
+            verify_key='subtask_result_rejected',
+            verify_class=SubtaskResultRejected
+        )
+
+class AckSubtaskResultVerify(Message):
+    """
+    Message sent from the Concent to the Provider to acknowledge reception
+    of the `SubtaskResultVerify` message
+    """
+    TYPE = CONCENT_MSG_BASE + 7
+
+    __slots__ = [
+        'subtask_result_verify',
+    ] + Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        return deserialize_verify(
+            key,
+            super().deserialize_slot(key, value),
+            verify_key='subtask_result_verify',
+            verify_class=SubtaskResultVerify
+        )
+
+class SubtaskResultSettled(Message):
+    """
+    Message sent from the Concent to both the Provider and the Requestor
+    informing of positive acceptance of the results by the Concent and the
+    fact that the payment has been force-sent to the Provider
+
+    :param (slot)str origin: the origin of the `SubtaskResultVerify` message
+                             that triggered the Concent action
+
+    :param (slot)TaskToCompute task_to_compute: TTF containing the task
+                                                that the settlement
+                                                pertains to
+
+    """
+
+    TYPE = CONCENT_MSG_BASE + 8
+
+    @enum.unique
+    class Origin(enum.Enum):
+        ResultsAcceptedTimeout = 'results_accepted_timeout'
+        ResultsRejected = 'results_rejected'
+
+    ENUM_SLOTS = {
+        'origin': Origin,
+    }
+
+    __slots__ = [
+        'origin',
+        'task_to_compute',
+    ] + Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        return deserialize_verify(
+            key,
+            super().deserialize_slot(key, value),
+            verify_key='task_to_compute',
+            verify_class=TaskToCompute,
+        )
+
 def deserialize_verify(key, value, verify_key, verify_class):
     if key == verify_key:
         verify_slot_type(value, verify_class)
     return value
 
+deserialize_subtask_results_rejected = functools.partial(
+    deserialize_verify,
+    verify_key='subtask_result_rejected',
+    verify_class=SubtaskResultRejected,
+)
 
 deserialize_task_to_compute = functools.partial(
     deserialize_verify,
@@ -1148,6 +1237,9 @@ def init_messages():
             RejectReportComputedTask,
             VerdictReportComputedTask,
             FileTransferToken,
+            SubtaskResultVerify,
+            AckSubtaskResultVerify,
+            SubtaskResultSettled,
             ):
         if message_class.TYPE in registered_message_types:
             raise RuntimeError(
