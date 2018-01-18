@@ -76,21 +76,16 @@ class TaskToCompute(base.Message):
         return value
 
 
-class CannotAssignTask(base.Message):
+class CannotAssignTask(base.AbstractReasonMessage):
     TYPE = TASK_MSG_BASE + 3
 
     __slots__ = [
-        'reason',
         'task_id'
-    ] + base.Message.__slots__
+    ] + base.AbstractReasonMessage.__slots__
 
     class REASON(enum.Enum):
         NotMyTask = 'not_my_task'
         NoMoreSubtasks = 'no_more_subtasks'
-
-    ENUM_SLOTS = {
-        'reason': REASON,
-    }
 
 
 class ReportComputedTask(base.Message):
@@ -227,14 +222,13 @@ class WaitingForResults(base.Message):
     __slots__ = base.Message.__slots__
 
 
-class CannotComputeTask(base.Message):
+class CannotComputeTask(base.AbstractReasonMessage):
     TYPE = TASK_MSG_BASE + 26
 
     __slots__ = [
-        'reason',
         'subtask_id',
         'task_to_compute',
-    ] + base.Message.__slots__
+    ] + base.AbstractReasonMessage.__slots__
 
     class REASON(enum.Enum):
         WrongCTD = 'wrong_ctd'
@@ -243,10 +237,6 @@ class CannotComputeTask(base.Message):
         WrongEnvironment = 'wrong_environment'
         NoSourceCode = 'no_source_code'
         WrongDockerImages = 'wrong_docker_images'
-
-    ENUM_SLOTS = {
-        'reason': REASON,
-    }
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)

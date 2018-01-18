@@ -186,21 +186,16 @@ class ForceGetTaskResultFailed(base.Message):
         return tasks.deserialize_task_to_compute(key, value)
 
 
-class ForceGetTaskResultRejected(base.Message):
+class ForceGetTaskResultRejected(base.AbstractReasonMessage):
     TYPE = CONCENT_MSG_BASE + 9
 
     __slots__ = [
-        'reason',
         'force_get_task_result',
-    ] + base.Message.__slots__
+    ] + base.AbstractReasonMessage.__slots__
 
     class REASON(enum.Enum):
         OperationAlreadyInitiated = 'operation_already_initiated'
         AcceptanceTimeLimitExceeded = 'acceptance_time_limit_exceeded'
-
-    ENUM_SLOTS = {
-        'reason': REASON,
-    }
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
