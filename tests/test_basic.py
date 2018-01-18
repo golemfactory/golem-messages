@@ -128,6 +128,13 @@ class BasicTestCase(unittest.TestCase):
             # slots are properly set in class definition
             assert len(cls.__slots__) >= len(message.Message.__slots__)
 
+    def test_deserialize_old_timestamp(self):
+        # TODO remove after 0.11 release
+        import struct
+        raw_header = struct.pack('!HQ?', 1, 1516272285269707, False)
+        header = message.base.Message.deserialize_header(raw_header)
+        self.assertEqual(header, (1, 1516272285, False))
+
 
 testnow = datetime.datetime.utcnow().replace(microsecond=0)
 
