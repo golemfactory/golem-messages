@@ -136,7 +136,11 @@ def init_messages():
             concents.AckReportComputedTask,
             concents.RejectReportComputedTask,
             concents.VerdictReportComputedTask,
-            concents.FileTransferToken, ):
+            concents.FileTransferToken,
+            concents.SubtaskResultVerify,
+            concents.AckSubtaskResultVerify,
+            concents.SubtaskResultSettled,
+    ):
         if message_class.TYPE in registered_message_types:
             raise RuntimeError(
                 "Duplicated message {}.TYPE: {}"

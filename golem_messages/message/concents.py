@@ -146,6 +146,87 @@ class FileTransferToken(base.Message):
             'size': 0,
         }
 
+class SubtaskResultVerify(base.Message):
+    """
+    Message sent from a Provider to the Concent, requesting additional
+    verification in case the result had been rejected by the Requestor
+
+    :param (slot)SubtaskResultRejected subtask_result_rejected:
+           the original reject message
+
+    """
+    TYPE = CONCENT_MSG_BASE + 6
+
+    __slots__ = [
+        'subtask_result_rejected',
+    ] + base.Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        return base.deserialize_verify(
+            key,
+            super().deserialize_slot(key, value),
+            verify_key='subtask_result_rejected',
+            verify_class=tasks.SubtaskResultRejected
+        )
+
+class AckSubtaskResultVerify(base.Message):
+    """
+    Message sent from the Concent to the Provider to acknowledge reception
+    of the `SubtaskResultVerify` message
+    """
+    TYPE = CONCENT_MSG_BASE + 7
+
+    __slots__ = [
+        'subtask_result_verify',
+    ] + base.Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        return base.deserialize_verify(
+            key,
+            super().deserialize_slot(key, value),
+            verify_key='subtask_result_verify',
+            verify_class=SubtaskResultVerify
+        )
+
+class SubtaskResultSettled(base.Message):
+    """
+    Message sent from the Concent to both the Provider and the Requestor
+    informing of positive acceptance of the results by the Concent and the
+    fact that the payment has been force-sent to the Provider
+
+    :param (slot)str origin: the origin of the `SubtaskResultVerify` message
+                             that triggered the Concent action
+
+    :param (slot)TaskToCompute task_to_compute: TTF containing the task
+                                                that the settlement
+                                                pertains to
+
+    """
+
+    TYPE = CONCENT_MSG_BASE + 8
+
+    @enum.unique
+    class Origin(enum.Enum):
+        ResultsAcceptedTimeout = 'results_accepted_timeout'
+        ResultsRejected = 'results_rejected'
+
+    ENUM_SLOTS = {
+        'origin': Origin,
+    }
+
+    __slots__ = [
+        'origin',
+        'task_to_compute',
+    ] + base.Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        return base.deserialize_verify(
+            key,
+            super().deserialize_slot(key, value),
+            verify_key='task_to_compute',
+            verify_class=tasks.TaskToCompute,
+        )
+
 
 deserialize_task_failure = functools.partial(
     base.deserialize_verify,

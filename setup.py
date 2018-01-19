@@ -37,6 +37,7 @@ setup(
         'cbor2==3.0.4',
         'coincurve>=5.0.1',
         'ethereum==1.6.1',
+        'factory-boy==2.9.2',
         'pyelliptic==1.5.7',
         'pytz',
     ],
