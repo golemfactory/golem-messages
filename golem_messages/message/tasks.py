@@ -154,11 +154,18 @@ class SubtaskResultAccepted(base.Message):
         'payment_ts'
     ] + base.Message.__slots__
 
+#
+# @todo for consistency's sake, the name of this message class should be:
+#       `SubtaskResultsRejected` (+ that's what's specified in the docs)
+#
+#       https://github.com/golemfactory/golem-messages/issues/96
+#
 
 class SubtaskResultRejected(base.Message):
     TYPE = TASK_MSG_BASE + 11
 
     __slots__ = ['subtask_id'] + base.Message.__slots__
+
 
 
 class DeltaParts(base.Message):
