@@ -2,11 +2,14 @@ import uuid
 import factory
 
 from golem_messages.message.tasks import (
-    ComputeTaskDef, TaskToCompute, SubtaskResultRejected
+    ComputeTaskDef, TaskToCompute, SubtaskResultRejected, ReportComputedTask,
 )
 
 from golem_messages.message.concents import (
     SubtaskResultVerify, AckSubtaskResultVerify, SubtaskResultSettled,
+    ForceGetTaskResult, ForceGetTaskResultAck, ForceGetTaskResultFailed,
+    ForceGetTaskResultRejected, ForceGetTaskResultUpload,
+    ForceReportComputedTask, FileTransferToken,
 )
 
 # pylint: disable=too-few-public-methods,unnecessary-lambda
@@ -83,6 +86,34 @@ class SubtaskResultRejectedFactory(factory.Factory):
                                subtask_id='test-si-{}'.format(uuid.uuid4()))
 
 
+class ReportComputedTaskSlotsFactory(SlotsFactory):
+    class Meta:
+        model = tuple
+
+    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+
+
+class ReportComputedTaskFactory(factory.Factory):
+    class Meta:
+        model = ReportComputedTask
+
+    slots = factory.SubFactory(ReportComputedTaskSlotsFactory)
+
+
+class ForceReportComputedTaskSlotsFactory(SlotsFactory):
+    class Meta:
+        model = tuple
+
+    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+
+
+class ForceReportComputedTaskFactory(factory.Factory):
+    class Meta:
+        model = ForceReportComputedTask
+
+    slots = factory.SubFactory(ForceReportComputedTaskSlotsFactory)
+
+
 class SubtaskResultVerifySlotsFactory(SlotsFactory):
     class Meta:
         model = tuple
@@ -140,3 +171,84 @@ class SubtaskResultSettledFactory(factory.Factory):
                 SubtaskResultSettled.Origin.ResultsRejected
         })
         return cls(*args, **kwargs)
+
+
+class ForceGetTaskResultSlotsFactory(SlotsFactory):
+    class Meta:
+        model = tuple
+
+    report_computed_task = factory.SubFactory(ReportComputedTaskFactory)
+    force_report_computed_task = factory.SubFactory(
+        ForceReportComputedTaskFactory)
+
+
+class ForceGetTaskResultFactory(factory.Factory):
+    class Meta:
+        model = ForceGetTaskResult
+
+    slots = factory.SubFactory(ForceGetTaskResultSlotsFactory)
+
+
+class ForceGetTaskResultAckSlotsFactory(SlotsFactory):
+    class Meta:
+        model = tuple
+
+    force_get_task_result = factory.SubFactory(ForceGetTaskResultFactory)
+
+
+class ForceGetTaskResultAckFactory(factory.Factory):
+    class Meta:
+        model = ForceGetTaskResultAck
+
+    slots = factory.SubFactory(ForceGetTaskResultAckSlotsFactory)
+
+
+class ForceGetTaskResultFailedSlotsFactory(SlotsFactory):
+    class Meta:
+        model = tuple
+
+    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+
+
+class ForceGetTaskResultFailedFactory(factory.Factory):
+    class Meta:
+        model = ForceGetTaskResultFailed
+
+    slots = factory.SubFactory(ForceGetTaskResultFailedSlotsFactory)
+
+
+class ForceGetTaskResultRejectedSlotsFactory(SlotsFactory):
+    class Meta:
+        model = tuple
+
+    force_get_task_result = factory.SubFactory(ForceGetTaskResultFactory)
+
+
+class ForceGetTaskResultRejectedFactory(factory.Factory):
+    class Meta:
+        model = ForceGetTaskResultRejected
+
+    slots = factory.SubFactory(ForceGetTaskResultRejectedSlotsFactory)
+
+
+class FileTransferTokenFactory(factory.Factory):
+    class Meta:
+        model = FileTransferToken
+
+    slots = factory.SubFactory(SlotsFactory,
+                               subtask_id='test-si-{}'.format(uuid.uuid4()))
+
+
+class ForceGetTaskResultUploadSlotsFactory(SlotsFactory):
+    class Meta:
+        model = tuple
+
+    force_get_task_result = factory.SubFactory(ForceGetTaskResultFactory)
+    file_transfer_token = factory.SubFactory(FileTransferTokenFactory)
+
+
+class ForceGetTaskResultUploadFactory(factory.Factory):
+    class Meta:
+        model = ForceGetTaskResultUpload
+
+    slots = factory.SubFactory(ForceGetTaskResultUploadSlotsFactory)
