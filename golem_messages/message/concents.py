@@ -23,7 +23,7 @@ class ServiceRefused(base.AbstractReasonMessage):
     __slots__ = [
         'subtask_id',
         'task_to_compute',
-    ] + base.Message.__slots__
+    ] + base.AbstractReasonMessage.__slots__
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
