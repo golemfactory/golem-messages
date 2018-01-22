@@ -308,6 +308,18 @@ class Message():
         return (name not in Message.__slots__) and (name in self.__slots__)
 
 
+class AbstractReasonMessage(Message):
+    __slots__ = [
+        'reason',
+    ] + Message.__slots__
+
+    @property
+    def ENUM_SLOTS(self):
+        return {
+            'reason': self.REASON,
+        }
+
+
 ##################
 # Basic Messages #
 ##################
@@ -347,11 +359,11 @@ class RandVal(Message):
     __slots__ = ['rand_val'] + Message.__slots__
 
 
-class Disconnect(Message):
+class Disconnect(AbstractReasonMessage):
     TYPE = 2
     ENCRYPT = False
 
-    __slots__ = ['reason'] + Message.__slots__
+    __slots__ = AbstractReasonMessage.__slots__
 
     class REASON(enum.Enum):
         DuplicatePeers = 'duplicate_peers'
@@ -366,10 +378,6 @@ class Disconnect(Message):
         ResourceHandshakeFailure = 'resource_handshake'
         KeyNotDifficult = 'key_not_difficult'
         Bootstrap = 'bootstrap'
-
-    ENUM_SLOTS = {
-        'reason': REASON,
-    }
 
 
 class ChallengeSolution(Message):

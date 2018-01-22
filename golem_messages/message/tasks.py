@@ -76,21 +76,16 @@ class TaskToCompute(base.Message):
         return value
 
 
-class CannotAssignTask(base.Message):
+class CannotAssignTask(base.AbstractReasonMessage):
     TYPE = TASK_MSG_BASE + 3
 
     __slots__ = [
-        'reason',
         'task_id'
-    ] + base.Message.__slots__
+    ] + base.AbstractReasonMessage.__slots__
 
     class REASON(enum.Enum):
         NotMyTask = 'not_my_task'
         NoMoreSubtasks = 'no_more_subtasks'
-
-    ENUM_SLOTS = {
-        'reason': REASON,
-    }
 
 
 class ReportComputedTask(base.Message):
@@ -114,6 +109,8 @@ class ReportComputedTask(base.Message):
         'extra_data',
         'eth_account',
         'task_to_compute',
+        'size',
+        'checksum',
     ] + base.Message.__slots__
 
     def deserialize_slot(self, key, value):
@@ -232,14 +229,13 @@ class WaitingForResults(base.Message):
     __slots__ = base.Message.__slots__
 
 
-class CannotComputeTask(base.Message):
+class CannotComputeTask(base.AbstractReasonMessage):
     TYPE = TASK_MSG_BASE + 26
 
     __slots__ = [
-        'reason',
         'subtask_id',
         'task_to_compute',
-    ] + base.Message.__slots__
+    ] + base.AbstractReasonMessage.__slots__
 
     class REASON(enum.Enum):
         WrongCTD = 'wrong_ctd'
@@ -248,10 +244,6 @@ class CannotComputeTask(base.Message):
         WrongEnvironment = 'wrong_environment'
         NoSourceCode = 'no_source_code'
         WrongDockerImages = 'wrong_docker_images'
-
-    ENUM_SLOTS = {
-        'reason': REASON,
-    }
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
@@ -298,4 +290,10 @@ deserialize_task_to_compute = functools.partial(
     base.deserialize_verify,
     verify_key='task_to_compute',
     verify_class=TaskToCompute,
+)
+
+deserialize_report_computed_task = functools.partial(
+    base.deserialize_verify,
+    verify_key='report_computed_task',
+    verify_class=ReportComputedTask,
 )

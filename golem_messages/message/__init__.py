@@ -140,6 +140,11 @@ def init_messages():
             concents.SubtaskResultVerify,
             concents.AckSubtaskResultVerify,
             concents.SubtaskResultSettled,
+            concents.ForceGetTaskResult,
+            concents.ForceGetTaskResultAck,
+            concents.ForceGetTaskResultFailed,
+            concents.ForceGetTaskResultRejected,
+            concents.ForceGetTaskResultUpload,
     ):
         if message_class.TYPE in registered_message_types:
             raise RuntimeError(

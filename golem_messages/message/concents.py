@@ -228,6 +228,76 @@ class SubtaskResultSettled(base.Message):
         )
 
 
+class ForceGetTaskResult(base.Message):
+    TYPE = CONCENT_MSG_BASE + 9
+
+    __slots__ = [
+        'report_computed_task',
+        'force_report_computed_task',
+    ] + base.Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        value = tasks.deserialize_report_computed_task(key, value)
+        value = deserialize_force_report_computed_task(key, value)
+        return value
+
+
+class ForceGetTaskResultAck(base.Message):
+    TYPE = CONCENT_MSG_BASE + 10
+
+    __slots__ = [
+        'force_get_task_result',
+    ] + base.Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_force_get_task_result(key, value)
+
+
+class ForceGetTaskResultFailed(base.Message):
+    TYPE = CONCENT_MSG_BASE + 11
+
+    __slots__ = [
+        'task_to_compute',
+    ] + base.Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return tasks.deserialize_task_to_compute(key, value)
+
+
+class ForceGetTaskResultRejected(base.AbstractReasonMessage):
+    TYPE = CONCENT_MSG_BASE + 12
+
+    __slots__ = [
+        'force_get_task_result',
+    ] + base.AbstractReasonMessage.__slots__
+
+    class REASON(enum.Enum):
+        OperationAlreadyInitiated = 'operation_already_initiated'
+        AcceptanceTimeLimitExceeded = 'acceptance_time_limit_exceeded'
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        return deserialize_force_get_task_result(key, value)
+
+
+class ForceGetTaskResultUpload(base.Message):
+    TYPE = CONCENT_MSG_BASE + 13
+
+    __slots__ = [
+        'force_get_task_result',
+        'file_transfer_token',
+    ] + base.Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        value = deserialize_force_get_task_result(key, value)
+        value = deserialize_file_transfer_token(key, value)
+        return value
+
+
 deserialize_task_failure = functools.partial(
     base.deserialize_verify,
     verify_key='task_failure',
@@ -250,4 +320,16 @@ deserialize_ack_report_computed_task = functools.partial(
     base.deserialize_verify,
     verify_key='ack_report_computed_task',
     verify_class=AckReportComputedTask,
+)
+
+deserialize_force_get_task_result = functools.partial(
+    base.deserialize_verify,
+    verify_key='force_get_task_result',
+    verify_class=ForceGetTaskResult,
+)
+
+deserialize_file_transfer_token = functools.partial(
+    base.deserialize_verify,
+    verify_key='file_transfer_token',
+    verify_class=FileTransferToken,
 )

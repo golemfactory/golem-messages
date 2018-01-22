@@ -11,8 +11,12 @@ from golem_messages import shortcuts
 
 from .factories import (
     TaskToComputeFactory,
+    ReportComputedTaskFactory, ForceReportComputedTaskFactory,
     SubtaskResultRejectedFactory, SubtaskResultVerifyFactory,
-    AckSubtaskResultVerifyFactory, SubtaskResultSettledFactory
+    AckSubtaskResultVerifyFactory, SubtaskResultSettledFactory,
+    ForceGetTaskResultFactory, ForceGetTaskResultAckFactory,
+    ForceGetTaskResultFailedFactory, ForceGetTaskResultRejectedFactory,
+    ForceGetTaskResultUploadFactory, FileTransferToken,
 )
 
 
@@ -425,3 +429,78 @@ class ConcentsTest(unittest.TestCase):
 
         self.assertEqual(expected, msg.slots())
         self.assertIsInstance(msg.task_to_compute, message.tasks.TaskToCompute)
+
+    def test_force_get_task_result(self):
+        rct = ReportComputedTaskFactory()
+        frct = ForceReportComputedTaskFactory()
+        msg = ForceGetTaskResultFactory(
+            slots__report_computed_task=rct,
+            slots__force_report_computed_task=frct
+        )
+        expected = [
+            ['report_computed_task', rct],
+            ['force_report_computed_task', frct]
+        ]
+
+        self.assertEqual(expected, msg.slots())
+        self.assertIsInstance(msg.report_computed_task,
+                              message.tasks.ReportComputedTask)
+        self.assertIsInstance(msg.force_report_computed_task,
+                              message.concents.ForceReportComputedTask)
+
+    def test_force_get_task_result_ack(self):
+        fgtr = ForceGetTaskResultFactory()
+        msg = ForceGetTaskResultAckFactory(
+            slots__force_get_task_result=fgtr
+        )
+        expected = [
+            ['force_get_task_result', fgtr]
+        ]
+
+        self.assertEqual(expected, msg.slots())
+        self.assertIsInstance(msg.force_get_task_result,
+                              message.concents.ForceGetTaskResult)
+
+    def test_force_get_task_result_failed(self):
+        ttc = TaskToComputeFactory()
+        msg = ForceGetTaskResultFailedFactory(
+            slots__task_to_compute=ttc
+        )
+        expected = [
+            ['task_to_compute', ttc]
+        ]
+
+        self.assertEqual(expected, msg.slots())
+        self.assertIsInstance(msg.task_to_compute, message.tasks.TaskToCompute)
+
+    def test_force_get_task_result_rejected(self):
+        fgtr = ForceGetTaskResultFactory()
+        msg = ForceGetTaskResultRejectedFactory(
+            slots__force_get_task_result=fgtr
+        )
+        expected = [
+            ['force_get_task_result', fgtr],
+            ['reason', None]
+        ]
+
+        self.assertEqual(expected, msg.slots())
+        self.assertIsInstance(msg.force_get_task_result,
+                              message.concents.ForceGetTaskResult)
+
+    def test_force_get_task_result_upload(self):
+        fgtr = ForceGetTaskResultFactory()
+        ftt = FileTransferToken()
+        msg = ForceGetTaskResultUploadFactory(
+            slots__force_get_task_result=fgtr,
+            slots__file_transfer_token=ftt
+        )
+        expected = [
+            ['force_get_task_result', fgtr],
+            ['file_transfer_token', ftt]
+        ]
+
+        self.assertEqual(expected, msg.slots())
+        self.assertIsInstance(msg.force_get_task_result,
+                              message.concents.ForceGetTaskResult)
+        self.assertIsInstance(msg.file_transfer_token,
+                              message.concents.FileTransferToken)
