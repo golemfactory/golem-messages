@@ -276,7 +276,7 @@ class NestedMessageTestCase(unittest.TestCase):
 
     def test_reject_report_computed_task_with_cannot_compute_task(self):
         msg = message.RejectReportComputedTask()
-        msg.reason = message.RejectReportComputedTask.Reason.GOT_MESSAGE_CANNOT_COMPUTE_TASK  # noqa
+        msg.reason = message.RejectReportComputedTask.REASON.GotMessageCannotComputeTask  # noqa
         msg.cannot_compute_task = message.CannotComputeTask()
         msg.cannot_compute_task.reason =\
             message.CannotComputeTask.REASON.WrongCTD

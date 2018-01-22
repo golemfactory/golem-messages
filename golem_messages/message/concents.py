@@ -10,23 +10,18 @@ from . import tasks
 CONCENT_MSG_BASE = 4000
 
 
-class ServiceRefused(base.Message):
+class ServiceRefused(base.AbstractReasonMessage):
     TYPE = CONCENT_MSG_BASE
 
     @enum.unique
-    class Reason(enum.Enum):
-        TOO_SMALL_COMMUNICATION_PAYMENT = 'TOO_SMALL_COMMUNICATION_PAYMENT'
-        TOO_SMALL_REQUESTOR_DEPOSIT = 'TOO_SMALL_REQUESTOR_DEPOSIT'
-        TOO_SMALL_PROVIDER_DEPOSIT = 'TOO_SMALL_PROVIDER_DEPOSIT'
-        SYSTEM_OVERLOADED = 'SYSTEM_OVERLOADED'
-
-    ENUM_SLOTS = {
-        'reason': Reason,
-    }
+    class REASON(enum.Enum):
+        TooSmallCommunicationPayment = 'TOO_SMALL_COMMUNICATION_PAYMENT'
+        TooSmallRequestorDeposit = 'TOO_SMALL_REQUESTOR_DEPOSIT'
+        TooSmallProviderDeposit = 'TOO_SMALL_PROVIDER_DEPOSIT'
+        SystemOverloaded = 'SYSTEM_OVERLOADED'
 
     __slots__ = [
         'subtask_id',
-        'reason',
         'task_to_compute',
     ] + base.Message.__slots__
 
@@ -61,11 +56,11 @@ class AckReportComputedTask(base.Message):
         return tasks.deserialize_task_to_compute(key, value)
 
 
-class RejectReportComputedTask(base.Message):
+class RejectReportComputedTask(base.AbstractReasonMessage):
     TYPE = CONCENT_MSG_BASE + 3
 
     @enum.unique
-    class Reason(enum.Enum):
+    class REASON(enum.Enum):
         """
         since python 3.6 it's possible to do this:
 
@@ -74,28 +69,23 @@ class RejectReportComputedTask(base.Message):
                 return name
 
         @enum.unique
-        class Reason(StringEnum):
+        class REASON(StringEnum):
             TASK_TIME_LIMIT_EXCEEDED = enum.auto()
             SUBTASK_TIME_LIMIT_EXCEEDED = enum.auto()
             GOT_MESSAGE_CANNOT_COMPUTE_TASK = enum.auto()
             GOT_MESSAGE_TASK_FAILURE = enum.auto()
         """
-        TASK_TIME_LIMIT_EXCEEDED = 'TASK_TIME_LIMIT_EXCEEDED'
-        SUBTASK_TIME_LIMIT_EXCEEDED = 'SUBTASK_TIME_LIMIT_EXCEEDED'
-        GOT_MESSAGE_CANNOT_COMPUTE_TASK = 'GOT_MESSAGE_CANNOT_COMPUTE_TASK'
-        GOT_MESSAGE_TASK_FAILURE = 'GOT_MESSAGE_TASK_FAILURE'
-
-    ENUM_SLOTS = {
-        'reason': Reason,
-    }
+        TaskTimeLimitExceeded = 'TASK_TIME_LIMIT_EXCEEDED'
+        SubtaskTimeLimitExceeded = 'SUBTASK_TIME_LIMIT_EXCEEDED'
+        GotMessageCannotComputeTask = 'GOT_MESSAGE_CANNOT_COMPUTE_TASK'
+        GotMessageTaskFailure = 'GOT_MESSAGE_TASK_FAILURE'
 
     __slots__ = [
         'subtask_id',
-        'reason',
         'task_to_compute',
         'task_failure',
         'cannot_compute_task',
-    ] + base.Message.__slots__
+    ] + base.AbstractReasonMessage.__slots__
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
@@ -146,6 +136,7 @@ class FileTransferToken(base.Message):
             'size': 0,
         }
 
+
 class SubtaskResultVerify(base.Message):
     """
     Message sent from a Provider to the Concent, requesting additional
@@ -169,6 +160,7 @@ class SubtaskResultVerify(base.Message):
             verify_class=tasks.SubtaskResultRejected
         )
 
+
 class AckSubtaskResultVerify(base.Message):
     """
     Message sent from the Concent to the Provider to acknowledge reception
@@ -187,6 +179,7 @@ class AckSubtaskResultVerify(base.Message):
             verify_key='subtask_result_verify',
             verify_class=SubtaskResultVerify
         )
+
 
 class SubtaskResultSettled(base.Message):
     """
