@@ -222,8 +222,20 @@ DECODERS = collections.OrderedDict((
     (OBJECT_TAG, decode_object),
 ))
 
+def wrap_error(wrap_with):
+    def _inner(f):
+        @functools.wraps(f)
+        def _curry(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except Exception as e:
+                raise wrap_with from e
+        return _curry
+    return _inner
+
 # Public functions
 
+@wrap_error(exceptions.SerializationError)
 dumps = functools.partial(
     cbor2.dumps,
     encoders=ENCODERS,
@@ -233,6 +245,7 @@ dumps = functools.partial(
 )
 
 
+@wrap_error(exceptions.SerializationError)
 loads = functools.partial(
     cbor2.loads,
     semantic_decoders=DECODERS,

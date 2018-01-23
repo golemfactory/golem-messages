@@ -2,6 +2,10 @@ class MessageError(RuntimeError):
     pass
 
 
+class HeaderError(MessageError):
+    pass
+
+
 class TimestampError(MessageError):
     pass
 
@@ -18,6 +22,10 @@ class CryptoError(MessageError):
     pass
 
 
+class CoincurveError(CryptoError):
+    pass
+
+
 class InvalidSignature(CryptoError):
     pass
 
@@ -27,4 +35,8 @@ class InvalidKeys(CryptoError):
 
 
 class DecryptionError(CryptoError):
+    pass
+
+
+class SerializationError(MessageError):
     pass

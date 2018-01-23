@@ -64,12 +64,17 @@ if 'pyelliptic' not in dir() \
     sys.exit(1)
 
 
+def verify_pubkey(key):
+    if len(key) != 64:
+        raise exceptions.InvalidKeys('Invalid pubkey length')
+
+
 def privtopub(raw_privkey):
     raw_pubkey = bitcoin.encode_pubkey(
         bitcoin.privtopub(raw_privkey),
         'bin_electrum'
     )
-    assert len(raw_pubkey) == 64
+    verify_pubkey(raw_pubkey)
     return raw_pubkey
 
 
@@ -126,11 +131,14 @@ def ecdsa_sign(privkey, msghash):
 
 
 def ecdsa_verify(pubkey, signature, message):
-    assert len(pubkey) == 64
+    verify_pubkey(pubkey)
     message = sha3(message)
-    pk = coincurve.PublicKey.from_signature_and_message(
-        signature, message, hasher=None
-    )
+    try:
+        pk = coincurve.PublicKey.from_signature_and_message(
+            signature, message, hasher=None
+        )
+    except Exception as e:
+        raise exceptions.CoincurveError() from e
     if not pk.format(compressed=False) == b'\04' + pubkey:
         raise exceptions.InvalidSignature()
     return True
@@ -149,7 +157,7 @@ class ECCx(pyelliptic.ECC):
     def __init__(self, raw_privkey):
         if raw_privkey is not None:
             raw_pubkey = privtopub(raw_privkey)
-            assert len(raw_pubkey) == 64
+            verify_pubkey(raw_pubkey)
             _, pubkey_x, pubkey_y, _ = self._decode_pubkey(raw_pubkey)
         else:
             raw_pubkey, pubkey_x, pubkey_y = (None,)*3
@@ -172,7 +180,7 @@ class ECCx(pyelliptic.ECC):
 
     @classmethod
     def _decode_pubkey(cls, raw_pubkey):
-        assert len(raw_pubkey) == 64
+        verify_pubkey(raw_pubkey)
         pubkey_x = raw_pubkey[:32]
         pubkey_y = raw_pubkey[32:]
         return cls.curve, pubkey_x, pubkey_y, 64
@@ -189,8 +197,8 @@ class ECCx(pyelliptic.ECC):
                 # failed for some keys
                 bitcoin.get_privkey_format(self.raw_privkey)
             except AssertionError:
-                raise exceptions.CryptoError('Invalid privkey')
-            assert len(self.raw_pubkey) == 64
+                raise exceptions.InvalidKeys('Invalid privkey')
+            verify_pubkey(self.raw_pubkey)
             raw_check_result = self.raw_check_key(
                     self.raw_privkey,
                     *self._decode_pubkey(self.raw_pubkey)[1:3])
@@ -317,5 +325,6 @@ class ECCx(pyelliptic.ECC):
         return signature
 
     def verify(self, signature, message):
-        assert len(signature) == 65
+        if len(signature) != 65:
+            raise exceptions.INvalidSignature('Invalid length')
         return ecdsa_verify(self.raw_pubkey, signature, message)
