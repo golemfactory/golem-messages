@@ -29,25 +29,17 @@ class BasicTestCase(unittest.TestCase):
                                    self.ecc.raw_pubkey)
         self.assertEqual(msg, msg2)
 
-    @mock.patch('golem_messages.message.base.verify_time')
-    def test_deserialization(self, verify_time):  # pylint: disable=no-self-use
+    def test_deserialization(self):
         """Deserialization should work even if we haven't created any messages
         """
-        verify_time.return_value = True
-        serialized_ping = b'\x03\xe9\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
-            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
-            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
-            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
-            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
-            b'\xd8\x1c\x80'
+        serialized_ping = message.p2p.Ping().serialize()
         deserialized = message.Message.deserialize(serialized_ping, None)
-        assert deserialized is not None
-        assert deserialized.TYPE == message.Ping.TYPE
+        self.assertIsInstance(deserialized, message.p2p.Ping)
 
     @mock.patch('golem_messages.serializer.dumps', wraps=serializer.dumps)
     def test_slots_reselialization_optimization(self, dumps_mock):
         """Don't reserialize message slots immediately after deserialization"""
-        msg = message.Ping()
+        msg = message.p2p.Ping()
         payload = golem_messages.dump(msg, self.ecc.raw_privkey,
                                       self.ecc.raw_pubkey)
         # One call for slots and second for hash_header
@@ -81,7 +73,7 @@ class BasicTestCase(unittest.TestCase):
 
     def test_deserialize_verify_fail(self):
         task_to_compute = message.TaskToCompute()
-        with self.assertRaises(TypeError):
+        with self.assertRaises(exceptions.FieldError):
             message.base.deserialize_verify(
                 key='ping',
                 verify_key='ping',
@@ -129,11 +121,10 @@ class BasicTestCase(unittest.TestCase):
             assert len(cls.__slots__) >= len(message.Message.__slots__)
 
     def test_deserialize_old_timestamp(self):
-        # TODO remove after 0.11 release
         import struct
         raw_header = struct.pack('!HQ?', 1, 1516272285269707, False)
-        header = message.base.Message.deserialize_header(raw_header)
-        self.assertEqual(header, (1, 1516272285, False))
+        with self.assertRaises(exceptions.HeaderError):
+            message.base.Message.deserialize_header(raw_header)
 
 
 testnow = datetime.datetime.utcnow().replace(microsecond=0)
@@ -242,8 +233,8 @@ class SlotSerializationTestCase(unittest.TestCase):
             reason='Every man is the builder of a temple called his body. —HDT'
         )
         s = msg.serialize()
-        msg2 = message.Message.deserialize(s, decrypt_func=None)
-        self.assertIs(msg2, None)
+        with self.assertRaises(exceptions.FieldError):
+            message.Message.deserialize(s, decrypt_func=None)
 
 
 class NestedMessageTestCase(unittest.TestCase):
@@ -271,8 +262,8 @@ class NestedMessageTestCase(unittest.TestCase):
                 "paint and pencil"
             )
             s = msg.serialize()
-            msg2 = message.Message.deserialize(s, decrypt_func=None)
-            self.assertIs(msg2, None)
+            with self.assertRaises(exceptions.FieldError):
+                message.Message.deserialize(s, decrypt_func=None)
 
     def test_reject_report_computed_task_with_cannot_compute_task(self):
         msg = message.RejectReportComputedTask()

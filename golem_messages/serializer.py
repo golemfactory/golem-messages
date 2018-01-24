@@ -13,6 +13,8 @@ import cbor2.encoder
 import cbor2.types
 import pytz
 
+from . import exceptions
+
 
 logger = logging.getLogger('golem.core.simpleserializer')
 
@@ -222,6 +224,7 @@ DECODERS = collections.OrderedDict((
     (OBJECT_TAG, decode_object),
 ))
 
+
 def wrap_error(wrap_with):
     def _inner(f):
         @functools.wraps(f)
@@ -233,20 +236,19 @@ def wrap_error(wrap_with):
         return _curry
     return _inner
 
+
 # Public functions
 
-@wrap_error(exceptions.SerializationError)
-dumps = functools.partial(
+dumps = wrap_error(exceptions.SerializationError)(functools.partial(
     cbor2.dumps,
     encoders=ENCODERS,
     datetime_as_timestamp=True,
     timezone=pytz.utc,
     value_sharing=False,
-)
+))
 
 
-@wrap_error(exceptions.SerializationError)
-loads = functools.partial(
+loads = wrap_error(exceptions.SerializationError)(functools.partial(
     cbor2.loads,
     semantic_decoders=DECODERS,
-)
+))

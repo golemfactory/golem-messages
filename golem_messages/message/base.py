@@ -78,6 +78,8 @@ class Message():
         # Child message slots
         try:
             self.load_slots(slots)
+        except exceptions.FieldError:
+            raise
         except Exception as e:
             raise exceptions.MessageError('Load slots failed') from e
 
@@ -180,7 +182,10 @@ class Message():
 
     def deserialize_slot(self, key, value):
         if (key in self.ENUM_SLOTS) and (value is not None):
-            value = self.ENUM_SLOTS[key](value)
+            try:
+                value = self.ENUM_SLOTS[key](value)
+            except ValueError as e:
+                raise exceptions.FieldError(field=key, value=value) from e
         return value
 
     @classmethod
@@ -196,7 +201,8 @@ class Message():
             raise exceptions.HeaderError() from e
 
         logger.debug("deserialize_header(): %r", header)
-        if not settings.MIN_TIMESTAMP < header.timestamp < settings.MAX_TIMESTAMP:
+        if not settings.MIN_TIMESTAMP < header.timestamp < \
+                settings.MAX_TIMESTAMP:
             raise exceptions.HeaderError(
                 "Invalid timestamp {got}. Should be between {min_} and {max_}"
                 .format(
@@ -205,6 +211,8 @@ class Message():
                     max_=settings.MAX_TIMESTAMP,
                 )
             )
+
+        from golem_messages.message import registered_message_types
 
         if header.type_ not in registered_message_types:
             raise exceptions.HeaderError(
@@ -376,5 +384,8 @@ class ChallengeSolution(Message):
 
 def deserialize_verify(key, value, verify_key, verify_class):
     if key == verify_key:
-        verify_slot_type(value, verify_class)
+        try:
+            verify_slot_type(value, verify_class)
+        except TypeError as e:
+            raise exceptions.FieldError(field=key, value=value) from e
     return value
