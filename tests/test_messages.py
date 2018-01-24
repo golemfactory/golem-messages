@@ -12,8 +12,8 @@ from golem_messages import shortcuts
 from .factories import (
     TaskToComputeFactory,
     ReportComputedTaskFactory, ForceReportComputedTaskFactory,
-    SubtaskResultRejectedFactory, SubtaskResultVerifyFactory,
-    AckSubtaskResultVerifyFactory, SubtaskResultSettledFactory,
+    SubtaskResultsRejectedFactory, SubtaskResultsVerifyFactory,
+    AckSubtaskResultsVerifyFactory, SubtaskResultsSettledFactory,
     ForceGetTaskResultFactory, ForceGetTaskResultAckFactory,
     ForceGetTaskResultFailedFactory, ForceGetTaskResultRejectedFactory,
     ForceGetTaskResultUploadFactory, FileTransferToken,
@@ -381,35 +381,36 @@ class MessagesTestCase(unittest.TestCase):
 class ConcentsTest(unittest.TestCase):
 
     def test_subtask_result_verify(self):
-        srr = SubtaskResultRejectedFactory()
-        msg = SubtaskResultVerifyFactory(slots__subtask_result_rejected=srr)
+        srr = SubtaskResultsRejectedFactory()
+        msg = SubtaskResultsVerifyFactory(slots__subtask_result_rejected=srr)
         expected = [
             ['subtask_result_rejected', srr]
         ]
 
         self.assertEqual(expected, msg.slots())
         self.assertIsInstance(msg.subtask_result_rejected,
-                              message.tasks.SubtaskResultRejected)
+                              message.tasks.SubtaskResultsRejected)
 
     def test_ack_subtask_result_verify(self):
-        srv = SubtaskResultVerifyFactory()
-        msg = AckSubtaskResultVerifyFactory(slots__subtask_results_verify=srv)
+        srv = SubtaskResultsVerifyFactory()
+        msg = AckSubtaskResultsVerifyFactory(slots__subtask_results_verify=srv)
         expected = [
             ['subtask_result_verify', srv]
         ]
 
         self.assertEqual(expected, msg.slots())
         self.assertIsInstance(msg.subtask_result_verify,
-                              concents.SubtaskResultVerify)
+                              concents.SubtaskResultsVerify)
 
     def test_subtask_result_settled_no_acceptance(self):
         ttc = TaskToComputeFactory()
-        msg = SubtaskResultSettledFactory.origin_acceptance_timeout(
+        msg = SubtaskResultsSettledFactory.origin_acceptance_timeout(
             slots__task_to_compute=ttc
         )
         expected = [
             ['origin',
-             concents.SubtaskResultSettled.Origin.ResultsAcceptedTimeout.value],
+             concents.SubtaskResultsSettled.Origin.ResultsAcceptedTimeout
+             .value],
             ['task_to_compute', ttc]
         ]
 
@@ -418,12 +419,12 @@ class ConcentsTest(unittest.TestCase):
 
     def test_subtask_result_settled_results_rejected(self):
         ttc = TaskToComputeFactory()
-        msg = SubtaskResultSettledFactory.origin_results_rejected(
+        msg = SubtaskResultsSettledFactory.origin_results_rejected(
             slots__task_to_compute=ttc
         )
         expected = [
             ['origin',
-             concents.SubtaskResultSettled.Origin.ResultsRejected.value],
+             concents.SubtaskResultsSettled.Origin.ResultsRejected.value],
             ['task_to_compute', ttc]
         ]
 

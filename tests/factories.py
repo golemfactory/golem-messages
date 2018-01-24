@@ -2,11 +2,11 @@ import uuid
 import factory
 
 from golem_messages.message.tasks import (
-    ComputeTaskDef, TaskToCompute, SubtaskResultRejected, ReportComputedTask,
+    ComputeTaskDef, TaskToCompute, SubtaskResultsRejected, ReportComputedTask,
 )
 
 from golem_messages.message.concents import (
-    SubtaskResultVerify, AckSubtaskResultVerify, SubtaskResultSettled,
+    SubtaskResultsVerify, AckSubtaskResultsVerify, SubtaskResultsSettled,
     ForceGetTaskResult, ForceGetTaskResultAck, ForceGetTaskResultFailed,
     ForceGetTaskResultRejected, ForceGetTaskResultUpload,
     ForceReportComputedTask, FileTransferToken,
@@ -26,7 +26,7 @@ class SlotsFactory(factory.Factory):
 
     :Example:
 
-    SubtaskResultVerifyFactory(slots__subtask_id='some-id')
+    SubtaskResultsVerifyFactory(slots__subtask_id='some-id')
 
     """
 
@@ -78,9 +78,9 @@ class TaskToComputeFactory(factory.Factory):
     slots = factory.SubFactory(TaskToComputeSlotsFactory)
 
 
-class SubtaskResultRejectedFactory(factory.Factory):
+class SubtaskResultsRejectedFactory(factory.Factory):
     class Meta:
-        model = SubtaskResultRejected
+        model = SubtaskResultsRejected
 
     slots = factory.SubFactory(SlotsFactory,
                                subtask_id='test-si-{}'.format(uuid.uuid4()))
@@ -114,53 +114,53 @@ class ForceReportComputedTaskFactory(factory.Factory):
     slots = factory.SubFactory(ForceReportComputedTaskSlotsFactory)
 
 
-class SubtaskResultVerifySlotsFactory(SlotsFactory):
+class SubtaskResultsVerifySlotsFactory(SlotsFactory):
     class Meta:
         model = tuple
 
-    subtask_result_rejected = factory.SubFactory(SubtaskResultRejectedFactory)
+    subtask_result_rejected = factory.SubFactory(SubtaskResultsRejectedFactory)
 
 
-class SubtaskResultVerifyFactory(factory.Factory):
+class SubtaskResultsVerifyFactory(factory.Factory):
     class Meta:
-        model = SubtaskResultVerify
+        model = SubtaskResultsVerify
 
-    slots = factory.SubFactory(SubtaskResultVerifySlotsFactory)
-
-
-class AckSubtaskResultVerifySlotsFactory(SlotsFactory):
-    class Meta:
-        model = tuple
-
-    subtask_result_verify = factory.SubFactory(SubtaskResultVerifyFactory)
+    slots = factory.SubFactory(SubtaskResultsVerifySlotsFactory)
 
 
-class AckSubtaskResultVerifyFactory(factory.Factory):
-    class Meta:
-        model = AckSubtaskResultVerify
-
-    slots = factory.SubFactory(AckSubtaskResultVerifySlotsFactory)
-
-
-class SubtaskResultSettledSlotsFactory(SlotsFactory):
+class AckSubtaskResultsVerifySlotsFactory(SlotsFactory):
     class Meta:
         model = tuple
 
-    origin = SubtaskResultSettled.Origin.ResultsAcceptedTimeout
+    subtask_result_verify = factory.SubFactory(SubtaskResultsVerifyFactory)
+
+
+class AckSubtaskResultsVerifyFactory(factory.Factory):
+    class Meta:
+        model = AckSubtaskResultsVerify
+
+    slots = factory.SubFactory(AckSubtaskResultsVerifySlotsFactory)
+
+
+class SubtaskResultsSettledSlotsFactory(SlotsFactory):
+    class Meta:
+        model = tuple
+
+    origin = SubtaskResultsSettled.Origin.ResultsAcceptedTimeout
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
 
 
-class SubtaskResultSettledFactory(factory.Factory):
+class SubtaskResultsSettledFactory(factory.Factory):
     class Meta:
-        model = SubtaskResultSettled
+        model = SubtaskResultsSettled
 
-    slots = factory.SubFactory(SubtaskResultSettledSlotsFactory)
+    slots = factory.SubFactory(SubtaskResultsSettledSlotsFactory)
 
     @classmethod
     def origin_acceptance_timeout(cls, *args, **kwargs):
         kwargs.update({
             'slots__origin':
-                SubtaskResultSettled.Origin.ResultsAcceptedTimeout
+                SubtaskResultsSettled.Origin.ResultsAcceptedTimeout
         })
         return cls(*args, **kwargs)
 
@@ -168,7 +168,7 @@ class SubtaskResultSettledFactory(factory.Factory):
     def origin_results_rejected(cls, *args, **kwargs):
         kwargs.update({
             'slots__origin':
-                SubtaskResultSettled.Origin.ResultsRejected
+                SubtaskResultsSettled.Origin.ResultsRejected
         })
         return cls(*args, **kwargs)
 

@@ -146,7 +146,7 @@ class GetResource(base.Message):
     ] + base.Message.__slots__
 
 
-class SubtaskResultAccepted(base.Message):
+class SubtaskResultsAccepted(base.Message):
     TYPE = TASK_MSG_BASE + 10
 
     __slots__ = [
@@ -154,18 +154,11 @@ class SubtaskResultAccepted(base.Message):
         'payment_ts'
     ] + base.Message.__slots__
 
-#
-# @todo for consistency's sake, the name of this message class should be:
-#       `SubtaskResultsRejected` (+ that's what's specified in the docs)
-#
-#       https://github.com/golemfactory/golem-messages/issues/96
-#
 
-class SubtaskResultRejected(base.Message):
+class SubtaskResultsRejected(base.Message):
     TYPE = TASK_MSG_BASE + 11
 
     __slots__ = ['subtask_id'] + base.Message.__slots__
-
 
 
 class DeltaParts(base.Message):
@@ -252,7 +245,7 @@ class CannotComputeTask(base.AbstractReasonMessage):
 
 class SubtaskPayment(base.Message):
     """Informs about payment for a subtask.
-    It succeeds SubtaskResultAccepted but could
+    It succeeds SubtaskResultsAccepted but could
     be sent after a delay. It is also sent in response to
     SubtaskPaymentRequest. If transaction_id is None it
     should be interpreted as PAYMENT PENDING status.

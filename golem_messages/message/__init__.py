@@ -33,8 +33,6 @@ from golem_messages.message.tasks import TaskFailure  # noqa
 from golem_messages.message.tasks import GetTaskResult  # noqa
 from golem_messages.message.tasks import StartSessionResponse  # noqa
 from golem_messages.message.tasks import WaitingForResults  # noqa
-from golem_messages.message.tasks import SubtaskResultAccepted  # noqa
-from golem_messages.message.tasks import SubtaskResultRejected  # noqa
 from golem_messages.message.tasks import DeltaParts  # noqa
 from golem_messages.message.tasks import SubtaskPayment  # noqa
 from golem_messages.message.tasks import SubtaskPaymentRequest  # noqa
@@ -110,8 +108,8 @@ def init_messages():
             tasks.StartSessionResponse,
 
             tasks.WaitingForResults,
-            tasks.SubtaskResultAccepted,
-            tasks.SubtaskResultRejected,
+            tasks.SubtaskResultsAccepted,
+            tasks.SubtaskResultsRejected,
             tasks.DeltaParts,
             tasks.GetResource,
 
@@ -137,9 +135,9 @@ def init_messages():
             concents.RejectReportComputedTask,
             concents.VerdictReportComputedTask,
             concents.FileTransferToken,
-            concents.SubtaskResultVerify,
-            concents.AckSubtaskResultVerify,
-            concents.SubtaskResultSettled,
+            concents.SubtaskResultsVerify,
+            concents.AckSubtaskResultsVerify,
+            concents.SubtaskResultsSettled,
             concents.ForceGetTaskResult,
             concents.ForceGetTaskResultAck,
             concents.ForceGetTaskResultFailed,
