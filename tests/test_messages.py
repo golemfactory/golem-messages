@@ -5,9 +5,10 @@ import unittest
 import unittest.mock as mock
 import uuid
 
+from golem_messages import exceptions
 from golem_messages import message
-from golem_messages.message import concents
 from golem_messages import shortcuts
+from golem_messages.message import concents
 
 from . import factories
 
@@ -363,7 +364,7 @@ class MessagesTestCase(unittest.TestCase):
             ('compute_task_def', compute_task_def),
         ))
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(exceptions.FieldError):
             message.TaskToCompute(slots=(
                 ('requestor_id', 'staple of research'),
                 ('compute_task_def', compute_task_def),
