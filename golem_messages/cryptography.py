@@ -326,5 +326,5 @@ class ECCx(pyelliptic.ECC):
 
     def verify(self, signature, message):
         if len(signature) != 65:
-            raise exceptions.INvalidSignature('Invalid length')
+            raise exceptions.InvalidSignature('Invalid length')
         return ecdsa_verify(self.raw_pubkey, signature, message)
