@@ -2,6 +2,7 @@ import enum
 import functools
 
 from golem_messages import datastructures
+from golem_messages import exceptions
 
 from . import base
 
@@ -16,7 +17,7 @@ class ComputeTaskDef(datastructures.FrozenDict):
         # deadline represents subtask timeout in UTC timestamp (float or int)
         # If you're looking for whole TASK deadline SEE: task_header.deadline
         # Task headers are received in MessageTasks.tasks.
-        'deadline': '',
+        'deadline': 0,
         'src_code': '',
         'extra_data': {},  # safe because of copy in parent.__missing__()
         'short_description': '',
@@ -67,7 +68,11 @@ class TaskToCompute(base.Message):
             return
         if node_key != self.requestor_id:
             errmsg = "requestor_id: {} != compute_task_def['task_owner']['key']"
-            raise ValueError(errmsg.format(self.requestor_id, node_key))
+            raise exceptions.FieldError(
+                errmsg.format(self.requestor_id, node_key),
+                field='compute_task_def',
+                value=value,
+            )
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
