@@ -52,7 +52,9 @@ class TaskToCompute(base.Message):
 
     __slots__ = [
         'requestor_id',
+        'requestor_public_key',
         'provider_id',
+        'provider_public_key',
         'compute_task_def',
     ] + base.Message.__slots__
 
