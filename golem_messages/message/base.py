@@ -56,7 +56,8 @@ class Message():
 
     __slots__ = ['timestamp', 'encrypted', 'sig', '_raw']
 
-    HDR_LEN = struct.calcsize('!HQ?')
+    HDR_FORMAT = '!HQ?'
+    HDR_LEN = struct.calcsize(HDR_FORMAT)
     SIG_LEN = 65
     PAYLOAD_IDX = HDR_LEN + SIG_LEN
 
@@ -171,9 +172,12 @@ class Message():
 
         :return: serialized header
         """
-        return struct.pack('!HQ?', self.TYPE,
-                           self.timestamp,
-                           self.encrypted)
+        return struct.pack(
+            self.HDR_FORMAT,
+            self.TYPE,
+            self.timestamp,
+            self.encrypted,
+        )
 
     def serialize_slot(self, key, value):  # noqa pylint: disable=unused-argument, no-self-use
         if isinstance(value, enum.Enum):
@@ -196,7 +200,9 @@ class Message():
         :return: datastructures.MessageHeader
         """
         try:
-            header = datastructures.MessageHeader(*struct.unpack('!HQ?', data))
+            header = datastructures.MessageHeader(
+                *struct.unpack(cls.HDR_FORMAT, data),
+            )
         except (struct.error, TypeError) as e:
             raise exceptions.HeaderError() from e
 
