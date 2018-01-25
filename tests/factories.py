@@ -1,13 +1,9 @@
 import uuid
 import factory
 
+
+from golem_messages.message import concents
 from golem_messages.message import tasks
-from golem_messages.message.concents import (
-    SubtaskResultVerify, AckSubtaskResultVerify, SubtaskResultSettled,
-    ForceGetTaskResult, ForceGetTaskResultAck, ForceGetTaskResultFailed,
-    ForceGetTaskResultRejected, ForceGetTaskResultUpload,
-    ForceReportComputedTask, FileTransferToken,
-)
 
 # pylint: disable=too-few-public-methods,unnecessary-lambda
 
@@ -23,7 +19,7 @@ class SlotsFactory(factory.Factory):
 
     :Example:
 
-    SubtaskResultVerifyFactory(slots__subtask_id='some-id')
+    SubtaskResultsVerifyFactory(slots__subtask_id='some-id')
 
     """
 
@@ -37,6 +33,7 @@ class SlotsFactory(factory.Factory):
 
 class TaskOwnerFactory(factory.DictFactory):
     key = factory.Sequence(lambda n: 'node {}'.format(n))
+    node_name = factory.Faker('name')
 
 
 class ComputeTaskDefFactory(factory.DictFactory):
@@ -81,9 +78,9 @@ class TaskToComputeFactory(factory.Factory):
     slots = factory.SubFactory(TaskToComputeSlotsFactory)
 
 
-class SubtaskResultRejectedFactory(factory.Factory):
+class SubtaskResultsRejectedFactory(factory.Factory):
     class Meta:
-        model = tasks.SubtaskResultRejected
+        model = tasks.SubtaskResultsRejected
 
     slots = factory.SubFactory(SlotsFactory,
                                subtask_id='test-si-{}'.format(uuid.uuid4()))
@@ -112,67 +109,63 @@ class ForceReportComputedTaskSlotsFactory(SlotsFactory):
 
 class ForceReportComputedTaskFactory(factory.Factory):
     class Meta:
-        model = ForceReportComputedTask
+        model = concents.ForceReportComputedTask
 
     slots = factory.SubFactory(ForceReportComputedTaskSlotsFactory)
 
 
-class SubtaskResultVerifySlotsFactory(SlotsFactory):
+class SubtaskResultsVerifySlotsFactory(SlotsFactory):
     class Meta:
         model = tuple
 
-    subtask_result_rejected = factory.SubFactory(SubtaskResultRejectedFactory)
+    subtask_result_rejected = factory.SubFactory(SubtaskResultsRejectedFactory)
 
 
-class SubtaskResultVerifyFactory(factory.Factory):
+class SubtaskResultsVerifyFactory(factory.Factory):
     class Meta:
-        model = SubtaskResultVerify
+        model = concents.SubtaskResultsVerify
 
-    slots = factory.SubFactory(SubtaskResultVerifySlotsFactory)
-
-
-class AckSubtaskResultVerifySlotsFactory(SlotsFactory):
-    class Meta:
-        model = tuple
-
-    subtask_result_verify = factory.SubFactory(SubtaskResultVerifyFactory)
+    slots = factory.SubFactory(SubtaskResultsVerifySlotsFactory)
 
 
-class AckSubtaskResultVerifyFactory(factory.Factory):
-    class Meta:
-        model = AckSubtaskResultVerify
-
-    slots = factory.SubFactory(AckSubtaskResultVerifySlotsFactory)
-
-
-class SubtaskResultSettledSlotsFactory(SlotsFactory):
+class AckSubtaskResultsVerifySlotsFactory(SlotsFactory):
     class Meta:
         model = tuple
 
-    origin = SubtaskResultSettled.Origin.ResultsAcceptedTimeout
+    subtask_result_verify = factory.SubFactory(SubtaskResultsVerifyFactory)
+
+
+class AckSubtaskResultsVerifyFactory(factory.Factory):
+    class Meta:
+        model = concents.AckSubtaskResultsVerify
+
+    slots = factory.SubFactory(AckSubtaskResultsVerifySlotsFactory)
+
+
+class SubtaskResultsSettledSlotsFactory(SlotsFactory):
+    class Meta:
+        model = tuple
+
+    origin = concents.SubtaskResultsSettled.Origin.ResultsAcceptedTimeout
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
 
 
-class SubtaskResultSettledFactory(factory.Factory):
+class SubtaskResultsSettledFactory(factory.Factory):
     class Meta:
-        model = SubtaskResultSettled
+        model = concents.SubtaskResultsSettled
 
-    slots = factory.SubFactory(SubtaskResultSettledSlotsFactory)
+    slots = factory.SubFactory(SubtaskResultsSettledSlotsFactory)
 
     @classmethod
     def origin_acceptance_timeout(cls, *args, **kwargs):
-        kwargs.update({
-            'slots__origin':
-                SubtaskResultSettled.Origin.ResultsAcceptedTimeout
-        })
+        kwargs['slots__origin'] = \
+                concents.SubtaskResultsSettled.Origin.ResultsAcceptedTimeout
         return cls(*args, **kwargs)
 
     @classmethod
     def origin_results_rejected(cls, *args, **kwargs):
-        kwargs.update({
-            'slots__origin':
-                SubtaskResultSettled.Origin.ResultsRejected
-        })
+        kwargs['slots__origin'] = \
+                concents.SubtaskResultsSettled.Origin.ResultsRejected
         return cls(*args, **kwargs)
 
 
@@ -187,7 +180,7 @@ class ForceGetTaskResultSlotsFactory(SlotsFactory):
 
 class ForceGetTaskResultFactory(factory.Factory):
     class Meta:
-        model = ForceGetTaskResult
+        model = concents.ForceGetTaskResult
 
     slots = factory.SubFactory(ForceGetTaskResultSlotsFactory)
 
@@ -201,7 +194,7 @@ class ForceGetTaskResultAckSlotsFactory(SlotsFactory):
 
 class ForceGetTaskResultAckFactory(factory.Factory):
     class Meta:
-        model = ForceGetTaskResultAck
+        model = concents.ForceGetTaskResultAck
 
     slots = factory.SubFactory(ForceGetTaskResultAckSlotsFactory)
 
@@ -215,7 +208,7 @@ class ForceGetTaskResultFailedSlotsFactory(SlotsFactory):
 
 class ForceGetTaskResultFailedFactory(factory.Factory):
     class Meta:
-        model = ForceGetTaskResultFailed
+        model = concents.ForceGetTaskResultFailed
 
     slots = factory.SubFactory(ForceGetTaskResultFailedSlotsFactory)
 
@@ -229,14 +222,14 @@ class ForceGetTaskResultRejectedSlotsFactory(SlotsFactory):
 
 class ForceGetTaskResultRejectedFactory(factory.Factory):
     class Meta:
-        model = ForceGetTaskResultRejected
+        model = concents.ForceGetTaskResultRejected
 
     slots = factory.SubFactory(ForceGetTaskResultRejectedSlotsFactory)
 
 
 class FileTransferTokenFactory(factory.Factory):
     class Meta:
-        model = FileTransferToken
+        model = concents.FileTransferToken
 
     slots = factory.SubFactory(SlotsFactory,
                                subtask_id='test-si-{}'.format(uuid.uuid4()))
@@ -252,6 +245,10 @@ class ForceGetTaskResultUploadSlotsFactory(SlotsFactory):
 
 class ForceGetTaskResultUploadFactory(factory.Factory):
     class Meta:
-        model = ForceGetTaskResultUpload
+        model = concents.ForceGetTaskResultUpload
 
     slots = factory.SubFactory(ForceGetTaskResultUploadSlotsFactory)
+
+
+class ForceGetTaskResultDownloadFactory(ForceGetTaskResultUploadFactory):
+    pass

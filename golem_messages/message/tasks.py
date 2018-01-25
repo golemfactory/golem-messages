@@ -2,6 +2,7 @@ import enum
 import functools
 
 from golem_messages import datastructures
+from golem_messages import exceptions
 
 from . import base
 
@@ -16,7 +17,7 @@ class ComputeTaskDef(datastructures.FrozenDict):
         # deadline represents subtask timeout in UTC timestamp (float or int)
         # If you're looking for whole TASK deadline SEE: task_header.deadline
         # Task headers are received in MessageTasks.tasks.
-        'deadline': '',
+        'deadline': 0,
         'src_code': '',
         'extra_data': {},  # safe because of copy in parent.__missing__()
         'short_description': '',
@@ -69,7 +70,11 @@ class TaskToCompute(base.Message):
             return
         if node_key != self.requestor_id:
             errmsg = "requestor_id: {} != compute_task_def['task_owner']['key']"
-            raise ValueError(errmsg.format(self.requestor_id, node_key))
+            raise exceptions.FieldError(
+                errmsg.format(self.requestor_id, node_key),
+                field='compute_task_def',
+                value=value,
+            )
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
@@ -148,7 +153,7 @@ class GetResource(base.Message):
     ] + base.Message.__slots__
 
 
-class SubtaskResultAccepted(base.Message):
+class SubtaskResultsAccepted(base.Message):
     TYPE = TASK_MSG_BASE + 10
 
     __slots__ = [
@@ -156,18 +161,11 @@ class SubtaskResultAccepted(base.Message):
         'payment_ts'
     ] + base.Message.__slots__
 
-#
-# @todo for consistency's sake, the name of this message class should be:
-#       `SubtaskResultsRejected` (+ that's what's specified in the docs)
-#
-#       https://github.com/golemfactory/golem-messages/issues/96
-#
 
-class SubtaskResultRejected(base.Message):
+class SubtaskResultsRejected(base.Message):
     TYPE = TASK_MSG_BASE + 11
 
     __slots__ = ['subtask_id'] + base.Message.__slots__
-
 
 
 class DeltaParts(base.Message):
@@ -254,7 +252,7 @@ class CannotComputeTask(base.AbstractReasonMessage):
 
 class SubtaskPayment(base.Message):
     """Informs about payment for a subtask.
-    It succeeds SubtaskResultAccepted but could
+    It succeeds SubtaskResultsAccepted but could
     be sent after a delay. It is also sent in response to
     SubtaskPaymentRequest. If transaction_id is None it
     should be interpreted as PAYMENT PENDING status.

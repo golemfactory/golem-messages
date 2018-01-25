@@ -56,7 +56,8 @@ class Message():
 
     __slots__ = ['timestamp', 'encrypted', 'sig', '_raw']
 
-    HDR_LEN = 11
+    HDR_FORMAT = '!HQ?'
+    HDR_LEN = struct.calcsize(HDR_FORMAT)
     SIG_LEN = 65
     PAYLOAD_IDX = HDR_LEN + SIG_LEN
 
@@ -76,7 +77,12 @@ class Message():
         """
 
         # Child message slots
-        self.load_slots(slots)
+        try:
+            self.load_slots(slots)
+        except exceptions.FieldError:
+            raise
+        except Exception as e:
+            raise exceptions.MessageError('Load slots failed') from e
 
         # Set attributes
         for key in kwargs:
@@ -89,7 +95,12 @@ class Message():
         # Since epoch differs between OS, we use calendar.timegm() to unify it
         if not timestamp:
             timestamp = calendar.timegm(time.gmtime())
-        self.timestamp = int(timestamp)
+
+        try:
+            self.timestamp = int(timestamp)
+        except (ValueError, TypeError, OverflowError) as e:
+            raise exceptions.MessageError('Invalid timestamp') from e
+
         self.encrypted = bool(encrypted)
         self.sig = sig
 
@@ -134,27 +145,22 @@ class Message():
         if sign_func is None:
             sign_func = _fake_sign
 
-        try:
-            self.encrypted = bool(self.ENCRYPT and encrypt_func)
-            payload = serializer.dumps(self.slots())
+        self.encrypted = bool(self.ENCRYPT and encrypt_func)
+        payload = serializer.dumps(self.slots())
 
-            # When nesting one message inside another it's important
-            # not to overwrite original signature.
-            if self.sig is None:
-                self.sig = sign_func(self.get_short_hash(payload))
+        # When nesting one message inside another it's important
+        # not to overwrite original signature.
+        if self.sig is None:
+            self.sig = sign_func(self.get_short_hash(payload))
 
-            if self.encrypted:
-                payload = encrypt_func(payload)
+        if self.encrypted:
+            payload = encrypt_func(payload)
 
-            return (
-                self.serialize_header() +
-                self.sig +
-                payload
-            )
-
-        except Exception as exc:
-            logger.exception("Error serializing message: %r", exc)
-            raise
+        return (
+            self.serialize_header() +
+            self.sig +
+            payload
+        )
 
     def serialize_header(self):
         """ Serialize message's header
@@ -166,9 +172,12 @@ class Message():
 
         :return: serialized header
         """
-        return struct.pack('!HQ?', self.TYPE,
-                           self.timestamp,
-                           self.encrypted)
+        return struct.pack(
+            self.HDR_FORMAT,
+            self.TYPE,
+            self.timestamp,
+            self.encrypted,
+        )
 
     def serialize_slot(self, key, value):  # noqa pylint: disable=unused-argument, no-self-use
         if isinstance(value, enum.Enum):
@@ -177,7 +186,10 @@ class Message():
 
     def deserialize_slot(self, key, value):
         if (key in self.ENUM_SLOTS) and (value is not None):
-            value = self.ENUM_SLOTS[key](value)
+            try:
+                value = self.ENUM_SLOTS[key](value)
+            except ValueError as e:
+                raise exceptions.FieldError(field=key, value=value) from e
         return value
 
     @classmethod
@@ -187,19 +199,35 @@ class Message():
         :param data: bytes
         :return: datastructures.MessageHeader
         """
-        assert len(data) == cls.HDR_LEN
-        header = datastructures.MessageHeader(*struct.unpack('!HQ?', data))
+        try:
+            header = datastructures.MessageHeader(
+                *struct.unpack(cls.HDR_FORMAT, data),
+            )
+        except (struct.error, TypeError) as e:
+            raise exceptions.HeaderError() from e
 
-        if header.timestamp > 10**10:
-            # Old timestamp format. Remove after 0.11 golem core release
-            timestamp = header.timestamp // 10**6
-            header = datastructures.MessageHeader(header[0], timestamp,
-                                                  header[2])
+        logger.debug("deserialize_header(): %r", header)
+        if not settings.MIN_TIMESTAMP < header.timestamp < \
+                settings.MAX_TIMESTAMP:
+            raise exceptions.HeaderError(
+                "Invalid timestamp {got}. Should be between {min_} and {max_}"
+                .format(
+                    got=header.timestamp,
+                    min_=settings.MIN_TIMESTAMP,
+                    max_=settings.MAX_TIMESTAMP,
+                )
+            )
 
+        from golem_messages.message import registered_message_types
+
+        if header.type_ not in registered_message_types:
+            raise exceptions.HeaderError(
+                "Invalid type {got}".format(got=header.type_),
+            )
         return header
 
     @classmethod
-    def deserialize(cls, msg, decrypt_func, check_time=True, verify_func=None): # noqa TODO: #52 pylint: disable=inconsistent-return-statements
+    def deserialize(cls, msg, decrypt_func, check_time=True, verify_func=None):
         """
         Deserialize single message
         :param str msg: serialized message
@@ -211,57 +239,31 @@ class Message():
         from golem_messages.message import registered_message_types
 
         if not msg or len(msg) <= cls.PAYLOAD_IDX:
-            logger.info("Message error: message too short")
-            return  # TODO: #52 pylint: disable=inconsistent-return-statements
+            raise exceptions.MessageError("Message too short")
 
         raw_header = msg[:cls.HDR_LEN]
         sig = msg[cls.HDR_LEN:cls.PAYLOAD_IDX]
         data = msg[cls.PAYLOAD_IDX:]
 
-        try:
-            header = cls.deserialize_header(raw_header)
-            logger.debug("msg_type: %r", header.type_)
-            if header.encrypted:
-                data = decrypt_func(data)
-            slots = serializer.loads(data)
-        except Exception as exc:  # pylint: disable=broad-except
-            logger.info("Message error: invalid data: %r", exc)
-            logger.debug("Failing message hdr: %r data: %r", raw_header, data)
-            return  # TODO: #52 pylint: disable=inconsistent-return-statements
+        header = cls.deserialize_header(raw_header)
+        if header.encrypted:
+            data = decrypt_func(data)
+        slots = serializer.loads(data)
 
         if check_time:
-            try:
-                verify_time(header.timestamp)
-            except exceptions.TimestampError as e:
-                logger.info(
-                    "Message error: invalid timestamp: %r %s",
-                    header.timestamp,
-                    e,
-                )
-                return  # noqa TODO: #52 pylint: disable=inconsistent-return-statements
+            verify_time(header.timestamp)
 
-        if header.type_ not in registered_message_types:
-            logger.info('Message error: invalid type %d', header.type_)
-            return  # TODO: #52 pylint: disable=inconsistent-return-statements
+        instance = registered_message_types[header.type_](
+            timestamp=header.timestamp,
+            encrypted=header.encrypted,
+            sig=sig,
+            raw=msg,
+            slots=slots,
+            deserialized=True,
+        )
 
-        try:
-            instance = registered_message_types[header.type_](
-                timestamp=header.timestamp,
-                encrypted=header.encrypted,
-                sig=sig,
-                raw=msg,
-                slots=slots,
-                deserialized=True,
-            )
-        except Exception as exc:  # pylint: disable=broad-except
-            logger.info("Message error: invalid data: %r", exc)
-            return  # TODO: #52 pylint: disable=inconsistent-return-statements
         if verify_func is not None:
-            try:
-                verify_func(instance.get_short_hash(data), sig)
-            except Exception:
-                logger.debug('Failed to verify signature: %r', instance)
-                raise
+            verify_func(instance.get_short_hash(data), sig)
         return instance
 
     def __repr__(self):
@@ -388,5 +390,8 @@ class ChallengeSolution(Message):
 
 def deserialize_verify(key, value, verify_key, verify_class):
     if key == verify_key:
-        verify_slot_type(value, verify_class)
+        try:
+            verify_slot_type(value, verify_class)
+        except TypeError as e:
+            raise exceptions.FieldError(field=key, value=value) from e
     return value
