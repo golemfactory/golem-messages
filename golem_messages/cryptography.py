@@ -5,7 +5,7 @@ import hashlib
 import bitcoin
 import coincurve
 from rlp import utils as rlp_utils
-from _pysha3 import sha3_256 as _sha3_256
+from _pysha3 import sha3_256 as _sha3_256  # pylint: disable=no-name-in-module
 
 from . import exceptions
 
@@ -179,7 +179,7 @@ class ECCx(pyelliptic.ECC):
         return self.pubkey_x + self.pubkey_y
 
     @classmethod
-    def _decode_pubkey(cls, raw_pubkey):
+    def _decode_pubkey(cls, raw_pubkey):  # pylint: disable=arguments-differ
         verify_pubkey(raw_pubkey)
         pubkey_x = raw_pubkey[:32]
         pubkey_y = raw_pubkey[32:]
@@ -200,11 +200,12 @@ class ECCx(pyelliptic.ECC):
                 raise exceptions.InvalidKeys('Invalid privkey')
             verify_pubkey(self.raw_pubkey)
             raw_check_result = self.raw_check_key(
-                    self.raw_privkey,
-                    *self._decode_pubkey(self.raw_pubkey)[1:3])
+                self.raw_privkey,
+                *self._decode_pubkey(self.raw_pubkey)[1:3],
+            )
             if raw_check_result != 0:
                 raise exceptions.InvalidKeys()
-        except (AssertionError, Exception):
+        except Exception:  # pylint: disable=broad-except
             return False
         return True
 
@@ -243,7 +244,7 @@ class ECCx(pyelliptic.ECC):
         key_mac = hashlib.sha256(key_mac).digest()  # !!!
         assert len(key_mac) == 32
         # 3) generate R = rG [same op as generating a public key]
-        ephem_pubkey = ephem.raw_pubkey
+        # ephem.raw_pubkey
 
         # encrypt
         iv = pyelliptic.Cipher.gen_IV(cls.ecies_ciphername)
@@ -254,7 +255,7 @@ class ECCx(pyelliptic.ECC):
 
         # 4) send 0x04 || R || AsymmetricEncrypt(shared-secret, plaintext)
         #    || tag
-        msg = rlp_utils.ascii_chr(0x04) + ephem_pubkey + iv + ciphertext
+        msg = rlp_utils.ascii_chr(0x04) + ephem.raw_pubkey + iv + ciphertext
 
         # the MAC of a message (called the tag) as per SEC 1, 3.5.
         tag = pyelliptic.hmac_sha256(
@@ -319,12 +320,12 @@ class ECCx(pyelliptic.ECC):
     encrypt = ecies_encrypt
     decrypt = ecies_decrypt
 
-    def sign(self, data):
+    def sign(self, data):  # pylint: disable=arguments-differ
         signature = ecdsa_sign(self.raw_privkey, data)
         assert len(signature) == 65
         return signature
 
-    def verify(self, signature, message):
+    def verify(self, signature, message):  # pylint: disable=arguments-differ
         if len(signature) != 65:
             raise exceptions.InvalidSignature('Invalid length')
         return ecdsa_verify(self.raw_pubkey, signature, message)
