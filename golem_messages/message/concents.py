@@ -291,6 +291,21 @@ class ForceGetTaskResultUpload(base.Message):
         return value
 
 
+class ForceGetTaskResultDownload(base.Message):
+    TYPE = CONCENT_MSG_BASE + 14
+
+    __slots__ = [
+        'force_get_task_result',
+        'file_transfer_token',
+    ] + base.Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        value = deserialize_force_get_task_result(key, value)
+        value = deserialize_file_transfer_token(key, value)
+        return value
+
+
 deserialize_task_failure = functools.partial(
     base.deserialize_verify,
     verify_key='task_failure',
