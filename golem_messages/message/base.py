@@ -5,6 +5,7 @@ import hashlib
 import logging
 import struct
 import time
+import warnings
 
 import golem_messages
 
@@ -54,7 +55,7 @@ def verify_slot_type(value, class_):
 class Message():
     """ Communication message that is sent in all networks """
 
-    __slots__ = ['timestamp', 'encrypted', 'sig', '_raw']
+    __slots__ = ['header', 'sig']
 
     HDR_FORMAT = '!HQ?'
     HDR_LEN = struct.calcsize(HDR_FORMAT)
@@ -65,14 +66,14 @@ class Message():
     ENCRYPT = True
     ENUM_SLOTS = {}
 
-    def __init__(self, timestamp=None, encrypted=False, sig=None,  # noqa TODO #88 pylint: disable=too-many-arguments
-                 raw=None, slots=None, deserialized=False, **kwargs):
+    def __init__(self,
+                 header: datastructures.MessageHeader = None,
+                 sig=None,
+                 slots=None,
+                 deserialized=False,
+                 **kwargs):
 
         """Create a new message
-        :param timestamp: message timestamp
-        :param encrypted: whether message was encrypted
-        :param sig: signed message hash
-        :param raw: original message bytes
         :param deserialized: was message created by .deserialize()?
         """
 
@@ -89,23 +90,23 @@ class Message():
             if getattr(self, key, None) is None:
                 setattr(self, key, kwargs[key])
 
+        if deserialized and not (header and header.timestamp):
+            warnings.warn(
+                'Message without header {}'.format(self),
+                RuntimeWarning
+            )
+
         # Header
-        if deserialized and not timestamp:
-            logger.warning('Message without timestamp %r', self)
-        # Since epoch differs between OS, we use calendar.timegm() to unify it
-        if not timestamp:
-            timestamp = calendar.timegm(time.gmtime())
-
-        try:
-            self.timestamp = int(timestamp)
-        except (ValueError, TypeError, OverflowError) as e:
-            raise exceptions.MessageError('Invalid timestamp') from e
-
-        self.encrypted = bool(encrypted)
+        if header is None:
+            header = datastructures.MessageHeader(
+                self.TYPE,
+                # Since epoch differs between OS, we use calendar.timegm()
+                # instead of time.time() to unify it.
+                calendar.timegm(time.gmtime()),
+                False,
+            )
+        self.header = header
         self.sig = sig
-
-        # Encoded data
-        self._raw = raw  # whole message
 
     def __eq__(self, obj):
         if not isinstance(obj, Message):
@@ -114,14 +115,33 @@ class Message():
             return False
         return self.__slots__ == obj.__slots__
 
+    def __repr__(self):
+        return "{name}(header={header}, sig={sig}, slots={slots})".format(
+            name=self.__class__.__name__,
+            header=getattr(self, 'header', None),
+            sig=getattr(self, 'sig', None),
+            slots=self.slots(),
+        )
+
     @property
-    def raw(self):
-        """Returns a raw copy of the message"""
-        return self._raw[:]
+    def timestamp(self):
+        return self.header.timestamp
+
+    @property
+    def encrypted(self):
+        return self.header.encrypted
+
+    @encrypted.setter
+    def encrypted(self, value):
+        self.header = datastructures.MessageHeader(
+            self.header.type_,
+            self.header.timestamp,
+            value,
+        )
 
     def get_short_hash(self, payload=None):
         """Return short message representation for signature
-        :return bytes: sha1(TYPE, timestamp, encrypted, payload)
+        :return bytes: sha1(TYPE, timestamp, payload)
         """
         if payload is None:
             payload = serializer.dumps(self.slots())
@@ -254,10 +274,8 @@ class Message():
             verify_time(header.timestamp)
 
         instance = registered_message_types[header.type_](
-            timestamp=header.timestamp,
-            encrypted=header.encrypted,
+            header=header,
             sig=sig,
-            raw=msg,
             slots=slots,
             deserialized=True,
         )
@@ -265,15 +283,6 @@ class Message():
         if verify_func is not None:
             verify_func(instance.get_short_hash(data), sig)
         return instance
-
-    def __repr__(self):
-        return "{}(timestamp={}, encrypted={}, sig={}, slots={})".format(
-            self.__class__.__name__,
-            getattr(self, 'timestamp', None),
-            getattr(self, 'encrypted', None),
-            getattr(self, 'sig', None),
-            self.slots(),
-        )
 
     def load_slots(self, slots):
         try:
