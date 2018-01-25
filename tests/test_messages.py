@@ -374,8 +374,8 @@ class MessagesTestCase(unittest.TestCase):
 class ConcentsTest(unittest.TestCase):
 
     def test_subtask_result_verify(self):
-        srr = factories.SubtaskResultRejectedFactory()
-        msg = factories.SubtaskResultVerifyFactory(
+        srr = factories.SubtaskResultsRejectedFactory()
+        msg = factories.SubtaskResultsVerifyFactory(
             slots__subtask_result_rejected=srr,
         )
         expected = [
@@ -384,11 +384,11 @@ class ConcentsTest(unittest.TestCase):
 
         self.assertEqual(expected, msg.slots())
         self.assertIsInstance(msg.subtask_result_rejected,
-                              message.tasks.SubtaskResultRejected)
+                              message.tasks.SubtaskResultsRejected)
 
     def test_ack_subtask_result_verify(self):
-        srv = factories.SubtaskResultVerifyFactory()
-        msg = factories.AckSubtaskResultVerifyFactory(
+        srv = factories.SubtaskResultsVerifyFactory()
+        msg = factories.AckSubtaskResultsVerifyFactory(
             slots__subtask_results_verify=srv,
         )
         expected = [
@@ -397,16 +397,17 @@ class ConcentsTest(unittest.TestCase):
 
         self.assertEqual(expected, msg.slots())
         self.assertIsInstance(msg.subtask_result_verify,
-                              concents.SubtaskResultVerify)
+                              concents.SubtaskResultsVerify)
 
     def test_subtask_result_settled_no_acceptance(self):
         ttc = factories.TaskToComputeFactory()
-        msg = factories.SubtaskResultSettledFactory.origin_acceptance_timeout(
+        msg = factories.SubtaskResultsSettledFactory.origin_acceptance_timeout(
             slots__task_to_compute=ttc
         )
         expected = [
             ['origin',
-             concents.SubtaskResultSettled.Origin.ResultsAcceptedTimeout.value],
+             concents.SubtaskResultsSettled.Origin.ResultsAcceptedTimeout
+             .value],
             ['task_to_compute', ttc]
         ]
 
@@ -415,12 +416,12 @@ class ConcentsTest(unittest.TestCase):
 
     def test_subtask_result_settled_results_rejected(self):
         ttc = factories.TaskToComputeFactory()
-        msg = factories.SubtaskResultSettledFactory.origin_results_rejected(
+        msg = factories.SubtaskResultsSettledFactory.origin_results_rejected(
             slots__task_to_compute=ttc
         )
         expected = [
             ['origin',
-             concents.SubtaskResultSettled.Origin.ResultsRejected.value],
+             concents.SubtaskResultsSettled.Origin.ResultsRejected.value],
             ['task_to_compute', ttc]
         ]
 

@@ -2,7 +2,7 @@ import uuid
 import factory
 
 from golem_messages.message.tasks import (
-    ComputeTaskDef, TaskToCompute, SubtaskResultRejected, ReportComputedTask,
+    ComputeTaskDef, TaskToCompute, SubtaskResultsRejected, ReportComputedTask,
 )
 
 from golem_messages.message import concents
@@ -21,7 +21,7 @@ class SlotsFactory(factory.Factory):
 
     :Example:
 
-    SubtaskResultVerifyFactory(slots__subtask_id='some-id')
+    SubtaskResultsVerifyFactory(slots__subtask_id='some-id')
 
     """
 
@@ -73,9 +73,9 @@ class TaskToComputeFactory(factory.Factory):
     slots = factory.SubFactory(TaskToComputeSlotsFactory)
 
 
-class SubtaskResultRejectedFactory(factory.Factory):
+class SubtaskResultsRejectedFactory(factory.Factory):
     class Meta:
-        model = SubtaskResultRejected
+        model = SubtaskResultsRejected
 
     slots = factory.SubFactory(SlotsFactory,
                                subtask_id='test-si-{}'.format(uuid.uuid4()))
@@ -109,62 +109,58 @@ class ForceReportComputedTaskFactory(factory.Factory):
     slots = factory.SubFactory(ForceReportComputedTaskSlotsFactory)
 
 
-class SubtaskResultVerifySlotsFactory(SlotsFactory):
+class SubtaskResultsVerifySlotsFactory(SlotsFactory):
     class Meta:
         model = tuple
 
-    subtask_result_rejected = factory.SubFactory(SubtaskResultRejectedFactory)
+    subtask_result_rejected = factory.SubFactory(SubtaskResultsRejectedFactory)
 
 
-class SubtaskResultVerifyFactory(factory.Factory):
+class SubtaskResultsVerifyFactory(factory.Factory):
     class Meta:
-        model = concents.SubtaskResultVerify
+        model = concents.SubtaskResultsVerify
 
-    slots = factory.SubFactory(SubtaskResultVerifySlotsFactory)
-
-
-class AckSubtaskResultVerifySlotsFactory(SlotsFactory):
-    class Meta:
-        model = tuple
-
-    subtask_result_verify = factory.SubFactory(SubtaskResultVerifyFactory)
+    slots = factory.SubFactory(SubtaskResultsVerifySlotsFactory)
 
 
-class AckSubtaskResultVerifyFactory(factory.Factory):
-    class Meta:
-        model = concents.AckSubtaskResultVerify
-
-    slots = factory.SubFactory(AckSubtaskResultVerifySlotsFactory)
-
-
-class SubtaskResultSettledSlotsFactory(SlotsFactory):
+class AckSubtaskResultsVerifySlotsFactory(SlotsFactory):
     class Meta:
         model = tuple
 
-    origin = concents.SubtaskResultSettled.Origin.ResultsAcceptedTimeout
+    subtask_result_verify = factory.SubFactory(SubtaskResultsVerifyFactory)
+
+
+class AckSubtaskResultsVerifyFactory(factory.Factory):
+    class Meta:
+        model = concents.AckSubtaskResultsVerify
+
+    slots = factory.SubFactory(AckSubtaskResultsVerifySlotsFactory)
+
+
+class SubtaskResultsSettledSlotsFactory(SlotsFactory):
+    class Meta:
+        model = tuple
+
+    origin = concents.SubtaskResultsSettled.Origin.ResultsAcceptedTimeout
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
 
 
-class SubtaskResultSettledFactory(factory.Factory):
+class SubtaskResultsSettledFactory(factory.Factory):
     class Meta:
-        model = concents.SubtaskResultSettled
+        model = concents.SubtaskResultsSettled
 
-    slots = factory.SubFactory(SubtaskResultSettledSlotsFactory)
+    slots = factory.SubFactory(SubtaskResultsSettledSlotsFactory)
 
     @classmethod
     def origin_acceptance_timeout(cls, *args, **kwargs):
-        kwargs.update({
-            'slots__origin':
-                concents.SubtaskResultSettled.Origin.ResultsAcceptedTimeout
-        })
+        kwargs['slots__origin'] = \
+                concents.SubtaskResultsSettled.Origin.ResultsAcceptedTimeout
         return cls(*args, **kwargs)
 
     @classmethod
     def origin_results_rejected(cls, *args, **kwargs):
-        kwargs.update({
-            'slots__origin':
-                concents.SubtaskResultSettled.Origin.ResultsRejected
-        })
+        kwargs['slots__origin'] = \
+                concents.SubtaskResultsSettled.Origin.ResultsRejected
         return cls(*args, **kwargs)
 
 
