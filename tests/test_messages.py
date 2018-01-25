@@ -350,7 +350,7 @@ class MessagesTestCase(unittest.TestCase):
         self.assertEqual(expected, msg.slots())
 
     def test_task_to_compute_basic(self):
-        ttc = TaskToComputeFactory()
+        ttc = factories.TaskToComputeFactory()
         serialized = shortcuts.dump(ttc, None, None)
         msg = shortcuts.load(serialized, None, None)
         self.assertIsInstance(msg, message.tasks.TaskToCompute)
