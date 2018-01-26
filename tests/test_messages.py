@@ -5,6 +5,7 @@ import unittest
 import unittest.mock as mock
 import uuid
 
+from golem_messages import datastructures
 from golem_messages import exceptions
 from golem_messages import message
 from golem_messages import shortcuts
@@ -73,8 +74,8 @@ class MessagesTestCase(unittest.TestCase):
         self.assertEqual(expected, msg.slots())
 
     @mock.patch('golem_messages.message.base.verify_time')
-    def test_timestamp_and_timezones(self, vft_mock):  # noqa pylint: disable=unused-argument
-        epoch_t = 1475238345.0
+    def test_timestamp_and_timezones(self, *_):
+        epoch_t = 1475238345
 
         def set_tz(tz):
             os.environ['TZ'] = tz
@@ -85,7 +86,11 @@ class MessagesTestCase(unittest.TestCase):
 
         set_tz('Europe/Warsaw')
         warsaw_time = time.localtime(epoch_t)
-        msg_pre = message.Hello(timestamp=epoch_t)
+        msg_pre = message.Hello(header=datastructures.MessageHeader(
+            message.Hello.TYPE,
+            epoch_t,
+            False,
+        ))
         data = shortcuts.dump(msg_pre, None, None)
         set_tz('US/Eastern')
         msg_post = shortcuts.load(data, None, None)
