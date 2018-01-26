@@ -7,6 +7,8 @@ import struct
 import time
 import warnings
 
+import semantic_version
+
 import golem_messages
 
 from golem_messages import datastructures
@@ -52,6 +54,32 @@ def verify_slot_type(value, class_):
         )
 
 
+def verify_version(msg_version):
+    try:
+        theirs_v = semantic_version.Version(msg_version)
+    except ValueError as e:
+        raise exceptions.VersionMismatchError(
+            "Invalid version received: {msg_version}".format(
+                msg_version=msg_version,
+            )
+        ) from e
+    ours_v = semantic_version.Version(golem_messages.__version__)
+    spec_str = '>={major}.{minor}.0,<{next_minor}'.format(
+        major=ours_v.major,
+        minor=ours_v.minor,
+        next_minor=ours_v.next_minor(),
+    )
+    spec = semantic_version.Spec(spec_str)
+    if theirs_v not in spec:
+        raise exceptions.VersionMismatchError(
+            "Incompatible version received:"
+            " {ours} (ours) != {theirs} (theirs)".format(
+                ours=ours_v,
+                theirs=theirs_v,
+            )
+        )
+
+
 class Message():
     """ Communication message that is sent in all networks """
 
@@ -60,7 +88,6 @@ class Message():
     HDR_FORMAT = '!HQ?'
     HDR_LEN = struct.calcsize(HDR_FORMAT)
     SIG_LEN = 65
-    PAYLOAD_IDX = HDR_LEN + SIG_LEN
 
     TYPE = None
     ENCRYPT = True
@@ -242,7 +269,7 @@ class Message():
 
         if header.type_ not in registered_message_types:
             raise exceptions.HeaderError(
-                "Invalid type {got}".format(got=header.type_),
+                "Unknown message type {got}".format(got=header.type_),
             )
         return header
 
@@ -258,22 +285,34 @@ class Message():
 
         from golem_messages.message import registered_message_types
 
-        if not msg or len(msg) <= cls.PAYLOAD_IDX:
+        if not msg or len(msg) <= cls.HDR_LEN + cls.SIG_LEN:
             raise exceptions.MessageError("Message too short")
 
         raw_header = msg[:cls.HDR_LEN]
-        sig = msg[cls.HDR_LEN:cls.PAYLOAD_IDX]
-        data = msg[cls.PAYLOAD_IDX:]
+        data = msg[cls.HDR_LEN:]
 
         header = cls.deserialize_header(raw_header)
-        if header.encrypted:
-            data = decrypt_func(data)
-        slots = serializer.loads(data)
-
         if check_time:
             verify_time(header.timestamp)
 
-        instance = registered_message_types[header.type_](
+        class_ = registered_message_types[header.type_]
+        return class_.deserialize_with_header(
+            header,
+            data,
+            decrypt_func,
+            verify_func,
+        )
+
+    @classmethod
+    def deserialize_with_header(cls, header, data, decrypt_func, verify_func):
+        sig = data[:cls.SIG_LEN]
+        payload = data[cls.SIG_LEN:]
+
+        if header.encrypted:
+            payload = decrypt_func(payload)
+        slots = serializer.loads(payload)
+
+        instance = cls(
             header=header,
             sig=sig,
             slots=slots,
@@ -281,7 +320,7 @@ class Message():
         )
 
         if verify_func is not None:
-            verify_func(instance.get_short_hash(data), sig)
+            verify_func(instance.get_short_hash(payload), sig)
         return instance
 
     def load_slots(self, slots):
@@ -316,7 +355,9 @@ class Message():
         return processed_slots
 
     def valid_slot(self, name):
-        return (name not in Message.__slots__) and (name in self.__slots__)
+        return (not name.startswith('_')) \
+            and (name not in Message.__slots__) \
+            and (name in self.__slots__)
 
 
 class AbstractReasonMessage(Message):
@@ -339,11 +380,12 @@ class AbstractReasonMessage(Message):
 class Hello(Message):
     TYPE = 0
     ENCRYPT = False
+    VERSION_FORMAT = '!32p'
+    VERSION_LENGTH = struct.calcsize(VERSION_FORMAT)
 
     __slots__ = [
         'rand_val',
         'proto_id',
-        'golem_messages_version',
         'node_name',
         'node_info',
         'port',
@@ -353,13 +395,51 @@ class Hello(Message):
         'challenge',
         'difficulty',
         'metadata',
+        '_version',
     ] + Message.__slots__
+
+    @classmethod
+    def deserialize_with_header(cls, header, data, *args, **kwargs):  # noqa pylint: disable=arguments-differ
+        raw_version = data[-cls.VERSION_LENGTH:]
+        data = data[:-cls.VERSION_LENGTH]
+        try:
+            str_version = struct.unpack(cls.VERSION_FORMAT, raw_version)[0] \
+                .decode('ascii', 'replace')
+        except struct.error as e:
+            raise exceptions.VersionMismatchError(
+                "Unreadable version {raw_version}".format(
+                    raw_version=raw_version,
+                )
+            ) from e
+        verify_version(str_version)
+        instance = super().deserialize_with_header(
+            header,
+            data,
+            *args,
+            **kwargs,
+        )
+        instance._version = str_version  # noqa pylint: disable=assigning-non-slot,protected-access
+        return instance
+
+    def serialize(self, *args, **kwargs):  # pylint: disable=arguments-differ
+        serialized = super().serialize(*args, **kwargs)
+        version = struct.pack(
+            self.VERSION_FORMAT,
+            self._version.encode('ascii', 'replace')
+        )
+        return serialized + version
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         deserialized = kwargs.pop('deserialized', False)
-        if not deserialized and self.golem_messages_version is None:
-            self.golem_messages_version = golem_messages.__version__
+        if not deserialized and not hasattr(self, '_version'):
+            self._version = golem_messages.__version__
+
+    def __repr__(self):
+        return "<{} _version:{}>".format(
+            super().__repr__(),
+            getattr(self, '_version', '<undefined>'),
+        )
 
 
 class RandVal(Message):
