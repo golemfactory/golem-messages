@@ -118,6 +118,22 @@ class BasicTestCase(unittest.TestCase):
         )
         v_mock.assert_called_once_with(golem_messages.__version__)
 
+    def test_hello_version_signature(self):
+        msg = message.Hello()
+        serialized = golem_messages.dump(
+            msg,
+            self.ecc.raw_privkey,
+            self.ecc.raw_pubkey,
+        )
+        msg = golem_messages.load(
+            serialized,
+            self.ecc.raw_privkey,
+            self.ecc.raw_pubkey,
+        )
+        msg._version = 'haxior'
+        with self.assertRaises(exceptions.InvalidSignature):
+            self.ecc.verify(msg.sig, msg.get_short_hash())
+
     @mock.patch("golem_messages.message.base.RandVal")
     def test_init_messages_error(self, mock_message_rand_val):
         copy_registered = dict(message.registered_message_types)

@@ -304,7 +304,8 @@ class Message():
         )
 
     @classmethod
-    def deserialize_with_header(cls, header, data, decrypt_func, verify_func):
+    def deserialize_with_header(cls, header, data, decrypt_func, verify_func,
+                                **kwargs):
         sig = data[:cls.SIG_LEN]
         payload = data[cls.SIG_LEN:]
 
@@ -317,6 +318,7 @@ class Message():
             sig=sig,
             slots=slots,
             deserialized=True,
+            **kwargs,
         )
 
         if verify_func is not None:
@@ -415,10 +417,10 @@ class Hello(Message):
         instance = super().deserialize_with_header(
             header,
             data,
+            _version=str_version,
             *args,
             **kwargs,
         )
-        instance._version = str_version  # noqa pylint: disable=assigning-non-slot,protected-access
         return instance
 
     def serialize(self, *args, **kwargs):  # pylint: disable=arguments-differ
@@ -428,6 +430,10 @@ class Hello(Message):
             self._version.encode('ascii', 'replace')
         )
         return serialized + version
+
+    def get_short_hash(self, *args, **kwargs):  # noqa pylint: disable=arguments-differ
+        return super().get_short_hash(*args, **kwargs) \
+            + self._version.encode('ascii', 'replace')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
