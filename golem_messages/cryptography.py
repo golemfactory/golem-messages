@@ -320,12 +320,12 @@ class ECCx(pyelliptic.ECC):
     encrypt = ecies_encrypt
     decrypt = ecies_decrypt
 
-    def sign(self, data):  # pylint: disable=arguments-differ
-        signature = ecdsa_sign(self.raw_privkey, data)
+    def sign(self, inputb):
+        signature = ecdsa_sign(self.raw_privkey, inputb)
         assert len(signature) == 65
         return signature
 
-    def verify(self, signature, message):  # pylint: disable=arguments-differ
-        if len(signature) != 65:
+    def verify(self, sig, inputb):
+        if len(sig) != 65:
             raise exceptions.InvalidSignature('Invalid length')
-        return ecdsa_verify(self.raw_pubkey, signature, message)
+        return ecdsa_verify(self.raw_pubkey, sig, inputb)
