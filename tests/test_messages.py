@@ -354,6 +354,12 @@ class MessagesTestCase(unittest.TestCase):
         ]
         self.assertEqual(expected, msg.slots())
 
+    def test_task_to_compute_basic(self):
+        ttc = factories.TaskToComputeFactory()
+        serialized = shortcuts.dump(ttc, None, None)
+        msg = shortcuts.load(serialized, None, None)
+        self.assertIsInstance(msg, message.tasks.TaskToCompute)
+
     def test_task_to_compute_validate_compute_task_def(self):
         requestor_id = 'such as epidemiology'
         # Shoudn't raise

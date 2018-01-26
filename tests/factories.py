@@ -1,11 +1,9 @@
 import uuid
 import factory
 
-from golem_messages.message.tasks import (
-    ComputeTaskDef, TaskToCompute, SubtaskResultsRejected, ReportComputedTask,
-)
 
 from golem_messages.message import concents
+from golem_messages.message import tasks
 
 # pylint: disable=too-few-public-methods,unnecessary-lambda
 
@@ -35,18 +33,25 @@ class SlotsFactory(factory.Factory):
 
 class TaskOwnerFactory(factory.DictFactory):
     key = factory.Sequence(lambda n: 'node {}'.format(n))
+    node_name = factory.Faker('name')
 
 
 class ComputeTaskDefFactory(factory.DictFactory):
     class Meta:
-        model = ComputeTaskDef
+        model = tasks.ComputeTaskDef
 
     task_owner = factory.SubFactory(TaskOwnerFactory)
 
 
 class TaskToComputeSlotsFactory(SlotsFactory):
-    requestor_id = factory.Sequence(lambda n: 'master {}'.format(n))
-    provider_id = factory.Sequence(lambda n: 'servant {}'.format(n))
+    requestor_id = factory.Sequence(lambda n: 'requestor {}'.format(n))
+    requestor_public_key = factory.Sequence(
+        lambda n: 'requestor pubkey {}'.format(n)
+    )
+    provider_id = factory.Sequence(lambda n: 'provider {}'.format(n))
+    provider_public_key = factory.Sequence(
+        lambda n: 'provider pubkey {}'.format(n)
+    )
 
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
 
@@ -68,14 +73,14 @@ class TaskToComputeSlotsFactory(SlotsFactory):
 
 class TaskToComputeFactory(factory.Factory):
     class Meta:
-        model = TaskToCompute
+        model = tasks.TaskToCompute
 
     slots = factory.SubFactory(TaskToComputeSlotsFactory)
 
 
 class SubtaskResultsRejectedFactory(factory.Factory):
     class Meta:
-        model = SubtaskResultsRejected
+        model = tasks.SubtaskResultsRejected
 
     slots = factory.SubFactory(SlotsFactory,
                                subtask_id='test-si-{}'.format(uuid.uuid4()))
@@ -90,7 +95,7 @@ class ReportComputedTaskSlotsFactory(SlotsFactory):
 
 class ReportComputedTaskFactory(factory.Factory):
     class Meta:
-        model = ReportComputedTask
+        model = tasks.ReportComputedTask
 
     slots = factory.SubFactory(ReportComputedTaskSlotsFactory)
 
