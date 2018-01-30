@@ -31,6 +31,13 @@ class ServiceRefused(base.AbstractReasonMessage):
 
 
 class ForceReportComputedTask(base.Message):
+    """
+    Message sent from a Provider to the Concent, requesting an forced
+    acknowledgment of the reception of the `ReportComputedTask` message
+    from the Requestor.
+
+    The same, rewritten message is then sent from the Concent to the Requestor.
+    """
     TYPE = CONCENT_MSG_BASE + 1
 
     __slots__ = [

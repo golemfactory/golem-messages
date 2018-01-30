@@ -96,6 +96,10 @@ class CannotAssignTask(base.AbstractReasonMessage):
 
 
 class ReportComputedTask(base.Message):
+    """
+    Message sent from a Provider to a Requestor, announcing completion
+    of the assigned subtask (attached in `task_to_compute`)
+    """
     # FIXME this message should be simpler
     TYPE = TASK_MSG_BASE + 4
     RESULT_TYPE = {
@@ -162,10 +166,51 @@ class SubtaskResultsAccepted(base.Message):
     ] + base.Message.__slots__
 
 
-class SubtaskResultsRejected(base.Message):
+class SubtaskResultsRejected(base.AbstractReasonMessage):
+    """
+    Message sent from the Requestor to the Provider, rejecting the provider's
+    completed task results
+
+    also, sent from the Concent to the Provider in case of additional
+    verification (when the verdict of the verification is negative)
+    or in case of forced results verdict (when the verdict is
+    negative - either because the work itself was deemed invalid by the
+    requestor
+    """
     TYPE = TASK_MSG_BASE + 11
 
-    __slots__ = ['subtask_id'] + base.Message.__slots__
+    __slots__ = [
+        'report_computed_task',
+        'force_get_task_result_failed',
+    ] + base.AbstractReasonMessage.__slots__
+
+    @enum.unique
+    class REASON(enum.Enum):
+        VerificationNegative = 'Results verification negative'
+        ConcentDuplicateRequest = 'Concent had already processed this request'
+        ConcentResourcesFailure = \
+            'Concent could not retrieve resources to verify'
+        ConcentVerificationNegative = 'Concent results verification negative'
+        ConcentMessageRejected = \
+            'Included computed task report was found corrupt'
+        ForcedResourcesFailure = \
+            'Concent reported failure to retrieve the resources to verify'
+        ResourcesFailure = \
+            'Could not retrieve resources'
+
+    def deserialize_slot(self, key, value):
+        from .concents import ForceGetTaskResultFailed
+
+        value = super().deserialize_slot(key, value)
+        value = base.deserialize_verify(key, value,
+            verify_key='report_computed_task',
+            verify_class=ReportComputedTask,
+        )
+        value = base.deserialize_verify(key, value,
+            verify_key='force_get_task_result_failed',
+            verify_class=ForceGetTaskResultFailed,
+        )
+        return value
 
 
 class DeltaParts(base.Message):
