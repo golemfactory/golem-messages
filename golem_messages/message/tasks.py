@@ -98,7 +98,7 @@ class CannotAssignTask(base.AbstractReasonMessage):
 class ReportComputedTask(base.Message):
     """
     Message sent from a Provider to a Requestor, announcing completion
-    of the assigned subtask (attached in `task_to_compute`)
+    of the assigned subtask (attached as `task_to_compute`)
     """
     # FIXME this message should be simpler
     TYPE = TASK_MSG_BASE + 4
