@@ -383,6 +383,15 @@ class MessagesTestCase(unittest.TestCase):
 
 
 class TasksTest(unittest.TestCase):
+    def test_subtask_results_rejected_factory(self):
+        msg = factories.SubtaskResultsRejectedFactory()
+        self.assertIsInstance(msg, message.tasks.SubtaskResultsRejected)
+
+    def test_subtask_results_rejected_fgtrf_factory(self):
+        msg = factories.SubtaskResultsRejectedFGTRFFactory()
+        self.assertIsInstance(msg, message.tasks.SubtaskResultsRejected)
+
+
     def test_subtask_results_rejected(self):
         rct = factories.ReportComputedTaskFactory()
         reason = message.tasks.SubtaskResultsRejected.REASON\

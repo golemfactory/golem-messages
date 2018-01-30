@@ -82,7 +82,8 @@ class SubtaskResultsRejectedSlotsFactory(SlotsFactory):
     class Meta:
         model = tuple
 
-    report_computed_task = factory.SubFactory('.ReportComputedTaskFactory')
+    report_computed_task = factory.SubFactory(
+        'tests.factories.ReportComputedTaskFactory')
 
 
 class SubtaskResultsRejectedFactory(factory.Factory):
@@ -100,7 +101,7 @@ class SubtaskResultsRejectedFGTRFSlotsFactory(SlotsFactory):
         model = tuple
 
     force_get_task_result_failed = factory.SubFactory(
-        '.ForceGetTaskResultFailedFactory')
+        'tests.factories.ForceGetTaskResultFailedFactory')
 
 
 class SubtaskResultsRejectedFGTRFFactory(factory.Factory):
