@@ -391,14 +391,13 @@ class TasksTest(unittest.TestCase):
         msg = factories.SubtaskResultsRejectedFGTRFFactory()
         self.assertIsInstance(msg, message.tasks.SubtaskResultsRejected)
 
-
     def test_subtask_results_rejected(self):
         rct = factories.ReportComputedTaskFactory()
         reason = message.tasks.SubtaskResultsRejected.REASON\
             .VerificationNegative
         msg = factories.SubtaskResultsRejectedFactory(
             slots__report_computed_task=rct,
-            slots__reason = reason,
+            slots__reason=reason,
         )
         expected = [
             ['report_computed_task', rct],
@@ -416,7 +415,7 @@ class TasksTest(unittest.TestCase):
             .ForcedResourcesFailure
         msg = factories.SubtaskResultsRejectedFGTRFFactory(
             slots__force_get_task_result_failed=fgtrf,
-            slots__reason = reason,
+            slots__reason=reason,
         )
         expected = [
             ['report_computed_task', None],
@@ -578,4 +577,3 @@ class ConcentsTest(unittest.TestCase):
                               message.concents.ForceGetTaskResult)
         self.assertIsInstance(msg.file_transfer_token,
                               message.concents.FileTransferToken)
-

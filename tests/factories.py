@@ -96,6 +96,7 @@ class SubtaskResultsRejectedFactory(factory.Factory):
 
     slots = factory.SubFactory(SubtaskResultsRejectedSlotsFactory)
 
+
 class SubtaskResultsRejectedFGTRFSlotsFactory(SlotsFactory):
     class Meta:
         model = tuple
