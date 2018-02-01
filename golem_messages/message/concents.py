@@ -348,3 +348,9 @@ deserialize_file_transfer_token = functools.partial(
     verify_key='file_transfer_token',
     verify_class=FileTransferToken,
 )
+
+deserialize_force_get_task_result_failed = functools.partial(
+    base.deserialize_verify,
+    verify_key='force_get_task_result_failed',
+    verify_class=ForceGetTaskResultFailed,
+)

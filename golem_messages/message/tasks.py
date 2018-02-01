@@ -199,6 +199,18 @@ class SubtaskResultsRejected(base.AbstractReasonMessage):
             'Could not retrieve resources'
 
     def deserialize_slot(self, key, value):
+        # pylint: disable=cyclic-import
+        #
+        # with the current specification, it will be difficult to do without
+        # the cyclic import here since per-specs, the `SubtaskResultsRejected`
+        # message can contain the concent's `ForceGetTaskResultFailed` and
+        # at the same time, the concent messages also can contain
+        # `SubtaskResultsRejected` ...
+        #
+
+        from .concents import deserialize_force_get_task_result_failed
+
+        # pylint: enable=cyclic-import
 
         value = super().deserialize_slot(key, value)
         value = deserialize_report_computed_task(key, value)
@@ -335,24 +347,3 @@ deserialize_report_computed_task = functools.partial(
     verify_key='report_computed_task',
     verify_class=ReportComputedTask,
 )
-
-def deserialize_force_get_task_result_failed(key, value):
-    # pylint: disable=cyclic-import
-    #
-    # with the current specification, it will be difficult to do without
-    # the cyclic import here since per-specs, the `SubtaskResultsRejected`
-    # message can contain the concent's `ForceGetTaskResultFailed` and
-    # at the same time, the concent messages also can contain
-    # `SubtaskResultsRejected` ...
-    #
-
-    from .concents import ForceGetTaskResultFailed
-
-    # pylint: enable=cyclic-import
-
-    return base.deserialize_verify(
-        key,
-        value,
-        verify_key='force_get_task_result_failed',
-        verify_class=ForceGetTaskResultFailed,
-    )
