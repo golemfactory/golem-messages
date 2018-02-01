@@ -31,6 +31,13 @@ class ServiceRefused(base.AbstractReasonMessage):
 
 
 class ForceReportComputedTask(base.Message):
+    """
+    Message sent from a Provider to the Concent, requesting an forced
+    acknowledgment of the reception of the `ReportComputedTask` message
+    from the Requestor.
+
+    The same, rewritten message is then sent from the Concent to the Requestor.
+    """
     TYPE = CONCENT_MSG_BASE + 1
 
     __slots__ = [
@@ -340,4 +347,10 @@ deserialize_file_transfer_token = functools.partial(
     base.deserialize_verify,
     verify_key='file_transfer_token',
     verify_class=FileTransferToken,
+)
+
+deserialize_force_get_task_result_failed = functools.partial(
+    base.deserialize_verify,
+    verify_key='force_get_task_result_failed',
+    verify_class=ForceGetTaskResultFailed,
 )

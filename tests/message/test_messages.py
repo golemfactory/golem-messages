@@ -11,7 +11,7 @@ from golem_messages import message
 from golem_messages import shortcuts
 from golem_messages.message import concents
 
-from . import factories
+from tests import factories
 
 
 class InitializationTestCase(unittest.TestCase):
