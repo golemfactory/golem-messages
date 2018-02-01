@@ -1,4 +1,6 @@
+# pylint: disable=no-self-use
 import unittest
+import unittest.mock as mock
 
 from golem_messages import datastructures
 
@@ -51,3 +53,18 @@ class FrozenTestCase(unittest.TestCase):
                 'Pod moskitierą czuło się duchotę, przy oknie — '
                 'gorąc zupełnie tropikalny.'
             )
+
+    @mock.patch('golem_messages.datastructures.FrozenDict.__setitem__')
+    def test_init_calls_setitem_on_kwargs(self, set_mock):
+        datastructures.FrozenDict(a=1)
+        set_mock.assert_called_once_with('a', 1)
+
+    @mock.patch('golem_messages.datastructures.FrozenDict.__setitem__')
+    def test_init_calls_setitem_on_dict(self, set_mock):
+        datastructures.FrozenDict({'a': 1})
+        set_mock.assert_called_once_with('a', 1)
+
+    @mock.patch('golem_messages.datastructures.FrozenDict.__setitem__')
+    def test_init_calls_setitem_on_iterable(self, set_mock):
+        datastructures.FrozenDict([('a', 1)])
+        set_mock.assert_called_once_with('a', 1)

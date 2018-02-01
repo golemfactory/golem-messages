@@ -41,6 +41,8 @@ class ComputeTaskDefFactory(factory.DictFactory):
         model = tasks.ComputeTaskDef
 
     task_owner = factory.SubFactory(TaskOwnerFactory)
+    task_id = factory.Faker('uuid4')
+    subtask_id = factory.Faker('uuid4')
 
 
 class TaskToComputeSlotsFactory(SlotsFactory):

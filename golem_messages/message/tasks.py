@@ -3,6 +3,7 @@ import functools
 
 from golem_messages import datastructures
 from golem_messages import exceptions
+from golem_messages import validators
 
 from . import base
 
@@ -32,6 +33,24 @@ class ComputeTaskDef(datastructures.FrozenDict):
         'environment': '',
         'docker_images': None,
     }
+
+    def __setitem__(self, key, value):
+        validator = getattr(self, 'validate_{}'.format(key), None)
+        if validator is not None:
+            validator(value=value)  # pylint: disable=not-callable
+        super().__setitem__(key, value)
+
+    validate_task_id = functools.partial(
+        validators.validate_varchar,
+        field_name='task_id',
+        max_length=128,
+    )
+
+    validate_subtask_id = functools.partial(
+        validators.validate_varchar,
+        field_name='subtask_id',
+        max_length=128,
+    )
 
 
 class WantToComputeTask(base.Message):
