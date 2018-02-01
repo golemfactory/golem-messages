@@ -12,4 +12,5 @@ class MessageTestCase(unittest.TestCase):
         decrypt = mock.Mock(side_effect=UnboundLocalError)
         with self.assertRaises(exceptions.DecryptionError):
             base.Message.deserialize('*' * 100, decrypt)
+        decrypt.assert_called_once_with(mock.ANY)
         des_hdr_mock.assert_called_once_with(mock.ANY)
