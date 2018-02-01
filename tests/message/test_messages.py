@@ -382,52 +382,6 @@ class MessagesTestCase(unittest.TestCase):
             ))
 
 
-class TasksTest(unittest.TestCase):
-    def test_subtask_results_rejected_factory(self):
-        msg = factories.SubtaskResultsRejectedFactory()
-        self.assertIsInstance(msg, message.tasks.SubtaskResultsRejected)
-
-    def test_subtask_results_rejected_fgtrf_factory(self):
-        msg = factories.SubtaskResultsRejectedFGTRFFactory()
-        self.assertIsInstance(msg, message.tasks.SubtaskResultsRejected)
-
-    def test_subtask_results_rejected(self):
-        rct = factories.ReportComputedTaskFactory()
-        reason = message.tasks.SubtaskResultsRejected.REASON\
-            .VerificationNegative
-        msg = factories.SubtaskResultsRejectedFactory(
-            slots__report_computed_task=rct,
-            slots__reason=reason,
-        )
-        expected = [
-            ['report_computed_task', rct],
-            ['force_get_task_result_failed', None],
-            ['reason', reason.value],
-        ]
-
-        self.assertEqual(expected, msg.slots())
-        self.assertIsInstance(msg.report_computed_task,
-                              message.tasks.ReportComputedTask)
-
-    def test_subtask_results_rejected_fgtrf(self):
-        fgtrf = factories.ForceGetTaskResultFailedFactory()
-        reason = message.tasks.SubtaskResultsRejected.REASON\
-            .ForcedResourcesFailure
-        msg = factories.SubtaskResultsRejectedFGTRFFactory(
-            slots__force_get_task_result_failed=fgtrf,
-            slots__reason=reason,
-        )
-        expected = [
-            ['report_computed_task', None],
-            ['force_get_task_result_failed', fgtrf],
-            ['reason', reason.value],
-        ]
-
-        self.assertEqual(expected, msg.slots())
-        self.assertIsInstance(msg.force_get_task_result_failed,
-                              message.concents.ForceGetTaskResultFailed)
-
-
 class ConcentsTest(unittest.TestCase):
 
     def test_subtask_result_verify(self):
