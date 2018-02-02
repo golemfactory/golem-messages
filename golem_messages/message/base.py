@@ -35,9 +35,16 @@ def verify_time(timestamp):
     delta_future = msgdt - now
     logger.debug('msgdt %s Δ %s Δfuture %s', msgdt, delta, delta_future)
     if delta > settings.MSG_TTL:
-        raise exceptions.MessageTooOldError()
+        raise exceptions.MessageTooOldError(
+            "delta {} > {}".format(delta, settings.MSG_TTL),
+        )
     if delta_future > settings.FUTURE_TIME_TOLERANCE:
-        raise exceptions.MessageFromFutureError()
+        raise exceptions.MessageFromFutureError(
+            "delta_future {} > {}".format(
+                delta_future,
+                settings.FUTURE_TIME_TOLERANCE
+            ),
+        )
 
 
 def _fake_sign(_):
