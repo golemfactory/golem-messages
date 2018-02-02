@@ -267,7 +267,14 @@ class Message():
 
         header = cls.deserialize_header(raw_header)
         if header.encrypted:
-            data = decrypt_func(data)
+            try:
+                data = decrypt_func(data)
+            except exceptions.MessageError:
+                raise
+            except Exception as e:
+                raise exceptions.DecryptionError(
+                    "Unknown decryption problem"
+                ) from e
         slots = serializer.loads(data)
 
         if check_time:
