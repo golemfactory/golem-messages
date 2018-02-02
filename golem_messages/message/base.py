@@ -310,7 +310,14 @@ class Message():
         payload = data[cls.SIG_LEN:]
 
         if header.encrypted:
-            payload = decrypt_func(payload)
+            try:
+                payload = decrypt_func(payload)
+            except exceptions.MessageError:
+                raise
+            except Exception as e:
+                raise exceptions.DecryptionError(
+                    "Unknown decryption problem"
+                ) from e
         slots = serializer.loads(payload)
 
         instance = cls(

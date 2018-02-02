@@ -15,6 +15,19 @@ class FrozenDict(dict):
 
     ITEMS = {}
 
+    def __init__(self, *args, **kwargs):
+        "Mimic dict __init__ but always use __setitem__"
+        super().__init__()
+        if args:
+            if isinstance(args[0], dict):
+                for key in args[0]:
+                    self[key] = args[0][key]
+            else:
+                for key, value in args[0]:
+                    self[key] = value
+        for key in kwargs:
+            self[key] = kwargs[key]
+
     def __missing__(self, key):
         return copy.deepcopy(self.ITEMS[key])
 
