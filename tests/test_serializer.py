@@ -6,14 +6,6 @@ from golem_messages import serializer
 from golem_messages import shortcuts
 
 
-class EnumTestCase(unittest.TestCase):
-    def test_disconnect_reason(self):
-        r = message.Disconnect.REASON.TooManyPeers
-        s = serializer.dumps(r)
-        r2 = serializer.loads(s)
-        self.assertIs(r, r2)
-
-
 class MessageTestCase(unittest.TestCase):
     def equal_after_processing(self, o):
         s = serializer.dumps(o)
