@@ -1,9 +1,12 @@
+# pylint: disable=protected-access
 import calendar
 import datetime
 import unittest
 import unittest.mock as mock
 
 from freezegun import freeze_time
+import semantic_version
+
 import golem_messages
 from golem_messages import exceptions
 from golem_messages import message
@@ -29,25 +32,17 @@ class BasicTestCase(unittest.TestCase):
                                    self.ecc.raw_pubkey)
         self.assertEqual(msg, msg2)
 
-    @mock.patch('golem_messages.message.base.verify_time')
-    def test_deserialization(self, verify_time):  # pylint: disable=no-self-use
+    def test_deserialization(self):
         """Deserialization should work even if we haven't created any messages
         """
-        verify_time.return_value = True
-        serialized_ping = b'\x03\xe9\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
-            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
-            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
-            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
-            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'\
-            b'\xd8\x1c\x80'
+        serialized_ping = message.p2p.Ping().serialize()
         deserialized = message.Message.deserialize(serialized_ping, None)
-        assert deserialized is not None
-        assert deserialized.TYPE == message.Ping.TYPE
+        self.assertIsInstance(deserialized, message.p2p.Ping)
 
     @mock.patch('golem_messages.serializer.dumps', wraps=serializer.dumps)
     def test_slots_reselialization_optimization(self, dumps_mock):
         """Don't reserialize message slots immediately after deserialization"""
-        msg = message.Ping()
+        msg = message.p2p.Ping()
         payload = golem_messages.dump(msg, self.ecc.raw_privkey,
                                       self.ecc.raw_pubkey)
         # One call for slots and second for hash_header
@@ -81,7 +76,7 @@ class BasicTestCase(unittest.TestCase):
 
     def test_deserialize_verify_fail(self):
         task_to_compute = message.TaskToCompute()
-        with self.assertRaises(TypeError):
+        with self.assertRaises(exceptions.FieldError):
             message.base.deserialize_verify(
                 key='ping',
                 verify_key='ping',
@@ -92,20 +87,52 @@ class BasicTestCase(unittest.TestCase):
     @mock.patch('golem_messages.__version__')
     def test_hello_version(self, v_mock):
         msg = message.Hello()
-        self.assertEqual(msg.golem_messages_version, v_mock)
+        self.assertEqual(msg._version, v_mock)
 
         msg = message.Hello(deserialized=True)
-        self.assertIsNone(msg.golem_messages_version)
+        self.assertFalse(hasattr(msg, '_version'))
 
         version_kwarg = object()
-        msg_kwarg = message.Hello(golem_messages_version=version_kwarg)
-        self.assertEqual(msg_kwarg.golem_messages_version, version_kwarg)
+        msg_kwarg = message.Hello(_version=version_kwarg)
+        self.assertEqual(msg_kwarg._version, version_kwarg)
 
         version_slot = object()
         msg_slot = message.Hello(
-            slots=[('golem_messages_version', version_slot), ],
+            slots=[('_version', version_slot), ],
         )
-        self.assertEqual(msg_slot.golem_messages_version, version_slot)
+        # Slots with '_' should be ignored
+        self.assertEqual(msg_slot._version, v_mock)
+
+    @mock.patch('golem_messages.message.base.verify_version')
+    def test_hello_version_verify(self, v_mock):
+        msg = message.Hello()
+        serialized = golem_messages.dump(
+            msg,
+            self.ecc.raw_privkey,
+            self.ecc.raw_pubkey,
+        )
+        golem_messages.load(
+            serialized,
+            self.ecc.raw_privkey,
+            self.ecc.raw_pubkey,
+        )
+        v_mock.assert_called_once_with(golem_messages.__version__)
+
+    def test_hello_version_signature(self):
+        msg = message.Hello()
+        serialized = golem_messages.dump(
+            msg,
+            self.ecc.raw_privkey,
+            self.ecc.raw_pubkey,
+        )
+        msg = golem_messages.load(
+            serialized,
+            self.ecc.raw_privkey,
+            self.ecc.raw_pubkey,
+        )
+        msg._version = 'haxior'
+        with self.assertRaises(exceptions.InvalidSignature):
+            self.ecc.verify(msg.sig, msg.get_short_hash())
 
     @mock.patch("golem_messages.message.base.RandVal")
     def test_init_messages_error(self, mock_message_rand_val):
@@ -129,11 +156,10 @@ class BasicTestCase(unittest.TestCase):
             assert len(cls.__slots__) >= len(message.Message.__slots__)
 
     def test_deserialize_old_timestamp(self):
-        # TODO remove after 0.11 release
         import struct
         raw_header = struct.pack('!HQ?', 1, 1516272285269707, False)
-        header = message.base.Message.deserialize_header(raw_header)
-        self.assertEqual(header, (1, 1516272285, False))
+        with self.assertRaises(exceptions.HeaderError):
+            message.base.Message.deserialize_header(raw_header)
 
 
 testnow = datetime.datetime.utcnow().replace(microsecond=0)
@@ -242,8 +268,8 @@ class SlotSerializationTestCase(unittest.TestCase):
             reason='Every man is the builder of a temple called his body. —HDT'
         )
         s = msg.serialize()
-        msg2 = message.Message.deserialize(s, decrypt_func=None)
-        self.assertIs(msg2, None)
+        with self.assertRaises(exceptions.FieldError):
+            message.Message.deserialize(s, decrypt_func=None)
 
 
 class NestedMessageTestCase(unittest.TestCase):
@@ -271,8 +297,8 @@ class NestedMessageTestCase(unittest.TestCase):
                 "paint and pencil"
             )
             s = msg.serialize()
-            msg2 = message.Message.deserialize(s, decrypt_func=None)
-            self.assertIs(msg2, None)
+            with self.assertRaises(exceptions.FieldError):
+                message.Message.deserialize(s, decrypt_func=None)
 
     def test_reject_report_computed_task_with_cannot_compute_task(self):
         msg = message.RejectReportComputedTask()
@@ -302,3 +328,60 @@ class ComputeTaskDefTestCase(unittest.TestCase):
         msg2 = message.Message.deserialize(s, None)
         self.assertEqual(ctd, msg2.compute_task_def)
         self.assertIsInstance(msg2.compute_task_def, message.ComputeTaskDef)
+
+
+gm_version = semantic_version.Version(golem_messages.__version__)
+
+
+class VerifyVersionTestCase(unittest.TestCase):
+    # pylint: disable=expression-not-assigned
+    def test_golem_messages_version_higher_minor(self):
+        with self.assertRaises(exceptions.VersionMismatchError):
+            message.base.verify_version(
+                str(gm_version.next_minor()),
+            ),
+
+    def test_golem_messages_version_higher_patch(self):
+        self.assertIsNone(
+            message.base.verify_version(
+                str(gm_version.next_patch()),
+            ),
+        )
+
+    def test_golem_messages_version_equal(self):
+        self.assertIsNone(
+            message.base.verify_version(
+                str(gm_version),
+            ),
+        )
+
+    def test_golem_messages_version_lower_patch(self):
+        with mock.patch.object(golem_messages, '__version__', new='1.1.1'):
+            self.assertIsNone(
+                message.base.verify_version(
+                    '1.1.2',
+                ),
+            )
+
+    def test_golem_messages_version_lower_minor(self):
+        with mock.patch.object(golem_messages, '__version__', new='1.1.1'):
+            with self.assertRaises(exceptions.VersionMismatchError):
+                message.base.verify_version(
+                    '1.0.9',
+                ),
+
+    def test_golem_messages_version_None(self):
+        with mock.patch.object(golem_messages, '__version__', new='1.1.1'):
+            with self.assertRaises(exceptions.VersionMismatchError):
+                message.base.verify_version(
+                    None,
+                ),
+
+    def test_golem_messages_version_invalid(self):
+        with mock.patch.object(golem_messages, '__version__', new='1.1.1'):
+            with self.assertRaises(exceptions.VersionMismatchError):
+                message.base.verify_version(
+                    ('Czy to bajka, czy nie bajka,'
+                     'Myślcie sobie, jak tam chcecie.'),
+                ),
+    # pylint: enable=expression-not-assigned

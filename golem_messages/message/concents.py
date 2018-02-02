@@ -31,6 +31,13 @@ class ServiceRefused(base.AbstractReasonMessage):
 
 
 class ForceReportComputedTask(base.Message):
+    """
+    Message sent from a Provider to the Concent, requesting an forced
+    acknowledgment of the reception of the `ReportComputedTask` message
+    from the Requestor.
+
+    The same, rewritten message is then sent from the Concent to the Requestor.
+    """
     TYPE = CONCENT_MSG_BASE + 1
 
     __slots__ = [
@@ -137,12 +144,12 @@ class FileTransferToken(base.Message):
         }
 
 
-class SubtaskResultVerify(base.Message):
+class SubtaskResultsVerify(base.Message):
     """
     Message sent from a Provider to the Concent, requesting additional
     verification in case the result had been rejected by the Requestor
 
-    :param (slot)SubtaskResultRejected subtask_result_rejected:
+    :param (slot)SubtaskResultsRejected subtask_result_rejected:
            the original reject message
 
     """
@@ -157,14 +164,14 @@ class SubtaskResultVerify(base.Message):
             key,
             super().deserialize_slot(key, value),
             verify_key='subtask_result_rejected',
-            verify_class=tasks.SubtaskResultRejected
+            verify_class=tasks.SubtaskResultsRejected
         )
 
 
-class AckSubtaskResultVerify(base.Message):
+class AckSubtaskResultsVerify(base.Message):
     """
     Message sent from the Concent to the Provider to acknowledge reception
-    of the `SubtaskResultVerify` message
+    of the `SubtaskResultsVerify` message
     """
     TYPE = CONCENT_MSG_BASE + 7
 
@@ -177,17 +184,17 @@ class AckSubtaskResultVerify(base.Message):
             key,
             super().deserialize_slot(key, value),
             verify_key='subtask_result_verify',
-            verify_class=SubtaskResultVerify
+            verify_class=SubtaskResultsVerify
         )
 
 
-class SubtaskResultSettled(base.Message):
+class SubtaskResultsSettled(base.Message):
     """
     Message sent from the Concent to both the Provider and the Requestor
     informing of positive acceptance of the results by the Concent and the
     fact that the payment has been force-sent to the Provider
 
-    :param (slot)str origin: the origin of the `SubtaskResultVerify` message
+    :param (slot)str origin: the origin of the `SubtaskResultsVerify` message
                              that triggered the Concent action
 
     :param (slot)TaskToCompute task_to_compute: TTF containing the task
@@ -291,6 +298,21 @@ class ForceGetTaskResultUpload(base.Message):
         return value
 
 
+class ForceGetTaskResultDownload(base.Message):
+    TYPE = CONCENT_MSG_BASE + 14
+
+    __slots__ = [
+        'force_get_task_result',
+        'file_transfer_token',
+    ] + base.Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        value = deserialize_force_get_task_result(key, value)
+        value = deserialize_file_transfer_token(key, value)
+        return value
+
+
 deserialize_task_failure = functools.partial(
     base.deserialize_verify,
     verify_key='task_failure',
@@ -325,4 +347,10 @@ deserialize_file_transfer_token = functools.partial(
     base.deserialize_verify,
     verify_key='file_transfer_token',
     verify_class=FileTransferToken,
+)
+
+deserialize_force_get_task_result_failed = functools.partial(
+    base.deserialize_verify,
+    verify_key='force_get_task_result_failed',
+    verify_class=ForceGetTaskResultFailed,
 )

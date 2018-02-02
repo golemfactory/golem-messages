@@ -5,6 +5,9 @@ import hashlib
 import logging
 import struct
 import time
+import warnings
+
+import semantic_version
 
 import golem_messages
 
@@ -32,9 +35,16 @@ def verify_time(timestamp):
     delta_future = msgdt - now
     logger.debug('msgdt %s Δ %s Δfuture %s', msgdt, delta, delta_future)
     if delta > settings.MSG_TTL:
-        raise exceptions.MessageTooOldError()
+        raise exceptions.MessageTooOldError(
+            "delta {} > {}".format(delta, settings.MSG_TTL),
+        )
     if delta_future > settings.FUTURE_TIME_TOLERANCE:
-        raise exceptions.MessageFromFutureError()
+        raise exceptions.MessageFromFutureError(
+            "delta_future {} > {}".format(
+                delta_future,
+                settings.FUTURE_TIME_TOLERANCE
+            ),
+        )
 
 
 def _fake_sign(_):
@@ -51,50 +61,86 @@ def verify_slot_type(value, class_):
         )
 
 
+def verify_version(msg_version):
+    try:
+        theirs_v = semantic_version.Version(msg_version)
+    except ValueError as e:
+        raise exceptions.VersionMismatchError(
+            "Invalid version received: {msg_version}".format(
+                msg_version=msg_version,
+            )
+        ) from e
+    ours_v = semantic_version.Version(golem_messages.__version__)
+    spec_str = '>={major}.{minor}.0,<{next_minor}'.format(
+        major=ours_v.major,
+        minor=ours_v.minor,
+        next_minor=ours_v.next_minor(),
+    )
+    spec = semantic_version.Spec(spec_str)
+    if theirs_v not in spec:
+        raise exceptions.VersionMismatchError(
+            "Incompatible version received:"
+            " {ours} (ours) != {theirs} (theirs)".format(
+                ours=ours_v,
+                theirs=theirs_v,
+            )
+        )
+
+
 class Message():
     """ Communication message that is sent in all networks """
 
-    __slots__ = ['timestamp', 'encrypted', 'sig', '_raw']
+    __slots__ = ['header', 'sig']
 
-    HDR_LEN = 11
+    HDR_FORMAT = '!HQ?'
+    HDR_LEN = struct.calcsize(HDR_FORMAT)
     SIG_LEN = 65
-    PAYLOAD_IDX = HDR_LEN + SIG_LEN
 
     TYPE = None
     ENCRYPT = True
     ENUM_SLOTS = {}
 
-    def __init__(self, timestamp=None, encrypted=False, sig=None,  # noqa TODO #88 pylint: disable=too-many-arguments
-                 raw=None, slots=None, deserialized=False, **kwargs):
+    def __init__(self,
+                 header: datastructures.MessageHeader = None,
+                 sig=None,
+                 slots=None,
+                 deserialized=False,
+                 **kwargs):
 
         """Create a new message
-        :param timestamp: message timestamp
-        :param encrypted: whether message was encrypted
-        :param sig: signed message hash
-        :param raw: original message bytes
         :param deserialized: was message created by .deserialize()?
         """
 
         # Child message slots
-        self.load_slots(slots)
+        try:
+            self.load_slots(slots)
+        except exceptions.FieldError:
+            raise
+        except Exception as e:
+            raise exceptions.MessageError('Load slots failed') from e
 
         # Set attributes
         for key in kwargs:
             if getattr(self, key, None) is None:
                 setattr(self, key, kwargs[key])
 
-        # Header
-        if deserialized and not timestamp:
-            logger.warning('Message without timestamp %r', self)
-        # Since epoch differs between OS, we use calendar.timegm() to unify it
-        if not timestamp:
-            timestamp = calendar.timegm(time.gmtime())
-        self.timestamp = int(timestamp)
-        self.encrypted = bool(encrypted)
-        self.sig = sig
+        if deserialized and not (header and header.timestamp):
+            warnings.warn(
+                'Message without header {}'.format(self),
+                RuntimeWarning
+            )
 
-        # Encoded data
-        self._raw = raw  # whole message
+        # Header
+        if header is None:
+            header = datastructures.MessageHeader(
+                self.TYPE,
+                # Since epoch differs between OS, we use calendar.timegm()
+                # instead of time.time() to unify it.
+                calendar.timegm(time.gmtime()),
+                False,
+            )
+        self.header = header
+        self.sig = sig
 
     def __eq__(self, obj):
         if not isinstance(obj, Message):
@@ -103,14 +149,33 @@ class Message():
             return False
         return self.__slots__ == obj.__slots__
 
+    def __repr__(self):
+        return "{name}(header={header}, sig={sig}, slots={slots})".format(
+            name=self.__class__.__name__,
+            header=getattr(self, 'header', None),
+            sig=getattr(self, 'sig', None),
+            slots=self.slots(),
+        )
+
     @property
-    def raw(self):
-        """Returns a raw copy of the message"""
-        return self._raw[:]
+    def timestamp(self):
+        return self.header.timestamp
+
+    @property
+    def encrypted(self):
+        return self.header.encrypted
+
+    @encrypted.setter
+    def encrypted(self, value):
+        self.header = datastructures.MessageHeader(
+            self.header.type_,
+            self.header.timestamp,
+            value,
+        )
 
     def get_short_hash(self, payload=None):
         """Return short message representation for signature
-        :return bytes: sha1(TYPE, timestamp, encrypted, payload)
+        :return bytes: sha1(TYPE, timestamp, payload)
         """
         if payload is None:
             payload = serializer.dumps(self.slots())
@@ -134,27 +199,22 @@ class Message():
         if sign_func is None:
             sign_func = _fake_sign
 
-        try:
-            self.encrypted = bool(self.ENCRYPT and encrypt_func)
-            payload = serializer.dumps(self.slots())
+        self.encrypted = bool(self.ENCRYPT and encrypt_func)
+        payload = serializer.dumps(self.slots())
 
-            # When nesting one message inside another it's important
-            # not to overwrite original signature.
-            if self.sig is None:
-                self.sig = sign_func(self.get_short_hash(payload))
+        # When nesting one message inside another it's important
+        # not to overwrite original signature.
+        if self.sig is None:
+            self.sig = sign_func(self.get_short_hash(payload))
 
-            if self.encrypted:
-                payload = encrypt_func(payload)
+        if self.encrypted:
+            payload = encrypt_func(payload)
 
-            return (
-                self.serialize_header() +
-                self.sig +
-                payload
-            )
-
-        except Exception as exc:
-            logger.exception("Error serializing message: %r", exc)
-            raise
+        return (
+            self.serialize_header() +
+            self.sig +
+            payload
+        )
 
     def serialize_header(self):
         """ Serialize message's header
@@ -166,9 +226,12 @@ class Message():
 
         :return: serialized header
         """
-        return struct.pack('!HQ?', self.TYPE,
-                           self.timestamp,
-                           self.encrypted)
+        return struct.pack(
+            self.HDR_FORMAT,
+            self.TYPE,
+            self.timestamp,
+            self.encrypted,
+        )
 
     def serialize_slot(self, key, value):  # noqa pylint: disable=unused-argument, no-self-use
         if isinstance(value, enum.Enum):
@@ -177,7 +240,10 @@ class Message():
 
     def deserialize_slot(self, key, value):
         if (key in self.ENUM_SLOTS) and (value is not None):
-            value = self.ENUM_SLOTS[key](value)
+            try:
+                value = self.ENUM_SLOTS[key](value)
+            except ValueError as e:
+                raise exceptions.FieldError(field=key, value=value) from e
         return value
 
     @classmethod
@@ -187,19 +253,35 @@ class Message():
         :param data: bytes
         :return: datastructures.MessageHeader
         """
-        assert len(data) == cls.HDR_LEN
-        header = datastructures.MessageHeader(*struct.unpack('!HQ?', data))
+        try:
+            header = datastructures.MessageHeader(
+                *struct.unpack(cls.HDR_FORMAT, data),
+            )
+        except (struct.error, TypeError) as e:
+            raise exceptions.HeaderError() from e
 
-        if header.timestamp > 10**10:
-            # Old timestamp format. Remove after 0.11 golem core release
-            timestamp = header.timestamp // 10**6
-            header = datastructures.MessageHeader(header[0], timestamp,
-                                                  header[2])
+        logger.debug("deserialize_header(): %r", header)
+        if not settings.MIN_TIMESTAMP < header.timestamp < \
+                settings.MAX_TIMESTAMP:
+            raise exceptions.HeaderError(
+                "Invalid timestamp {got}. Should be between {min_} and {max_}"
+                .format(
+                    got=header.timestamp,
+                    min_=settings.MIN_TIMESTAMP,
+                    max_=settings.MAX_TIMESTAMP,
+                )
+            )
 
+        from golem_messages.message import registered_message_types
+
+        if header.type_ not in registered_message_types:
+            raise exceptions.HeaderError(
+                "Unknown message type {got}".format(got=header.type_),
+            )
         return header
 
     @classmethod
-    def deserialize(cls, msg, decrypt_func, check_time=True, verify_func=None): # noqa TODO: #52 pylint: disable=inconsistent-return-statements
+    def deserialize(cls, msg, decrypt_func, check_time=True, verify_func=None):
         """
         Deserialize single message
         :param str msg: serialized message
@@ -210,68 +292,52 @@ class Message():
 
         from golem_messages.message import registered_message_types
 
-        if not msg or len(msg) <= cls.PAYLOAD_IDX:
-            logger.info("Message error: message too short")
-            return  # TODO: #52 pylint: disable=inconsistent-return-statements
+        if not msg or len(msg) <= cls.HDR_LEN + cls.SIG_LEN:
+            raise exceptions.MessageError("Message too short")
 
         raw_header = msg[:cls.HDR_LEN]
-        sig = msg[cls.HDR_LEN:cls.PAYLOAD_IDX]
-        data = msg[cls.PAYLOAD_IDX:]
+        data = msg[cls.HDR_LEN:]
 
-        try:
-            header = cls.deserialize_header(raw_header)
-            logger.debug("msg_type: %r", header.type_)
-            if header.encrypted:
-                data = decrypt_func(data)
-            slots = serializer.loads(data)
-        except Exception as exc:  # pylint: disable=broad-except
-            logger.info("Message error: invalid data: %r", exc)
-            logger.debug("Failing message hdr: %r data: %r", raw_header, data)
-            return  # TODO: #52 pylint: disable=inconsistent-return-statements
-
+        header = cls.deserialize_header(raw_header)
         if check_time:
-            try:
-                verify_time(header.timestamp)
-            except exceptions.TimestampError as e:
-                logger.info(
-                    "Message error: invalid timestamp: %r %s",
-                    header.timestamp,
-                    e,
-                )
-                return  # noqa TODO: #52 pylint: disable=inconsistent-return-statements
+            verify_time(header.timestamp)
 
-        if header.type_ not in registered_message_types:
-            logger.info('Message error: invalid type %d', header.type_)
-            return  # TODO: #52 pylint: disable=inconsistent-return-statements
-
-        try:
-            instance = registered_message_types[header.type_](
-                timestamp=header.timestamp,
-                encrypted=header.encrypted,
-                sig=sig,
-                raw=msg,
-                slots=slots,
-                deserialized=True,
-            )
-        except Exception as exc:  # pylint: disable=broad-except
-            logger.info("Message error: invalid data: %r", exc)
-            return  # TODO: #52 pylint: disable=inconsistent-return-statements
-        if verify_func is not None:
-            try:
-                verify_func(instance.get_short_hash(data), sig)
-            except Exception:
-                logger.debug('Failed to verify signature: %r', instance)
-                raise
-        return instance
-
-    def __repr__(self):
-        return "{}(timestamp={}, encrypted={}, sig={}, slots={})".format(
-            self.__class__.__name__,
-            getattr(self, 'timestamp', None),
-            getattr(self, 'encrypted', None),
-            getattr(self, 'sig', None),
-            self.slots(),
+        class_ = registered_message_types[header.type_]
+        return class_.deserialize_with_header(
+            header,
+            data,
+            decrypt_func,
+            verify_func,
         )
+
+    @classmethod
+    def deserialize_with_header(cls, header, data, decrypt_func, verify_func,
+                                **kwargs):
+        sig = data[:cls.SIG_LEN]
+        payload = data[cls.SIG_LEN:]
+
+        if header.encrypted:
+            try:
+                payload = decrypt_func(payload)
+            except exceptions.MessageError:
+                raise
+            except Exception as e:
+                raise exceptions.DecryptionError(
+                    "Unknown decryption problem"
+                ) from e
+        slots = serializer.loads(payload)
+
+        instance = cls(
+            header=header,
+            sig=sig,
+            slots=slots,
+            deserialized=True,
+            **kwargs,
+        )
+
+        if verify_func is not None:
+            verify_func(instance.get_short_hash(payload), sig)
+        return instance
 
     def load_slots(self, slots):
         try:
@@ -305,7 +371,9 @@ class Message():
         return processed_slots
 
     def valid_slot(self, name):
-        return (name not in Message.__slots__) and (name in self.__slots__)
+        return (not name.startswith('_')) \
+            and (name not in Message.__slots__) \
+            and (name in self.__slots__)
 
 
 class AbstractReasonMessage(Message):
@@ -328,11 +396,12 @@ class AbstractReasonMessage(Message):
 class Hello(Message):
     TYPE = 0
     ENCRYPT = False
+    VERSION_FORMAT = '!32p'
+    VERSION_LENGTH = struct.calcsize(VERSION_FORMAT)
 
     __slots__ = [
         'rand_val',
         'proto_id',
-        'golem_messages_version',
         'node_name',
         'node_info',
         'port',
@@ -342,13 +411,55 @@ class Hello(Message):
         'challenge',
         'difficulty',
         'metadata',
+        '_version',
     ] + Message.__slots__
+
+    @classmethod
+    def deserialize_with_header(cls, header, data, *args, **kwargs):  # noqa pylint: disable=arguments-differ
+        raw_version = data[-cls.VERSION_LENGTH:]
+        data = data[:-cls.VERSION_LENGTH]
+        try:
+            str_version = struct.unpack(cls.VERSION_FORMAT, raw_version)[0] \
+                .decode('ascii', 'replace')
+        except struct.error as e:
+            raise exceptions.VersionMismatchError(
+                "Unreadable version {raw_version}".format(
+                    raw_version=raw_version,
+                )
+            ) from e
+        verify_version(str_version)
+        instance = super().deserialize_with_header(
+            header,
+            data,
+            _version=str_version,
+            *args,
+            **kwargs,
+        )
+        return instance
+
+    def serialize(self, *args, **kwargs):  # pylint: disable=arguments-differ
+        serialized = super().serialize(*args, **kwargs)
+        version = struct.pack(
+            self.VERSION_FORMAT,
+            self._version.encode('ascii', 'replace')
+        )
+        return serialized + version
+
+    def get_short_hash(self, *args, **kwargs):  # noqa pylint: disable=arguments-differ
+        return super().get_short_hash(*args, **kwargs) \
+            + self._version.encode('ascii', 'replace')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         deserialized = kwargs.pop('deserialized', False)
-        if not deserialized and self.golem_messages_version is None:
-            self.golem_messages_version = golem_messages.__version__
+        if not deserialized and not hasattr(self, '_version'):
+            self._version = golem_messages.__version__
+
+    def __repr__(self):
+        return "<{} _version:{}>".format(
+            super().__repr__(),
+            getattr(self, '_version', '<undefined>'),
+        )
 
 
 class RandVal(Message):
@@ -388,5 +499,8 @@ class ChallengeSolution(Message):
 
 def deserialize_verify(key, value, verify_key, verify_class):
     if key == verify_key:
-        verify_slot_type(value, verify_class)
+        try:
+            verify_slot_type(value, verify_class)
+        except TypeError as e:
+            raise exceptions.FieldError(field=key, value=value) from e
     return value

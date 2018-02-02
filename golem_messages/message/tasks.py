@@ -2,6 +2,8 @@ import enum
 import functools
 
 from golem_messages import datastructures
+from golem_messages import exceptions
+from golem_messages import validators
 
 from . import base
 
@@ -16,7 +18,7 @@ class ComputeTaskDef(datastructures.FrozenDict):
         # deadline represents subtask timeout in UTC timestamp (float or int)
         # If you're looking for whole TASK deadline SEE: task_header.deadline
         # Task headers are received in MessageTasks.tasks.
-        'deadline': '',
+        'deadline': 0,
         'src_code': '',
         'extra_data': {},  # safe because of copy in parent.__missing__()
         'short_description': '',
@@ -31,6 +33,24 @@ class ComputeTaskDef(datastructures.FrozenDict):
         'environment': '',
         'docker_images': None,
     }
+
+    def __setitem__(self, key, value):
+        validator = getattr(self, 'validate_{}'.format(key), None)
+        if validator is not None:
+            validator(value=value)  # pylint: disable=not-callable
+        super().__setitem__(key, value)
+
+    validate_task_id = functools.partial(
+        validators.validate_varchar,
+        field_name='task_id',
+        max_length=128,
+    )
+
+    validate_subtask_id = functools.partial(
+        validators.validate_varchar,
+        field_name='subtask_id',
+        max_length=128,
+    )
 
 
 class WantToComputeTask(base.Message):
@@ -52,7 +72,9 @@ class TaskToCompute(base.Message):
 
     __slots__ = [
         'requestor_id',
+        'requestor_public_key',
         'provider_id',
+        'provider_public_key',
         'compute_task_def',
     ] + base.Message.__slots__
 
@@ -67,7 +89,11 @@ class TaskToCompute(base.Message):
             return
         if node_key != self.requestor_id:
             errmsg = "requestor_id: {} != compute_task_def['task_owner']['key']"
-            raise ValueError(errmsg.format(self.requestor_id, node_key))
+            raise exceptions.FieldError(
+                errmsg.format(self.requestor_id, node_key),
+                field='compute_task_def',
+                value=value,
+            )
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
@@ -89,6 +115,10 @@ class CannotAssignTask(base.AbstractReasonMessage):
 
 
 class ReportComputedTask(base.Message):
+    """
+    Message sent from a Provider to a Requestor, announcing completion
+    of the assigned subtask (attached as `task_to_compute`)
+    """
     # FIXME this message should be simpler
     TYPE = TASK_MSG_BASE + 4
     RESULT_TYPE = {
@@ -146,7 +176,7 @@ class GetResource(base.Message):
     ] + base.Message.__slots__
 
 
-class SubtaskResultAccepted(base.Message):
+class SubtaskResultsAccepted(base.Message):
     TYPE = TASK_MSG_BASE + 10
 
     __slots__ = [
@@ -154,18 +184,57 @@ class SubtaskResultAccepted(base.Message):
         'payment_ts'
     ] + base.Message.__slots__
 
-#
-# @todo for consistency's sake, the name of this message class should be:
-#       `SubtaskResultsRejected` (+ that's what's specified in the docs)
-#
-#       https://github.com/golemfactory/golem-messages/issues/96
-#
 
-class SubtaskResultRejected(base.Message):
+class SubtaskResultsRejected(base.AbstractReasonMessage):
+    """
+    Message sent from the Requestor to the Provider, rejecting the provider's
+    completed task results
+
+    also, sent from the Concent to the Provider in case of additional
+    verification (when the verdict of the verification is negative)
+    or in case of forced results verdict (when the verdict is
+    negative - either because the work itself was deemed invalid by the
+    requestor
+    """
     TYPE = TASK_MSG_BASE + 11
 
-    __slots__ = ['subtask_id'] + base.Message.__slots__
+    __slots__ = [
+        'report_computed_task',
+        'force_get_task_result_failed',
+    ] + base.AbstractReasonMessage.__slots__
 
+    @enum.unique
+    class REASON(enum.Enum):
+        VerificationNegative = 'Results verification negative'
+        ConcentDuplicateRequest = 'Concent had already processed this request'
+        ConcentResourcesFailure = \
+            'Concent could not retrieve resources to verify'
+        ConcentVerificationNegative = 'Concent results verification negative'
+        ConcentMessageRejected = \
+            'Included computed task report was found corrupt'
+        ForcedResourcesFailure = \
+            'Concent reported failure to retrieve the resources to verify'
+        ResourcesFailure = \
+            'Could not retrieve resources'
+
+    def deserialize_slot(self, key, value):
+        # pylint: disable=cyclic-import
+        #
+        # with the current specification, it will be difficult to do without
+        # the cyclic import here since per-specs, the `SubtaskResultsRejected`
+        # message can contain the concent's `ForceGetTaskResultFailed` and
+        # at the same time, the concent messages also can contain
+        # `SubtaskResultsRejected` ...
+        #
+
+        from .concents import deserialize_force_get_task_result_failed
+
+        # pylint: enable=cyclic-import
+
+        value = super().deserialize_slot(key, value)
+        value = deserialize_report_computed_task(key, value)
+        value = deserialize_force_get_task_result_failed(key, value)
+        return value
 
 
 class DeltaParts(base.Message):
@@ -252,7 +321,7 @@ class CannotComputeTask(base.AbstractReasonMessage):
 
 class SubtaskPayment(base.Message):
     """Informs about payment for a subtask.
-    It succeeds SubtaskResultAccepted but could
+    It succeeds SubtaskResultsAccepted but could
     be sent after a delay. It is also sent in response to
     SubtaskPaymentRequest. If transaction_id is None it
     should be interpreted as PAYMENT PENDING status.

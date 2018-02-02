@@ -32,7 +32,7 @@ class MessageTestCase(unittest.TestCase):
         requestor_keys = cryptography.ECCx(None)
 
         task_to_compute = message.TaskToCompute()
-        ctd = message.ComputeTaskDef({'task_id': 20, })
+        ctd = message.ComputeTaskDef({'task_id': '20', })
         task_to_compute.compute_task_def = ctd
 
         # Dump TaskToCompute to make it signed
