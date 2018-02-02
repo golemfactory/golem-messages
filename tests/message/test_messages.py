@@ -21,7 +21,7 @@ class InitializationTestCase(unittest.TestCase):
         for key in msg.__slots__:
             if key in message.Message.__slots__:
                 continue
-            if key == 'golem_messages_version':
+            if key.startswith('_'):
                 continue
             self.assertIsNone(getattr(msg, key))
 

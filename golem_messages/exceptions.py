@@ -56,3 +56,7 @@ class DecryptionError(CryptoError):
 
 class SerializationError(MessageError):
     pass
+
+
+class VersionMismatchError(MessageError):
+    pass
