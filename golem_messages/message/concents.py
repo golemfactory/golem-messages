@@ -51,6 +51,16 @@ class ForceReportComputedTask(base.Message):
 
 
 class AckReportComputedTask(base.Message):
+    """
+    Sent from Requestor to the Provider, acknowledging reception of the
+    `ReportComputedTask` message.
+
+    If the requestor fails to respond to the `ReportComputedTask` message
+    before the timeout and Provider then uses Concent to acquire the
+    acknowledgement, this message will be sent from the Concent to the Provider
+    and has the same effect as the regular Requestor's acknowledgement.
+    """
+
     TYPE = CONCENT_MSG_BASE + 2
 
     __slots__ = [
