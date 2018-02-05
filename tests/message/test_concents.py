@@ -154,3 +154,18 @@ class ConcentsTest(unittest.TestCase):
                               message.concents.ForceGetTaskResult)
         self.assertIsInstance(msg.file_transfer_token,
                               message.concents.FileTransferToken)
+
+    def test_force_subtask_results(self):
+        ack_rct = factories.AckReportComputedTaskFactory()
+
+        msg = factories.ForceSubtaskResultsFactory(
+            ack_report_computed_task=ack_rct,
+        )
+
+        expected = [
+            ['ack_report_computed_task', ack_rct]
+        ]
+
+        self.assertEqual(expected, msg.slots())
+        self.assertIsInstance(msg.ack_report_computed_task,
+                              message.concents.AckReportComputedTask)
