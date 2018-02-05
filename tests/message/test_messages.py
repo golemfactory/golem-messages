@@ -11,7 +11,7 @@ from golem_messages import message
 from golem_messages import shortcuts
 from golem_messages.message import concents
 
-from . import factories
+from tests import factories
 
 
 class InitializationTestCase(unittest.TestCase):
@@ -21,7 +21,7 @@ class InitializationTestCase(unittest.TestCase):
         for key in msg.__slots__:
             if key in message.Message.__slots__:
                 continue
-            if key == 'golem_messages_version':
+            if key.startswith('_'):
                 continue
             self.assertIsNone(getattr(msg, key))
 

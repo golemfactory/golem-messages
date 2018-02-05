@@ -41,6 +41,8 @@ class ComputeTaskDefFactory(factory.DictFactory):
         model = tasks.ComputeTaskDef
 
     task_owner = factory.SubFactory(TaskOwnerFactory)
+    task_id = factory.Faker('uuid4')
+    subtask_id = factory.Faker('uuid4')
 
 
 class TaskToComputeSlotsFactory(SlotsFactory):
@@ -78,12 +80,43 @@ class TaskToComputeFactory(factory.Factory):
     slots = factory.SubFactory(TaskToComputeSlotsFactory)
 
 
+class SubtaskResultsRejectedSlotsFactory(SlotsFactory):
+    class Meta:
+        model = tuple
+
+    report_computed_task = factory.SubFactory(
+        'tests.factories.ReportComputedTaskFactory')
+
+
 class SubtaskResultsRejectedFactory(factory.Factory):
+    """
+    Produces a regular `SubtaskResultsRejected` message, containing the earlier
+    `ReportComputedTask` message
+    """
     class Meta:
         model = tasks.SubtaskResultsRejected
 
-    slots = factory.SubFactory(SlotsFactory,
-                               subtask_id='test-si-{}'.format(uuid.uuid4()))
+    slots = factory.SubFactory(SubtaskResultsRejectedSlotsFactory)
+
+
+class SubtaskResultsRejectedFGTRFSlotsFactory(SlotsFactory):
+    class Meta:
+        model = tuple
+
+    force_get_task_result_failed = factory.SubFactory(
+        'tests.factories.ForceGetTaskResultFailedFactory')
+
+
+class SubtaskResultsRejectedFGTRFFactory(factory.Factory):
+    """
+    Produces the alternate version of the `SubtaskResultsRejected` message,
+    containing the `ForceGetTaskResultFailed` message - resulting from an
+    earlier, failed, forced communication procedure
+    """
+    class Meta:
+        model = tasks.SubtaskResultsRejected
+
+    slots = factory.SubFactory(SubtaskResultsRejectedFGTRFSlotsFactory)
 
 
 class ReportComputedTaskSlotsFactory(SlotsFactory):

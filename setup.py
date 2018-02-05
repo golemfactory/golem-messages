@@ -39,6 +39,7 @@ setup(
         'ethereum==1.6.1',
         'pyelliptic==1.5.9',
         'pytz',
+        'semantic_version',
     ],
     tests_require=[
         'factory-boy==2.9.2',
