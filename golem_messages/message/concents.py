@@ -332,8 +332,8 @@ class ForceSubtaskResultsResponse(base.Message):
 
     @base.verify_slot('subtask_results_accepted', tasks.SubtaskResultsAccepted)
     @base.verify_slot('subtask_results_rejected', tasks.SubtaskResultsRejected)
-    def deserialize_slot(self, *args, **kwargs):
-        return super().deserialize_slot(*args, **kwargs)
+    def deserialize_slot(self, key, value):
+        return super().deserialize_slot(key, value)
 
 
 deserialize_task_failure = functools.partial(

@@ -531,3 +531,47 @@ class ConcentsTest(unittest.TestCase):
                               message.concents.ForceGetTaskResult)
         self.assertIsInstance(msg.file_transfer_token,
                               message.concents.FileTransferToken)
+
+    def test_force_subtask_results_response_accepted(self):
+        subtask_results_accepted = factories.SubtaskResultsAcceptedFactory()
+        msg = factories.ForceSubtaskResultsResponseFactory(
+            subtask_results_accepted=subtask_results_accepted
+        )
+        expected = [
+            ['subtask_results_accepted', subtask_results_accepted],
+            ['subtask_results_rejected', None],
+        ]
+        self.assertEqual(expected, msg.slots())
+        self.assertIsInstance(
+            msg.subtask_results_accepted,
+            message.tasks.SubtaskResultsAccepted
+        )
+
+    def test_force_subtask_results_response_accepted_subfactory(self):
+        msg = factories.ForceSubtaskResultsResponseFactory.with_accepted()
+        self.assertIsInstance(
+            msg.subtask_results_accepted,
+            message.tasks.SubtaskResultsAccepted
+        )
+
+    def test_force_subtask_results_response_rejected(self):
+        subtask_results_rejected = factories.SubtaskResultsRejectedFactory()
+        msg = factories.ForceSubtaskResultsResponseFactory(
+            subtask_results_rejected=subtask_results_rejected
+        )
+        expected = [
+            ['subtask_results_accepted', None],
+            ['subtask_results_rejected', subtask_results_rejected],
+        ]
+        self.assertEqual(expected, msg.slots())
+        self.assertIsInstance(
+            msg.subtask_results_rejected,
+            message.tasks.SubtaskResultsRejected
+        )
+
+    def test_force_subtask_results_response_rejected_subfactory(self):
+        msg = factories.ForceSubtaskResultsResponseFactory.with_rejected()
+        self.assertIsInstance(
+            msg.subtask_results_rejected,
+            message.tasks.SubtaskResultsRejected
+        )

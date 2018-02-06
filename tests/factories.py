@@ -80,6 +80,11 @@ class TaskToComputeFactory(factory.Factory):
     slots = factory.SubFactory(TaskToComputeSlotsFactory)
 
 
+class SubtaskResultsAcceptedFactory(factory.Factory):
+    class Meta:
+        model = tasks.SubtaskResultsAccepted
+
+
 class SubtaskResultsRejectedSlotsFactory(SlotsFactory):
     class Meta:
         model = tuple
@@ -285,3 +290,50 @@ class ForceGetTaskResultUploadFactory(factory.Factory):
 
 class ForceGetTaskResultDownloadFactory(ForceGetTaskResultUploadFactory):
     pass
+
+
+class ForceSubtaskResultsResponseFactory(factory.Factory):
+    class Meta:
+        model = concents.ForceSubtaskResultsResponse
+
+    @classmethod
+    def with_accepted(cls, *args, **kwargs):
+        if 'subtask_results_accepted' not in kwargs:
+            kwargs['subtask_results_accepted__generate'] = True
+        return cls(*args, **kwargs)
+
+    @classmethod
+    def with_rejected(cls, *args, **kwargs):
+        if 'subtask_results_rejected' not in kwargs:
+            kwargs['subtask_results_rejected__generate'] = True
+        return cls(*args, **kwargs)
+
+    # pylint: disable=no-self-argument
+    # the first argument of a `post_generation` hook _doesn't_
+    # reference the factory class but rather the generated model object
+
+    @factory.post_generation
+    def subtask_results_accepted(obj, create, extracted, **kwargs):
+        if not create:
+            return
+
+        msg = extracted
+        if not msg and kwargs and kwargs.pop('generate'):
+            msg = SubtaskResultsAcceptedFactory(**kwargs)
+
+        if msg:
+            setattr(obj, 'subtask_results_accepted', msg)
+
+    @factory.post_generation
+    def subtask_results_rejected(obj, create, extracted, **kwargs):
+        if not create:
+            return
+
+        msg = extracted
+        if not msg and kwargs and kwargs.pop('generate'):
+            msg = SubtaskResultsRejectedFactory(**kwargs)
+
+        if msg:
+            setattr(obj, 'subtask_results_rejected', msg)
+
+    # pylint: enable=no-self-argument

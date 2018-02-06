@@ -373,4 +373,3 @@ deserialize_report_computed_task = functools.partial(
     verify_key='report_computed_task',
     verify_class=ReportComputedTask,
 )
-
