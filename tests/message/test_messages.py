@@ -575,3 +575,35 @@ class ConcentsTest(unittest.TestCase):
             msg.subtask_results_rejected,
             message.tasks.SubtaskResultsRejected
         )
+
+    def test_force_subtask_results_response_deserialize_accepted(self):
+        subtask_results_accepted = factories.SubtaskResultsAcceptedFactory()
+        msg = concents.ForceSubtaskResultsResponse(slots=(
+            ('subtask_results_accepted', subtask_results_accepted),
+        ))
+        self.assertIsInstance(
+            msg.subtask_results_accepted,
+            message.tasks.SubtaskResultsAccepted
+        )
+
+    def test_force_subtask_results_response_fail_accepted(self):
+        with self.assertRaises(exceptions.FieldError):
+            concents.ForceSubtaskResultsResponse(slots=(
+                ('subtask_results_accepted', 'loonquawl'),
+            ))
+
+    def test_force_subtask_results_response_deserialize_rejected(self):
+        subtask_results_rejected = factories.SubtaskResultsRejectedFactory()
+        msg = concents.ForceSubtaskResultsResponse(slots=(
+            ('subtask_results_rejected', subtask_results_rejected),
+        ))
+        self.assertIsInstance(
+            msg.subtask_results_rejected,
+            message.tasks.SubtaskResultsRejected
+        )
+
+    def test_force_subtask_results_response_fail_rejected(self):
+        with self.assertRaises(exceptions.FieldError):
+            concents.ForceSubtaskResultsResponse(slots=(
+                ('subtask_results_rejected', 'phouchg'),
+            ))
