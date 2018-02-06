@@ -507,6 +507,15 @@ def deserialize_verify(key, value, verify_key, verify_class):
     return value
 
 def verify_slot(slot_name, slot_class):
+    """
+    decorator for Message's `deserialize_slot` method
+    ensures that the slot identified by `slot_name` is an instance of the
+    message class given in `slot_class`
+
+    :param slot_name: the name of the slot
+    :param slot_class: the class to check against
+    :return: the verified value
+    """
     def deserialize_slot(method):
         @functools.wraps(method)
         def _(self, key, value):
