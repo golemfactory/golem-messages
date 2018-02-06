@@ -177,6 +177,12 @@ class GetResource(base.Message):
 
 
 class SubtaskResultsAccepted(base.Message):
+    """
+    Sent from the Requestor to the Provider, accepting the provider's
+    completed task results.
+
+    Having received this message, the Provider expects payment to follow.
+    """
     TYPE = TASK_MSG_BASE + 10
 
     __slots__ = [
@@ -187,14 +193,15 @@ class SubtaskResultsAccepted(base.Message):
 
 class SubtaskResultsRejected(base.AbstractReasonMessage):
     """
-    Message sent from the Requestor to the Provider, rejecting the provider's
+    Sent from the Requestor to the Provider, rejecting the provider's
     completed task results
 
-    also, sent from the Concent to the Provider in case of additional
-    verification (when the verdict of the verification is negative)
-    or in case of forced results verdict (when the verdict is
-    negative - either because the work itself was deemed invalid by the
-    requestor
+    Alternatively, sent from the Concent to the Provider in case of
+    additional verification (when the verdict of the verification is negative)
+    or in case of forced results verdict (when the verdict is negative -
+    either because the work itself was deemed invalid by the requestor or
+    because it had been previously determined authoritatively that the
+    results could not have been retrieved.)
     """
     TYPE = TASK_MSG_BASE + 11
 
@@ -366,3 +373,4 @@ deserialize_report_computed_task = functools.partial(
     verify_key='report_computed_task',
     verify_class=ReportComputedTask,
 )
+

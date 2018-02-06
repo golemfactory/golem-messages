@@ -1,6 +1,7 @@
 import calendar
 import datetime
 import enum
+import functools
 import hashlib
 import logging
 import struct
@@ -504,3 +505,17 @@ def deserialize_verify(key, value, verify_key, verify_class):
         except TypeError as e:
             raise exceptions.FieldError(field=key, value=value) from e
     return value
+
+def verify_slot(slot_name, slot_class):
+    def deserialize_slot(method):
+        @functools.wraps(method)
+        def _(self, key, value):
+            return functools.partial(
+                deserialize_verify,
+                verify_key=slot_name,
+                verify_class=slot_class,
+            )(
+                key, method(self, key, value)
+            )
+        return _
+    return deserialize_slot
