@@ -285,3 +285,17 @@ class ForceGetTaskResultUploadFactory(factory.Factory):
 
 class ForceGetTaskResultDownloadFactory(ForceGetTaskResultUploadFactory):
     pass
+
+
+class AckReportComputedTaskFactory(factory.Factory):
+    class Meta:
+        model = concents.AckReportComputedTask
+
+    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+
+
+class ForceSubtaskResultsFactory(factory.Factory):
+    class Meta:
+        model = concents.ForceSubtaskResults
+
+    ack_report_computed_task = factory.SubFactory(AckReportComputedTaskFactory)
