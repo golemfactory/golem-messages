@@ -296,7 +296,6 @@ class ForceGetTaskResultRejected(base.AbstractReasonMessage):
     ] + base.AbstractReasonMessage.__slots__
 
     class REASON(enum.Enum):
-        OperationAlreadyInitiated = 'operation_already_initiated'
         AcceptanceTimeLimitExceeded = 'acceptance_time_limit_exceeded'
 
     def deserialize_slot(self, key, value):
