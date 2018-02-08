@@ -1,7 +1,6 @@
 import uuid
 import factory
 
-
 from golem_messages.message import concents
 from golem_messages.message import tasks
 
@@ -337,3 +336,17 @@ class ForceSubtaskResultsResponseFactory(factory.Factory):
             setattr(obj, 'subtask_results_rejected', msg)
 
     # pylint: enable=no-self-argument
+
+
+class AckReportComputedTaskFactory(factory.Factory):
+    class Meta:
+        model = concents.AckReportComputedTask
+
+    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+
+
+class ForceSubtaskResultsFactory(factory.Factory):
+    class Meta:
+        model = concents.ForceSubtaskResults
+
+    ack_report_computed_task = factory.SubFactory(AckReportComputedTaskFactory)

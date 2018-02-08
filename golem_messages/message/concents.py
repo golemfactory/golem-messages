@@ -51,6 +51,16 @@ class ForceReportComputedTask(base.Message):
 
 
 class AckReportComputedTask(base.Message):
+    """
+    Sent from Requestor to the Provider, acknowledging reception of the
+    `ReportComputedTask` message.
+
+    If the requestor fails to respond to the `ReportComputedTask` message
+    before the timeout and Provider then uses Concent to acquire the
+    acknowledgement, this message will be sent from the Concent to the Provider
+    and has the same effect as the regular Requestor's acknowledgement.
+    """
+
     TYPE = CONCENT_MSG_BASE + 2
 
     __slots__ = [
@@ -103,6 +113,15 @@ class RejectReportComputedTask(base.AbstractReasonMessage):
 
 
 class VerdictReportComputedTask(base.Message):
+    """
+    Informational message sent from from the Concent to the affected
+    Requestor, informing them that the `ReportComputedTask` has been implicitly
+    acknowledged by the Concent on behalf of the Requestor.
+    (Provider has received the `AckReportComputedTask` from the Concent)
+
+    The state of the Provider/Requestor interaction is assumed to be the same
+    as if the Requestor sent the `AckReportComputedTask` on their own.
+    """
     TYPE = CONCENT_MSG_BASE + 4
 
     __slots__ = [
@@ -310,6 +329,28 @@ class ForceGetTaskResultDownload(base.Message):
         value = super().deserialize_slot(key, value)
         value = deserialize_force_get_task_result(key, value)
         value = deserialize_file_transfer_token(key, value)
+        return value
+
+class ForceSubtaskResults(base.Message):
+    """
+    Sent from the Provider to the Concent, in an effort to force the
+    `SubtaskResultsAccepted/Rejected` message from the Requestor
+
+    :param AckReportComputedTask ack_report_computed_task: the previously
+                                                           delivered
+                                                           acknowledgement
+                                                           of the reception
+                                                           of the RCT message
+    """
+    TYPE = CONCENT_MSG_BASE + 15
+
+    __slots__ = [
+        'ack_report_computed_task',
+    ] + base.Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        value = deserialize_ack_report_computed_task(key, value)
         return value
 
 
