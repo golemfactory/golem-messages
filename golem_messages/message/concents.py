@@ -168,7 +168,7 @@ class SubtaskResultsVerify(base.Message):
     Message sent from a Provider to the Concent, requesting additional
     verification in case the result had been rejected by the Requestor
 
-    :param (slot)SubtaskResultsRejected subtask_result_rejected:
+    :param SubtaskResultsRejected subtask_result_rejected:
            the original reject message
 
     """
@@ -213,10 +213,10 @@ class SubtaskResultsSettled(base.Message):
     informing of positive acceptance of the results by the Concent and the
     fact that the payment has been force-sent to the Provider
 
-    :param (slot)str origin: the origin of the `SubtaskResultsVerify` message
+    :param str origin: the origin of the `SubtaskResultsVerify` message
                              that triggered the Concent action
 
-    :param (slot)TaskToCompute task_to_compute: TTF containing the task
+    :param TaskToCompute task_to_compute: TTF containing the task
                                                 that the settlement
                                                 pertains to
 
@@ -352,6 +352,29 @@ class ForceSubtaskResults(base.Message):
         value = super().deserialize_slot(key, value)
         value = deserialize_ack_report_computed_task(key, value)
         return value
+
+
+class ForceSubtaskResultsResponse(base.Message):
+    """
+    Sent from the Concent to the Provider to communicate the final resolution
+    of the forced results verdict.
+
+    Contains one of the following:
+
+    :param SubtaskResultsAccepted subtask_results_accepted:
+    :param SubtaskResultsRejected subtask_results_rejected:
+    """
+    TYPE = CONCENT_MSG_BASE + 16
+
+    __slots__ = [
+        'subtask_results_accepted',
+        'subtask_results_rejected',
+    ] + base.Message.__slots__
+
+    @base.verify_slot('subtask_results_accepted', tasks.SubtaskResultsAccepted)
+    @base.verify_slot('subtask_results_rejected', tasks.SubtaskResultsRejected)
+    def deserialize_slot(self, key, value):
+        return super().deserialize_slot(key, value)
 
 
 deserialize_task_failure = functools.partial(

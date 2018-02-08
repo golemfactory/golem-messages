@@ -1,11 +1,12 @@
 import unittest
 
+from golem_messages import exceptions
 from golem_messages import message
 from golem_messages.message import concents
 
 from tests import factories
 
-class ConcentsTest(unittest.TestCase):
+class SubtaskResultsVerifyTest(unittest.TestCase):
 
     def test_subtask_result_verify(self):
         srr = factories.SubtaskResultsRejectedFactory()
@@ -32,6 +33,8 @@ class ConcentsTest(unittest.TestCase):
         self.assertEqual(expected, msg.slots())
         self.assertIsInstance(msg.subtask_result_verify,
                               concents.SubtaskResultsVerify)
+
+class SubtaskResultsSettledTest(unittest.TestCase):
 
     def test_subtask_result_settled_no_acceptance(self):
         ttc = factories.TaskToComputeFactory()
@@ -61,6 +64,9 @@ class ConcentsTest(unittest.TestCase):
 
         self.assertEqual(expected, msg.slots())
         self.assertIsInstance(msg.task_to_compute, message.tasks.TaskToCompute)
+
+
+class ConcentsTest(unittest.TestCase):
 
     def test_force_get_task_result(self):
         rct = factories.ReportComputedTaskFactory()
@@ -155,6 +161,9 @@ class ConcentsTest(unittest.TestCase):
         self.assertIsInstance(msg.file_transfer_token,
                               message.concents.FileTransferToken)
 
+
+class ForceSubtaskResultsTest(unittest.TestCase):
+
     def test_force_subtask_results(self):
         ack_rct = factories.AckReportComputedTaskFactory()
 
@@ -169,3 +178,82 @@ class ConcentsTest(unittest.TestCase):
         self.assertEqual(expected, msg.slots())
         self.assertIsInstance(msg.ack_report_computed_task,
                               message.concents.AckReportComputedTask)
+
+
+class ForceSubtaskResultsResponseTest(unittest.TestCase):
+
+    def test_force_subtask_results_response_accepted(self):
+        subtask_results_accepted = factories.SubtaskResultsAcceptedFactory()
+        msg = factories.ForceSubtaskResultsResponseFactory(
+            subtask_results_accepted=subtask_results_accepted
+        )
+        expected = [
+            ['subtask_results_accepted', subtask_results_accepted],
+            ['subtask_results_rejected', None],
+        ]
+        self.assertEqual(expected, msg.slots())
+        self.assertIsInstance(
+            msg.subtask_results_accepted,
+            message.tasks.SubtaskResultsAccepted
+        )
+
+    def test_force_subtask_results_response_accepted_subfactory(self):
+        msg = factories.ForceSubtaskResultsResponseFactory.with_accepted()
+        self.assertIsInstance(
+            msg.subtask_results_accepted,
+            message.tasks.SubtaskResultsAccepted
+        )
+
+    def test_force_subtask_results_response_rejected(self):
+        subtask_results_rejected = factories.SubtaskResultsRejectedFactory()
+        msg = factories.ForceSubtaskResultsResponseFactory(
+            subtask_results_rejected=subtask_results_rejected
+        )
+        expected = [
+            ['subtask_results_accepted', None],
+            ['subtask_results_rejected', subtask_results_rejected],
+        ]
+        self.assertEqual(expected, msg.slots())
+        self.assertIsInstance(
+            msg.subtask_results_rejected,
+            message.tasks.SubtaskResultsRejected
+        )
+
+    def test_force_subtask_results_response_rejected_subfactory(self):
+        msg = factories.ForceSubtaskResultsResponseFactory.with_rejected()
+        self.assertIsInstance(
+            msg.subtask_results_rejected,
+            message.tasks.SubtaskResultsRejected
+        )
+
+    def test_force_subtask_results_response_deserialize_accepted(self):
+        subtask_results_accepted = factories.SubtaskResultsAcceptedFactory()
+        msg = concents.ForceSubtaskResultsResponse(slots=(
+            ('subtask_results_accepted', subtask_results_accepted),
+        ))
+        self.assertIsInstance(
+            msg.subtask_results_accepted,
+            message.tasks.SubtaskResultsAccepted
+        )
+
+    def test_force_subtask_results_response_fail_accepted(self):
+        with self.assertRaises(exceptions.FieldError):
+            concents.ForceSubtaskResultsResponse(slots=(
+                ('subtask_results_accepted', 'loonquawl'),
+            ))
+
+    def test_force_subtask_results_response_deserialize_rejected(self):
+        subtask_results_rejected = factories.SubtaskResultsRejectedFactory()
+        msg = concents.ForceSubtaskResultsResponse(slots=(
+            ('subtask_results_rejected', subtask_results_rejected),
+        ))
+        self.assertIsInstance(
+            msg.subtask_results_rejected,
+            message.tasks.SubtaskResultsRejected
+        )
+
+    def test_force_subtask_results_response_fail_rejected(self):
+        with self.assertRaises(exceptions.FieldError):
+            concents.ForceSubtaskResultsResponse(slots=(
+                ('subtask_results_rejected', 'phouchg'),
+            ))
