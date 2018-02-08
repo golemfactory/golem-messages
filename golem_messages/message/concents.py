@@ -53,6 +53,16 @@ class ForceReportComputedTask(base.Message):
 
 
 class AckReportComputedTask(base.Message):
+    """
+    Sent from Requestor to the Provider, acknowledging reception of the
+    `ReportComputedTask` message.
+
+    If the requestor fails to respond to the `ReportComputedTask` message
+    before the timeout and Provider then uses Concent to acquire the
+    acknowledgement, this message will be sent from the Concent to the Provider
+    and has the same effect as the regular Requestor's acknowledgement.
+    """
+
     TYPE = CONCENT_MSG_BASE + 2
 
     __slots__ = [
@@ -105,6 +115,15 @@ class RejectReportComputedTask(base.AbstractReasonMessage):
 
 
 class VerdictReportComputedTask(base.Message):
+    """
+    Informational message sent from from the Concent to the affected
+    Requestor, informing them that the `ReportComputedTask` has been implicitly
+    acknowledged by the Concent on behalf of the Requestor.
+    (Provider has received the `AckReportComputedTask` from the Concent)
+
+    The state of the Provider/Requestor interaction is assumed to be the same
+    as if the Requestor sent the `AckReportComputedTask` on their own.
+    """
     TYPE = CONCENT_MSG_BASE + 4
 
     __slots__ = [
@@ -151,7 +170,7 @@ class SubtaskResultsVerify(base.Message):
     Message sent from a Provider to the Concent, requesting additional
     verification in case the result had been rejected by the Requestor
 
-    :param (slot)SubtaskResultsRejected subtask_result_rejected:
+    :param SubtaskResultsRejected subtask_result_rejected:
            the original reject message
 
     """
@@ -196,10 +215,10 @@ class SubtaskResultsSettled(base.Message):
     informing of positive acceptance of the results by the Concent and the
     fact that the payment has been force-sent to the Provider
 
-    :param (slot)str origin: the origin of the `SubtaskResultsVerify` message
+    :param str origin: the origin of the `SubtaskResultsVerify` message
                              that triggered the Concent action
 
-    :param (slot)TaskToCompute task_to_compute: TTF containing the task
+    :param TaskToCompute task_to_compute: TTF containing the task
                                                 that the settlement
                                                 pertains to
 
@@ -313,6 +332,51 @@ class ForceGetTaskResultDownload(base.Message):
         value = deserialize_force_get_task_result(key, value)
         value = deserialize_file_transfer_token(key, value)
         return value
+
+class ForceSubtaskResults(base.Message):
+    """
+    Sent from the Provider to the Concent, in an effort to force the
+    `SubtaskResultsAccepted/Rejected` message from the Requestor
+
+    :param AckReportComputedTask ack_report_computed_task: the previously
+                                                           delivered
+                                                           acknowledgement
+                                                           of the reception
+                                                           of the RCT message
+    """
+    TYPE = CONCENT_MSG_BASE + 15
+
+    __slots__ = [
+        'ack_report_computed_task',
+    ] + base.Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        value = deserialize_ack_report_computed_task(key, value)
+        return value
+
+
+class ForceSubtaskResultsResponse(base.Message):
+    """
+    Sent from the Concent to the Provider to communicate the final resolution
+    of the forced results verdict.
+
+    Contains one of the following:
+
+    :param SubtaskResultsAccepted subtask_results_accepted:
+    :param SubtaskResultsRejected subtask_results_rejected:
+    """
+    TYPE = CONCENT_MSG_BASE + 16
+
+    __slots__ = [
+        'subtask_results_accepted',
+        'subtask_results_rejected',
+    ] + base.Message.__slots__
+
+    @base.verify_slot('subtask_results_accepted', tasks.SubtaskResultsAccepted)
+    @base.verify_slot('subtask_results_rejected', tasks.SubtaskResultsRejected)
+    def deserialize_slot(self, key, value):
+        return super().deserialize_slot(key, value)
 
 
 deserialize_task_failure = functools.partial(
