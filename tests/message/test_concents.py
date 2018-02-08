@@ -39,7 +39,7 @@ class SubtaskResultsSettledTest(unittest.TestCase):
     def test_subtask_result_settled_no_acceptance(self):
         ttc = factories.TaskToComputeFactory()
         msg = factories.SubtaskResultsSettledFactory.origin_acceptance_timeout(
-            slots__task_to_compute=ttc
+            task_to_compute=ttc
         )
         expected = [
             ['origin',
@@ -54,7 +54,7 @@ class SubtaskResultsSettledTest(unittest.TestCase):
     def test_subtask_result_settled_results_rejected(self):
         ttc = factories.TaskToComputeFactory()
         msg = factories.SubtaskResultsSettledFactory.origin_results_rejected(
-            slots__task_to_compute=ttc
+            task_to_compute=ttc
         )
         expected = [
             ['origin',
@@ -257,3 +257,24 @@ class ForceSubtaskResultsResponseTest(unittest.TestCase):
             concents.ForceSubtaskResultsResponse(slots=(
                 ('subtask_results_rejected', 'phouchg'),
             ))
+
+
+class ForceSubtaskResultsRejectedTest(unittest.TestCase):
+
+    def test_registered(self):
+        self.assertIn(concents.ForceSubtaskResultsRejected,
+                      message.registered_message_types.values())
+
+    def test_force_subtask_results_premature(self):
+        msg = factories.ForceSubtaskResultsRejectedFactory.premature()
+        self.assertEqual(
+            msg.reason,
+            concents.ForceSubtaskResultsRejected.REASON.RequestPremature
+        )
+
+    def test_force_subtask_results_toolate(self):
+        msg = factories.ForceSubtaskResultsRejectedFactory.too_late()
+        self.assertEqual(
+            msg.reason,
+            concents.ForceSubtaskResultsRejected.REASON.RequestTooLate
+        )
