@@ -19,6 +19,8 @@ class ServiceRefused(base.AbstractReasonMessage):
         TooSmallRequestorDeposit = 'TOO_SMALL_REQUESTOR_DEPOSIT'
         TooSmallProviderDeposit = 'TOO_SMALL_PROVIDER_DEPOSIT'
         SystemOverloaded = 'SYSTEM_OVERLOADED'
+        DuplicateRequest = 'DUPLICATE_REQUEST'
+        InvalidRequest = 'REQUEST_FORMAT_OR_CONTENT_INVALID'
 
     __slots__ = [
         'subtask_id',

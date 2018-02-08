@@ -213,12 +213,9 @@ class SubtaskResultsRejected(base.AbstractReasonMessage):
     @enum.unique
     class REASON(enum.Enum):
         VerificationNegative = 'Results verification negative'
-        ConcentDuplicateRequest = 'Concent had already processed this request'
         ConcentResourcesFailure = \
             'Concent could not retrieve resources to verify'
         ConcentVerificationNegative = 'Concent results verification negative'
-        ConcentMessageRejected = \
-            'Included computed task report was found corrupt'
         ForcedResourcesFailure = \
             'Concent reported failure to retrieve the resources to verify'
         ResourcesFailure = \
