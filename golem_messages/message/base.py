@@ -87,6 +87,43 @@ def verify_version(msg_version):
             )
         )
 
+def deserialize_verify(key, value, verify_key, verify_class):
+    if key == verify_key:
+        try:
+            verify_slot_type(value, verify_class)
+        except TypeError as e:
+            raise exceptions.FieldError(field=key, value=value) from e
+    return value
+
+def verify_slot(slot_name, slot_class):
+    """
+    decorator for Message's `deserialize_slot` method
+    ensures that the slot identified by `slot_name` is an instance of the
+    message class given in `slot_class`
+
+    :param slot_name: the name of the slot
+    :param slot_class: the class to check against
+    :return: the verified value
+
+    :Example:
+
+        @base.verify_slot('wrapped_msg', WrappedMessageClass)
+        def deserialize_slot(self, key, value):
+            return super().deserialize_slot(key, value)
+
+    """
+    def deserialize_slot(method):
+        @functools.wraps(method)
+        def _(self, key, value):
+            return functools.partial(
+                deserialize_verify,
+                verify_key=slot_name,
+                verify_class=slot_class,
+            )(
+                key, method(self, key, value)
+            )
+        return _
+    return deserialize_slot
 
 class Message():
     """ Communication message that is sent in all networks """
@@ -496,35 +533,3 @@ class ChallengeSolution(Message):
     TYPE = 3
 
     __slots__ = ['solution'] + Message.__slots__
-
-
-def deserialize_verify(key, value, verify_key, verify_class):
-    if key == verify_key:
-        try:
-            verify_slot_type(value, verify_class)
-        except TypeError as e:
-            raise exceptions.FieldError(field=key, value=value) from e
-    return value
-
-def verify_slot(slot_name, slot_class):
-    """
-    decorator for Message's `deserialize_slot` method
-    ensures that the slot identified by `slot_name` is an instance of the
-    message class given in `slot_class`
-
-    :param slot_name: the name of the slot
-    :param slot_class: the class to check against
-    :return: the verified value
-    """
-    def deserialize_slot(method):
-        @functools.wraps(method)
-        def _(self, key, value):
-            return functools.partial(
-                deserialize_verify,
-                verify_key=slot_name,
-                verify_class=slot_class,
-            )(
-                key, method(self, key, value)
-            )
-        return _
-    return deserialize_slot
