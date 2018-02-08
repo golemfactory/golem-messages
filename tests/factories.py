@@ -179,29 +179,22 @@ class AckSubtaskResultsVerifyFactory(factory.Factory):
     slots = factory.SubFactory(AckSubtaskResultsVerifySlotsFactory)
 
 
-class SubtaskResultsSettledSlotsFactory(SlotsFactory):
-    class Meta:
-        model = tuple
-
-    origin = concents.SubtaskResultsSettled.Origin.ResultsAcceptedTimeout
-    task_to_compute = factory.SubFactory(TaskToComputeFactory)
-
-
 class SubtaskResultsSettledFactory(factory.Factory):
     class Meta:
         model = concents.SubtaskResultsSettled
 
-    slots = factory.SubFactory(SubtaskResultsSettledSlotsFactory)
+    origin = concents.SubtaskResultsSettled.Origin.ResultsAcceptedTimeout
+    task_to_compute = factory.SubFactory(TaskToComputeFactory)
 
     @classmethod
     def origin_acceptance_timeout(cls, *args, **kwargs):
-        kwargs['slots__origin'] = \
+        kwargs['origin'] = \
                 concents.SubtaskResultsSettled.Origin.ResultsAcceptedTimeout
         return cls(*args, **kwargs)
 
     @classmethod
     def origin_results_rejected(cls, *args, **kwargs):
-        kwargs['slots__origin'] = \
+        kwargs['origin'] = \
                 concents.SubtaskResultsSettled.Origin.ResultsRejected
         return cls(*args, **kwargs)
 
@@ -350,3 +343,22 @@ class ForceSubtaskResultsFactory(factory.Factory):
         model = concents.ForceSubtaskResults
 
     ack_report_computed_task = factory.SubFactory(AckReportComputedTaskFactory)
+
+
+class ForceSubtaskResultsRejectedFactory(factory.Factory):
+    class Meta:
+        model = concents.ForceSubtaskResultsRejected
+
+    reason = concents.ForceSubtaskResultsRejected.REASON.RequestPremature
+
+    @classmethod
+    def premature(cls, *args, **kwargs):
+        kwargs['reason'] = \
+            concents.ForceSubtaskResultsRejected.REASON.RequestPremature
+        return cls(*args, **kwargs)
+
+    @classmethod
+    def too_late(cls, *args, **kwargs):
+        kwargs['reason'] = \
+            concents.ForceSubtaskResultsRejected.REASON.RequestTooLate
+        return cls(*args, **kwargs)

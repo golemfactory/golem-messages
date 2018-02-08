@@ -11,6 +11,15 @@ CONCENT_MSG_BASE = 4000
 
 
 class ServiceRefused(base.AbstractReasonMessage):
+    """
+    Sent (synchronously) as a response from the Concent to the calling party
+    (either a Provider or a Requestor), informing them that the Concent refuses
+    to execute the requested action because either the message (request) itself
+    is corrupted or some of the prerequisites (like e.g. the deposit) are not
+    satisfied.
+
+    :param REASON reason: the reason for the refusal
+    """
     TYPE = CONCENT_MSG_BASE
 
     @enum.unique
@@ -376,6 +385,22 @@ class ForceSubtaskResultsResponse(base.Message):
     @base.verify_slot('subtask_results_rejected', tasks.SubtaskResultsRejected)
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
+
+
+class ForceSubtaskResultsRejected(base.AbstractReasonMessage):
+    """
+    Possible response from the Concent to the Provider to the
+    `ForceSubtaskResults` request, when the request is not valid at the time
+    it's made.
+    """
+
+    TYPE = CONCENT_MSG_BASE + 17
+
+    __slots__ = base.AbstractReasonMessage.__slots__
+
+    class REASON(enum.Enum):
+        RequestPremature = 'premature: still within the verification timeout'
+        RequestTooLate = 'too late: past the forced communication timeout'
 
 
 deserialize_task_failure = functools.partial(
