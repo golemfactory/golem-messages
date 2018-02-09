@@ -98,3 +98,7 @@ class TaskToComputeTest(unittest.TestCase):
                 ('requestor_id', 'staple of research'),
                 ('compute_task_def', compute_task_def),
             ))
+
+    def test_concent_enabled(self):
+        ttc = factories.TaskToComputeFactory(concent_enabled=True)
+        self.assertTrue(ttc.concent_enabled)
