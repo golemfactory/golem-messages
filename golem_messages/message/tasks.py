@@ -76,7 +76,8 @@ class TaskToCompute(base.Message):
         'provider_id',
         'provider_public_key',
         'compute_task_def',
-        'package_hash'
+        'package_hash',
+        'concent_enabled',
     ] + base.Message.__slots__
 
     def load_slots(self, slots):

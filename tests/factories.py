@@ -44,7 +44,10 @@ class ComputeTaskDefFactory(factory.DictFactory):
     subtask_id = factory.Faker('uuid4')
 
 
-class TaskToComputeSlotsFactory(SlotsFactory):
+class TaskToComputeFactory(factory.Factory):
+    class Meta:
+        model = tasks.TaskToCompute
+
     requestor_id = factory.Sequence(lambda n: 'requestor {}'.format(n))
     requestor_public_key = factory.Sequence(
         lambda n: 'requestor pubkey {}'.format(n)
@@ -70,13 +73,6 @@ class TaskToComputeSlotsFactory(SlotsFactory):
             kwargs['requestor_id'] = task_def.get('task_owner').get('key')
 
         return super()._create(*args, **kwargs)
-
-
-class TaskToComputeFactory(factory.Factory):
-    class Meta:
-        model = tasks.TaskToCompute
-
-    slots = factory.SubFactory(TaskToComputeSlotsFactory)
 
 
 class SubtaskResultsAcceptedFactory(factory.Factory):
