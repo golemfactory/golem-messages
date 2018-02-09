@@ -30,6 +30,7 @@ class ServiceRefused(base.AbstractReasonMessage):
         SystemOverloaded = 'SYSTEM_OVERLOADED'
         DuplicateRequest = 'DUPLICATE_REQUEST'
         InvalidRequest = 'REQUEST_FORMAT_OR_CONTENT_INVALID'
+        ConcentDisabled = 'CONCENT_SERVICE_IS_NOT_ENABLED_FOR_THIS_SUBTASK'
 
     __slots__ = [
         'subtask_id',
