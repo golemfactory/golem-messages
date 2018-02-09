@@ -2,11 +2,15 @@ import unittest
 
 from golem_messages import exceptions
 from golem_messages import message
+
 from golem_messages.message import concents
 
 from tests import factories
 
-class SubtaskResultsVerifyTest(unittest.TestCase):
+from .mixins import RegisteredMessageTestMixin
+
+class SubtaskResultsVerifyTest(RegisteredMessageTestMixin, unittest.TestCase):
+    MSG_CLASS = concents.SubtaskResultsVerify
 
     def test_subtask_result_verify(self):
         srr = factories.SubtaskResultsRejectedFactory()
@@ -34,7 +38,8 @@ class SubtaskResultsVerifyTest(unittest.TestCase):
         self.assertIsInstance(msg.subtask_result_verify,
                               concents.SubtaskResultsVerify)
 
-class SubtaskResultsSettledTest(unittest.TestCase):
+class SubtaskResultsSettledTest(RegisteredMessageTestMixin, unittest.TestCase):
+    MSG_CLASS = concents.SubtaskResultsSettled
 
     def test_subtask_result_settled_no_acceptance(self):
         ttc = factories.TaskToComputeFactory()
@@ -162,7 +167,8 @@ class ConcentsTest(unittest.TestCase):
                               message.concents.FileTransferToken)
 
 
-class ForceSubtaskResultsTest(unittest.TestCase):
+class ForceSubtaskResultsTest(RegisteredMessageTestMixin, unittest.TestCase):
+    MSG_CLASS = concents.ForceSubtaskResults
 
     def test_force_subtask_results(self):
         ack_rct = factories.AckReportComputedTaskFactory()
@@ -180,7 +186,9 @@ class ForceSubtaskResultsTest(unittest.TestCase):
                               message.concents.AckReportComputedTask)
 
 
-class ForceSubtaskResultsResponseTest(unittest.TestCase):
+class ForceSubtaskResultsResponseTest(RegisteredMessageTestMixin,
+                                      unittest.TestCase):
+    MSG_CLASS = concents.ForceSubtaskResultsResponse
 
     def test_force_subtask_results_response_accepted(self):
         subtask_results_accepted = factories.SubtaskResultsAcceptedFactory()
@@ -258,12 +266,9 @@ class ForceSubtaskResultsResponseTest(unittest.TestCase):
                 ('subtask_results_rejected', 'phouchg'),
             ))
 
-
-class ForceSubtaskResultsRejectedTest(unittest.TestCase):
-
-    def test_registered(self):
-        self.assertIn(concents.ForceSubtaskResultsRejected,
-                      message.registered_message_types.values())
+class ForceSubtaskResultsRejectedTest(RegisteredMessageTestMixin,
+                                      unittest.TestCase):
+    MSG_CLASS = concents.ForceSubtaskResultsRejected
 
     def test_force_subtask_results_premature(self):
         msg = factories.ForceSubtaskResultsRejectedFactory.premature()
