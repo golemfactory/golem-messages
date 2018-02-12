@@ -79,6 +79,9 @@ class SubtaskResultsAcceptedFactory(factory.Factory):
     class Meta:
         model = tasks.SubtaskResultsAccepted
 
+    task_to_compute = factory.SubFactory(
+        'tests.factories.TaskToComputeFactory')
+
 
 class SubtaskResultsRejectedFactory(factory.Factory):
     """
