@@ -99,6 +99,14 @@ class TaskToComputeTest(unittest.TestCase):
                 ('compute_task_def', compute_task_def),
             ))
 
-    def test_concent_enabled(self):
+    def test_concent_enabled_attribute(self):
         ttc = factories.TaskToComputeFactory(concent_enabled=True)
         self.assertTrue(ttc.concent_enabled)
+
+    def test_concent_enabled_default_true(self):
+        ttc = message.tasks.TaskToCompute()
+        self.assertTrue(ttc.concent_enabled)
+
+    def test_concent_enabled_false(self):
+        ttc = message.tasks.TaskToCompute(concent_enabled=False)
+        self.assertFalse(ttc.concent_enabled)

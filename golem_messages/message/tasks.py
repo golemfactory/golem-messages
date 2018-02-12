@@ -80,6 +80,15 @@ class TaskToCompute(base.Message):
         'concent_enabled',
     ] + base.Message.__slots__
 
+    def __init__(self, header: datastructures.MessageHeader = None,
+                 sig=None, slots=None, deserialized=False, **kwargs):
+        super().__init__(header=header, sig=sig, slots=slots,
+                         deserialized=deserialized, **kwargs)
+
+        # defaults to `True` if not specified explicitly as `False`
+        if self.concent_enabled is None:
+            self.concent_enabled = True
+
     def load_slots(self, slots):
         super().load_slots(slots)
         self.validate_compute_task_def(self.compute_task_def)
