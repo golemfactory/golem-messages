@@ -46,5 +46,6 @@ setup(
         'pycodestyle',
         'pylint',
         'freezegun',
+        'codecov',
     ],
 )
