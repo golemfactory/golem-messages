@@ -28,6 +28,7 @@ class ComputeTaskDefTestCase(unittest.TestCase):
             value=ctd['subtask_id'],
         )
 
+
 class SubtaskResultsAcceptedTest(RegisteredMessageTestMixin,
                                  unittest.TestCase):
     MSG_CLASS = message.tasks.SubtaskResultsAccepted
@@ -48,16 +49,13 @@ class SubtaskResultsAcceptedTest(RegisteredMessageTestMixin,
         ))
         self.assertIsInstance(msg.task_to_compute, message.tasks.TaskToCompute)
 
+
 class SubtaskResultsRejectedTest(RegisteredMessageTestMixin,
                                  unittest.TestCase):
     MSG_CLASS = message.tasks.SubtaskResultsRejected
 
     def test_subtask_results_rejected_factory(self):
         msg = factories.SubtaskResultsRejectedFactory()
-        self.assertIsInstance(msg, message.tasks.SubtaskResultsRejected)
-
-    def test_subtask_results_rejected_fgtrf_factory(self):
-        msg = factories.SubtaskResultsRejectedFGTRFFactory()
         self.assertIsInstance(msg, message.tasks.SubtaskResultsRejected)
 
     def test_subtask_results_rejected(self):
@@ -70,7 +68,6 @@ class SubtaskResultsRejectedTest(RegisteredMessageTestMixin,
         )
         expected = [
             ['report_computed_task', rct],
-            ['force_get_task_result_failed', None],
             ['reason', reason.value],
         ]
 
@@ -78,23 +75,6 @@ class SubtaskResultsRejectedTest(RegisteredMessageTestMixin,
         self.assertIsInstance(msg.report_computed_task,
                               message.tasks.ReportComputedTask)
 
-    def test_subtask_results_rejected_fgtrf(self):
-        fgtrf = factories.ForceGetTaskResultFailedFactory()
-        reason = message.tasks.SubtaskResultsRejected.REASON\
-            .ForcedResourcesFailure
-        msg = factories.SubtaskResultsRejectedFGTRFFactory(
-            force_get_task_result_failed=fgtrf,
-            reason=reason,
-        )
-        expected = [
-            ['report_computed_task', None],
-            ['force_get_task_result_failed', fgtrf],
-            ['reason', reason.value],
-        ]
-
-        self.assertEqual(expected, msg.slots())
-        self.assertIsInstance(msg.force_get_task_result_failed,
-                              message.concents.ForceGetTaskResultFailed)
 
 class TaskToComputeTest(unittest.TestCase):
     def test_task_to_compute_basic(self):

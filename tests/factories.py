@@ -101,19 +101,6 @@ class SubtaskResultsRejectedFactory(factory.Factory):
         'tests.factories.ReportComputedTaskFactory')
 
 
-class SubtaskResultsRejectedFGTRFFactory(factory.Factory):
-    """
-    Produces the alternate version of the `SubtaskResultsRejected` message,
-    containing the `ForceGetTaskResultFailed` message - resulting from an
-    earlier, failed, forced communication procedure
-    """
-    class Meta:
-        model = tasks.SubtaskResultsRejected
-
-    force_get_task_result_failed = factory.SubFactory(
-        'tests.factories.ForceGetTaskResultFailedFactory')
-
-
 class ReportComputedTaskSlotsFactory(SlotsFactory):
     class Meta:
         model = tuple
