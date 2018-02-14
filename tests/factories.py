@@ -132,7 +132,7 @@ class ForceReportComputedTaskSlotsFactory(SlotsFactory):
     class Meta:
         model = tuple
 
-    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    report_computed_task = factory.SubFactory(ReportComputedTaskFactory)
 
 
 class ForceReportComputedTaskFactory(factory.Factory):
