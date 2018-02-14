@@ -453,6 +453,8 @@ class ForcePaymentRejected(base.AbstractReasonMessage):
         NoUnsettledTasksFound = 'no unsettled tasks found'
         PaymentTimestampError = 'payment timestamp error'
 
+    __slots__ = base.AbstractReasonMessage.__slots__
+
 
 deserialize_task_failure = functools.partial(
     base.deserialize_verify,

@@ -1,5 +1,11 @@
+import time
 import uuid
+import random
+
 import factory
+import faker
+
+from ethereum.utils import denoms
 
 from golem_messages.message import concents
 from golem_messages.message import tasks
@@ -31,7 +37,7 @@ class SlotsFactory(factory.Factory):
 
 
 class TaskOwnerFactory(factory.DictFactory):
-    key = factory.Sequence(lambda n: 'node {}'.format(n))
+    key = factory.Faker('binary', length=64)
     node_name = factory.Faker('name')
 
 
@@ -358,3 +364,65 @@ class ForceSubtaskResultsRejectedFactory(factory.Factory):
         kwargs['reason'] = \
             concents.ForceSubtaskResultsRejected.REASON.RequestTooLate
         return cls(*args, **kwargs)
+
+
+class ForcePaymentFactory(factory.Factory):
+    class Meta:
+        model = concents.ForcePayment
+
+    @classmethod
+    def with_accepted_tasks(cls, *args, **kwargs):
+        kwargs['subtask_results_accepted_list__generate'] = 1
+        return cls(*args, **kwargs)
+
+    # pylint: disable=no-self-argument
+
+    @factory.post_generation
+    def subtask_results_accepted_list(obj, create, extracted, **kwargs):
+        if not create:
+            return
+
+        msgs = extracted
+        if not msgs and kwargs and kwargs.get('generate'):
+            msgs = []
+            num_msgs = kwargs.pop('generate')
+            for _ in range(num_msgs):
+                msgs.append(SubtaskResultsAcceptedFactory(**kwargs))
+
+        if msgs:
+            setattr(obj, 'subtask_results_accepted_list', msgs)
+
+    # pylint: enable=no-self-argument
+
+
+class ForcePaymentCommittedFactory(factory.Factory):
+    class Meta:
+        model = concents.ForcePaymentCommitted
+
+    payment_ts = factory.LazyFunction(lambda: int(time.time()))
+    task_owner_key = factory.Faker('binary', length=64)
+    provider_eth_account = factory.LazyFunction(
+        lambda: '0x' + faker.Faker().sha1())
+    amount_paid = factory.LazyFunction(
+        lambda: random.randint(0, denoms.ether)
+    )
+    recipient_type = concents.ForcePaymentCommitted.Actor.Provider
+
+    @classmethod
+    def to_provider(cls, *args, **kwargs):
+        kwargs['recipient_type'] = \
+            concents.ForcePaymentCommitted.Actor.Provider
+        return cls(*args, **kwargs)
+
+    @classmethod
+    def to_requestor(cls, *args, **kwargs):
+        kwargs['recipient_type'] = \
+            concents.ForcePaymentCommitted.Actor.Requestor
+        return cls(*args, **kwargs)
+
+
+class ForcePaymentRejectedFactory(factory.Factory):
+    class Meta:
+        model = concents.ForcePaymentRejected
+
+    reason = concents.ForcePaymentRejected.REASON.NoUnsettledTasksFound
