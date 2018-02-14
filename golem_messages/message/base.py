@@ -87,11 +87,19 @@ def verify_version(msg_version):
             )
         )
 
+
 def validate_slot(key, value, verify_class):
     try:
         verify_slot_type(value, verify_class)
     except TypeError as e:
-        raise exceptions.FieldError(field=key, value=value) from e
+        raise exceptions.FieldError(
+            "Should an instance of {should_be} not {is_now}".format(
+                should_be=verify_class,
+                is_now=type(value),
+            ),
+            field=key,
+            value=value,
+        ) from e
 
 
 def deserialize_verify(key, value, verify_key, verify_class):
@@ -99,13 +107,20 @@ def deserialize_verify(key, value, verify_key, verify_class):
         validate_slot(key, value, verify_class)
     return value
 
+
 def deserialize_verify_list(key, value, verify_key, verify_class):
     if key == verify_key:
         try:
             for v in value:
                 validate_slot(key, v, verify_class)
         except TypeError as e:
-            raise exceptions.FieldError(field=key, value=value) from e
+            raise exceptions.FieldError(
+                "Should be a list of {verify_class}".format(
+                    verify_class=verify_class,
+                ),
+                field=key,
+                value=value,
+            ) from e
     return value
 
 
@@ -140,6 +155,7 @@ def verify_slot(slot_name, slot_class):
         return _
     return deserialize_slot
 
+
 def verify_slot_list(slot_name, item_class):
     """
     decorator for Message's `deserialize_slot` method
@@ -164,6 +180,7 @@ def verify_slot_list(slot_name, item_class):
             )
         return _
     return deserialize_slot
+
 
 class Message():
     """ Communication message that is sent in all networks """
@@ -321,7 +338,11 @@ class Message():
             try:
                 value = self.ENUM_SLOTS[key](value)
             except ValueError as e:
-                raise exceptions.FieldError(field=key, value=value) from e
+                raise exceptions.FieldError(
+                    "Invalid value for enum slot",
+                    field=key,
+                    value=value,
+                ) from e
         return value
 
     @classmethod

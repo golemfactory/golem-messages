@@ -316,6 +316,13 @@ class AckReportComputedTaskFactory(factory.Factory):
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
 
 
+class RejectReportComputedTaskFactory(factory.Factory):
+    class Meta:
+        model = concents.RejectReportComputedTask
+
+    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+
+
 class ForceSubtaskResultsFactory(factory.Factory):
     class Meta:
         model = concents.ForceSubtaskResults
@@ -402,3 +409,13 @@ class ForcePaymentRejectedFactory(factory.Factory):
         model = concents.ForcePaymentRejected
 
     reason = concents.ForcePaymentRejected.REASON.NoUnsettledTasksFound
+
+
+class ForceReportComputedTaskResponseFactory(factory.Factory):
+    class Meta:
+        model = concents.ForceReportComputedTaskResponse
+
+    ack_report_computed_task = factory.SubFactory(AckReportComputedTaskFactory)
+    reject_report_computed_task = factory.SubFactory(
+        RejectReportComputedTaskFactory
+    )

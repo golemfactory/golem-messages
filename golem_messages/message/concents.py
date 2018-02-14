@@ -484,11 +484,11 @@ class ForceReportComputedTaskResponse(base.AbstractReasonMessage):
         'reject_report_computed_task',
     ]
 
-    @base.verify_slot_list(
+    @base.verify_slot(
         'ack_report_computed_task',
         AckReportComputedTask,
     )
-    @base.verify_slot_list(
+    @base.verify_slot(
         'reject_report_computed_task',
         RejectReportComputedTask,
     )

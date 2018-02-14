@@ -8,6 +8,7 @@ from golem_messages.message import concents
 from tests import factories
 
 from .mixins import RegisteredMessageTestMixin
+from .mixins import SerializationMixin
 
 
 class SubtaskResultsVerifyTest(RegisteredMessageTestMixin, unittest.TestCase):
@@ -351,5 +352,7 @@ class ForcePaymentRejectedTest(RegisteredMessageTestMixin, unittest.TestCase):
 
 class ForceReportComputedTaskResponseTestCase(
         RegisteredMessageTestMixin,
+        SerializationMixin,
         unittest.TestCase):
     MSG_CLASS = concents.ForceReportComputedTaskResponse
+    FACTORY = factories.ForceReportComputedTaskResponseFactory
