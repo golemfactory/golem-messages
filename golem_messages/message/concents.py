@@ -405,6 +405,13 @@ class ForceSubtaskResultsRejected(base.AbstractReasonMessage):
 
 
 class ForcePayment(base.Message):
+    """
+    Sent from the Provider to the Concent to force payment for which the
+    payment timeout has already passed using Requestor's deposit.
+
+    :param list subtask_results_accepted_list: the list of
+        `SubtaskResultsAccepted` messages
+    """
     TYPE = CONCENT_MSG_BASE + 18
 
     __slots__ = [
@@ -418,6 +425,14 @@ class ForcePayment(base.Message):
 
 
 class ForcePaymentCommitted(base.Message):
+    """
+    Sent from the Concent to the Provider to acknowledge that Provider
+    has been paid from the Requestor's deposit - or - to acknowledge that
+    the payment is due but the deposit is not enough to cover it.
+
+    Message of the same content is also sent as an information to the Requestor
+    whose deposit is affected by the operation.
+    """
     TYPE = CONCENT_MSG_BASE + 19
 
     __slots__ = [
@@ -441,20 +456,25 @@ class ForcePaymentCommitted(base.Message):
         Requestor = "requestor"
         Provider = "provider"
 
-    @property
-    def ENUM_SLOTS(self):
-        return {
-            'recipient_type': self.Actor,
-        }
+    ENUM_SLOTS = {
+        'recipient_type': Actor,
+    }
 
 
 class ForcePaymentRejected(base.AbstractReasonMessage):
+    """
+    Sent from the Concent to the Provider to inform them that Concent was
+    unable to find the tasks that need to be paid for - because either they
+    have indeed been paid for already or because they are not overdue yet.
+
+    (the latter means that most likely, the Provider's clock is out of sync)
+    """
     TYPE = CONCENT_MSG_BASE + 20
 
     @enum.unique
     class REASON(enum.Enum):
         NoUnsettledTasksFound = 'no unsettled tasks found'
-        PaymentTimestampError = 'payment timestamp error'
+        TimestampError = 'timestamp error - subtasks are not overdue yet'
 
     __slots__ = base.AbstractReasonMessage.__slots__
 
