@@ -5,6 +5,8 @@ from golem_messages import message
 from golem_messages import serializer
 from golem_messages import shortcuts
 
+from tests import factories
+
 
 class MessageTestCase(unittest.TestCase):
     def equal_after_processing(self, o):
@@ -31,30 +33,28 @@ class MessageTestCase(unittest.TestCase):
         provider_keys = cryptography.ECCx(None)
         requestor_keys = cryptography.ECCx(None)
 
-        task_to_compute = message.TaskToCompute()
-        ctd = message.ComputeTaskDef({'task_id': '20', })
-        task_to_compute.compute_task_def = ctd
+        report_computed_task = factories.ReportComputedTaskFactory()
 
         # Dump TaskToCompute to make it signed
-        s_task_to_compute = shortcuts.dump(
-            task_to_compute,
+        s_rct = shortcuts.dump(
+            report_computed_task,
             requestor_keys.raw_privkey,
             provider_keys.raw_pubkey,
         )
 
         # Load TaskToCompute back to its original format
         # Task TaskToCompute is verified correctly
-        task_to_compute = shortcuts.load(
-            s_task_to_compute,
+        report_computed_task = shortcuts.load(
+            s_rct,
             provider_keys.raw_privkey,
             requestor_keys.raw_pubkey,
         )
 
-        first_sig = task_to_compute.sig
-        first_hash = task_to_compute.get_short_hash()
+        first_sig = report_computed_task.sig
+        first_hash = report_computed_task.get_short_hash()
 
         force_report = message.ForceReportComputedTask()
-        force_report.task_to_compute = task_to_compute
+        force_report.report_computed_task = report_computed_task
 
         s_force_report = shortcuts.dump(
             force_report,
@@ -68,8 +68,8 @@ class MessageTestCase(unittest.TestCase):
             provider_keys.raw_pubkey,
         )
 
-        second_sig = force_report.task_to_compute.sig
-        second_hash = force_report.task_to_compute.get_short_hash()
+        second_sig = force_report.report_computed_task.sig
+        second_hash = force_report.report_computed_task.get_short_hash()
 
         self.assertEqual(first_sig, second_sig)
         self.assertEqual(first_hash, second_hash)
@@ -79,6 +79,6 @@ class MessageTestCase(unittest.TestCase):
         # failure.
         cryptography.ecdsa_verify(
             requestor_keys.raw_pubkey,
-            force_report.task_to_compute.sig,
-            force_report.task_to_compute.get_short_hash(),
+            force_report.report_computed_task.sig,
+            force_report.report_computed_task.get_short_hash(),
         )

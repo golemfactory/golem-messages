@@ -53,13 +53,14 @@ class ForceReportComputedTask(base.Message):
     TYPE = CONCENT_MSG_BASE + 1
 
     __slots__ = [
-        'task_to_compute',
+        'report_computed_task',
         'result_hash',
     ] + base.Message.__slots__
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
-        return tasks.deserialize_task_to_compute(key, value)
+        value = tasks.deserialize_report_computed_task(key, value)
+        return value
 
 
 class AckReportComputedTask(base.Message):
