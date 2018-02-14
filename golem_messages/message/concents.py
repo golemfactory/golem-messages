@@ -445,6 +445,14 @@ class ForcePaymentCommitted(base.Message):
             'recipient_type': self.Actor,
         }
 
+class ForcePaymentRejected(base.AbstractReasonMessage):
+    TYPE = CONCENT_MSG_BASE + 20
+
+    @enum.unique
+    class REASON(enum.Enum):
+        NoUnsettledTasksFound = 'no unsettled tasks found'
+        PaymentTimestampError = 'payment timestamp error'
+
 
 deserialize_task_failure = functools.partial(
     base.deserialize_verify,
