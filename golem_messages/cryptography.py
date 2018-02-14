@@ -1,9 +1,11 @@
-import os
-import sys
-import struct
 import hashlib
+import os
+import struct
+import sys
+
 import bitcoin
 import coincurve
+
 from rlp import utils as rlp_utils
 from _pysha3 import sha3_256 as _sha3_256  # pylint: disable=no-name-in-module
 

@@ -8,6 +8,8 @@ from golem_messages.message import concents
 from tests import factories
 
 from .mixins import RegisteredMessageTestMixin
+from .mixins import SerializationMixin
+
 
 class SubtaskResultsVerifyTest(RegisteredMessageTestMixin, unittest.TestCase):
     MSG_CLASS = concents.SubtaskResultsVerify
@@ -37,6 +39,7 @@ class SubtaskResultsVerifyTest(RegisteredMessageTestMixin, unittest.TestCase):
         self.assertEqual(expected, msg.slots())
         self.assertIsInstance(msg.subtask_result_verify,
                               concents.SubtaskResultsVerify)
+
 
 class SubtaskResultsSettledTest(RegisteredMessageTestMixin, unittest.TestCase):
     MSG_CLASS = concents.SubtaskResultsSettled
@@ -75,21 +78,16 @@ class ConcentsTest(unittest.TestCase):
 
     def test_force_get_task_result(self):
         rct = factories.ReportComputedTaskFactory()
-        frct = factories.ForceReportComputedTaskFactory()
         msg = factories.ForceGetTaskResultFactory(
             slots__report_computed_task=rct,
-            slots__force_report_computed_task=frct
         )
         expected = [
             ['report_computed_task', rct],
-            ['force_report_computed_task', frct]
         ]
 
         self.assertEqual(expected, msg.slots())
         self.assertIsInstance(msg.report_computed_task,
                               message.tasks.ReportComputedTask)
-        self.assertIsInstance(msg.force_report_computed_task,
-                              message.concents.ForceReportComputedTask)
 
     def test_force_get_task_result_ack(self):
         fgtr = factories.ForceGetTaskResultFactory()
@@ -266,6 +264,7 @@ class ForceSubtaskResultsResponseTest(RegisteredMessageTestMixin,
                 ('subtask_results_rejected', 'phouchg'),
             ))
 
+
 class ForceSubtaskResultsRejectedTest(RegisteredMessageTestMixin,
                                       unittest.TestCase):
     MSG_CLASS = concents.ForceSubtaskResultsRejected
@@ -324,6 +323,7 @@ class ForcePaymentTest(RegisteredMessageTestMixin, unittest.TestCase):
                 ('subtask_results_accepted_list', [message.base.Message()]),
             ])
 
+
 class ForcePaymentCommittedTest(RegisteredMessageTestMixin, unittest.TestCase):
     MSG_CLASS = concents.ForcePaymentCommitted
 
@@ -341,9 +341,18 @@ class ForcePaymentCommittedTest(RegisteredMessageTestMixin, unittest.TestCase):
         self.assertEqual(msg.recipient_type,
                          concents.ForcePaymentCommitted.Actor.Requestor)
 
+
 class ForcePaymentRejectedTest(RegisteredMessageTestMixin, unittest.TestCase):
     MSG_CLASS = concents.ForcePaymentRejected
 
     def test_factory(self):
         msg = factories.ForcePaymentRejectedFactory()
         self.assertIsInstance(msg, self.MSG_CLASS)
+
+
+class ForceReportComputedTaskResponseTestCase(
+        RegisteredMessageTestMixin,
+        SerializationMixin,
+        unittest.TestCase):
+    MSG_CLASS = concents.ForceReportComputedTaskResponse
+    FACTORY = factories.ForceReportComputedTaskResponseFactory

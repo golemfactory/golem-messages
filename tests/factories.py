@@ -101,19 +101,6 @@ class SubtaskResultsRejectedFactory(factory.Factory):
         'tests.factories.ReportComputedTaskFactory')
 
 
-class SubtaskResultsRejectedFGTRFFactory(factory.Factory):
-    """
-    Produces the alternate version of the `SubtaskResultsRejected` message,
-    containing the `ForceGetTaskResultFailed` message - resulting from an
-    earlier, failed, forced communication procedure
-    """
-    class Meta:
-        model = tasks.SubtaskResultsRejected
-
-    force_get_task_result_failed = factory.SubFactory(
-        'tests.factories.ForceGetTaskResultFailedFactory')
-
-
 class ReportComputedTaskSlotsFactory(SlotsFactory):
     class Meta:
         model = tuple
@@ -329,6 +316,13 @@ class AckReportComputedTaskFactory(factory.Factory):
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
 
 
+class RejectReportComputedTaskFactory(factory.Factory):
+    class Meta:
+        model = concents.RejectReportComputedTask
+
+    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+
+
 class ForceSubtaskResultsFactory(factory.Factory):
     class Meta:
         model = concents.ForceSubtaskResults
@@ -415,3 +409,13 @@ class ForcePaymentRejectedFactory(factory.Factory):
         model = concents.ForcePaymentRejected
 
     reason = concents.ForcePaymentRejected.REASON.NoUnsettledTasksFound
+
+
+class ForceReportComputedTaskResponseFactory(factory.Factory):
+    class Meta:
+        model = concents.ForceReportComputedTaskResponse
+
+    ack_report_computed_task = factory.SubFactory(AckReportComputedTaskFactory)
+    reject_report_computed_task = factory.SubFactory(
+        RejectReportComputedTaskFactory
+    )

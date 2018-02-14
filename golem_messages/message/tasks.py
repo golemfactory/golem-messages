@@ -222,7 +222,6 @@ class SubtaskResultsRejected(base.AbstractReasonMessage):
 
     __slots__ = [
         'report_computed_task',
-        'force_get_task_result_failed',
     ] + base.AbstractReasonMessage.__slots__
 
     @enum.unique
@@ -237,22 +236,8 @@ class SubtaskResultsRejected(base.AbstractReasonMessage):
             'Could not retrieve resources'
 
     def deserialize_slot(self, key, value):
-        # pylint: disable=cyclic-import
-        #
-        # with the current specification, it will be difficult to do without
-        # the cyclic import here since per-specs, the `SubtaskResultsRejected`
-        # message can contain the concent's `ForceGetTaskResultFailed` and
-        # at the same time, the concent messages also can contain
-        # `SubtaskResultsRejected` ...
-        #
-
-        from .concents import deserialize_force_get_task_result_failed
-
-        # pylint: enable=cyclic-import
-
         value = super().deserialize_slot(key, value)
         value = deserialize_report_computed_task(key, value)
-        value = deserialize_force_get_task_result_failed(key, value)
         return value
 
 

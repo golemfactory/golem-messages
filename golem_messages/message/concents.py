@@ -265,13 +265,11 @@ class ForceGetTaskResult(base.Message):
 
     __slots__ = [
         'report_computed_task',
-        'force_report_computed_task',
     ] + base.Message.__slots__
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
         value = tasks.deserialize_report_computed_task(key, value)
-        value = deserialize_force_report_computed_task(key, value)
         return value
 
 
@@ -343,6 +341,7 @@ class ForceGetTaskResultDownload(base.Message):
         value = deserialize_file_transfer_token(key, value)
         return value
 
+
 class ForceSubtaskResults(base.Message):
     """
     Sent from the Provider to the Concent, in an effort to force the
@@ -404,6 +403,7 @@ class ForceSubtaskResultsRejected(base.AbstractReasonMessage):
         RequestPremature = 'premature: still within the verification timeout'
         RequestTooLate = 'too late: past the forced communication timeout'
 
+
 class ForcePayment(base.Message):
     """
     Sent from the Provider to the Concent to force payment for which the
@@ -422,6 +422,7 @@ class ForcePayment(base.Message):
                            tasks.SubtaskResultsAccepted)
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
+
 
 class ForcePaymentCommitted(base.Message):
     """
@@ -459,6 +460,7 @@ class ForcePaymentCommitted(base.Message):
         'recipient_type': Actor,
     }
 
+
 class ForcePaymentRejected(base.AbstractReasonMessage):
     """
     Sent from the Concent to the Provider to inform them that Concent was
@@ -475,6 +477,43 @@ class ForcePaymentRejected(base.AbstractReasonMessage):
         TimestampError = 'timestamp error - subtasks are not overdue yet'
 
     __slots__ = base.AbstractReasonMessage.__slots__
+
+
+class ForceReportComputedTaskResponse(base.AbstractReasonMessage):
+    """Sent from Concent to Provider as a response to ForceReportComputedTask.
+    """
+    TYPE = CONCENT_MSG_BASE + 21
+
+    @enum.unique
+    class REASON(enum.Enum):
+        # Ack received from requestor attached as ack_report_computed_task
+        AckFromRequestor = 'ack_from_requestor'
+        # Reject received from requestor attached as reject_report_computed_task
+        RejectFromRequestor = 'reject_from_requestor'
+        # Concent refused service because of subtask timeout
+        SubtaskTimeout = 'subtask_timeout'
+        # Ack generated and signed by Concent attached
+        # as ack_report_computed_task
+        ConcentAck = 'concent_ack'
+
+    __slots__ = base.AbstractReasonMessage.__slots__ + [
+        # AckReportComputedTask sent from Requestor to Concent
+        # OR generated and signed by Concent
+        'ack_report_computed_task',
+        # RejectReportComputedTask sent from Requestor to Concent
+        'reject_report_computed_task',
+    ]
+
+    @base.verify_slot(
+        'ack_report_computed_task',
+        AckReportComputedTask,
+    )
+    @base.verify_slot(
+        'reject_report_computed_task',
+        RejectReportComputedTask,
+    )
+    def deserialize_slot(self, key, value):
+        return super().deserialize_slot(key, value)
 
 
 deserialize_task_failure = functools.partial(

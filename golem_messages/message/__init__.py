@@ -130,7 +130,6 @@ def init_messages():
 
             # Concent messages
             concents.ServiceRefused,
-            concents.ForceReportComputedTask,
             concents.AckReportComputedTask,
             concents.RejectReportComputedTask,
             concents.VerdictReportComputedTask,
@@ -149,6 +148,8 @@ def init_messages():
             concents.ForcePayment,
             concents.ForcePaymentCommitted,
             concents.ForcePaymentRejected,
+            concents.ForceReportComputedTask,
+            concents.ForceReportComputedTaskResponse
     ):
         if message_class.TYPE in registered_message_types:
             raise RuntimeError(
