@@ -85,13 +85,8 @@ class SubtaskResultsAcceptedFactory(factory.Factory):
     class Meta:
         model = tasks.SubtaskResultsAccepted
 
-
-class SubtaskResultsRejectedSlotsFactory(SlotsFactory):
-    class Meta:
-        model = tuple
-
-    report_computed_task = factory.SubFactory(
-        'tests.factories.ReportComputedTaskFactory')
+    task_to_compute = factory.SubFactory(
+        'tests.factories.TaskToComputeFactory')
 
 
 class SubtaskResultsRejectedFactory(factory.Factory):
@@ -102,15 +97,8 @@ class SubtaskResultsRejectedFactory(factory.Factory):
     class Meta:
         model = tasks.SubtaskResultsRejected
 
-    slots = factory.SubFactory(SubtaskResultsRejectedSlotsFactory)
-
-
-class SubtaskResultsRejectedFGTRFSlotsFactory(SlotsFactory):
-    class Meta:
-        model = tuple
-
-    force_get_task_result_failed = factory.SubFactory(
-        'tests.factories.ForceGetTaskResultFailedFactory')
+    report_computed_task = factory.SubFactory(
+        'tests.factories.ReportComputedTaskFactory')
 
 
 class SubtaskResultsRejectedFGTRFFactory(factory.Factory):
@@ -122,7 +110,8 @@ class SubtaskResultsRejectedFGTRFFactory(factory.Factory):
     class Meta:
         model = tasks.SubtaskResultsRejected
 
-    slots = factory.SubFactory(SubtaskResultsRejectedFGTRFSlotsFactory)
+    force_get_task_result_failed = factory.SubFactory(
+        'tests.factories.ForceGetTaskResultFailedFactory')
 
 
 class ReportComputedTaskSlotsFactory(SlotsFactory):

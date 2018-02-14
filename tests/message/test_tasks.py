@@ -8,6 +8,8 @@ from golem_messages import shortcuts
 
 from tests import factories
 
+from .mixins import RegisteredMessageTestMixin
+
 
 class ComputeTaskDefTestCase(unittest.TestCase):
     @mock.patch('golem_messages.message.tasks.ComputeTaskDef.validate_task_id')
@@ -26,7 +28,30 @@ class ComputeTaskDefTestCase(unittest.TestCase):
             value=ctd['subtask_id'],
         )
 
-class TasksTest(unittest.TestCase):
+class SubtaskResultsAcceptedTest(RegisteredMessageTestMixin,
+                                 unittest.TestCase):
+    MSG_CLASS = message.tasks.SubtaskResultsAccepted
+
+    def test_factory(self):
+        msg = factories.SubtaskResultsAcceptedFactory()
+        self.assertIsInstance(msg, message.tasks.SubtaskResultsAccepted)
+
+    def test_task_to_compute_wrong_class(self):
+        with self.assertRaises(exceptions.FieldError):
+            message.tasks.SubtaskResultsAccepted(slots=(
+                ('task_to_compute', 'something else'),
+            ))
+
+    def test_task_to_compute_correct(self):
+        msg = message.tasks.SubtaskResultsAccepted(slots=(
+            ('task_to_compute', factories.TaskToComputeFactory()),
+        ))
+        self.assertIsInstance(msg.task_to_compute, message.tasks.TaskToCompute)
+
+class SubtaskResultsRejectedTest(RegisteredMessageTestMixin,
+                                 unittest.TestCase):
+    MSG_CLASS = message.tasks.SubtaskResultsRejected
+
     def test_subtask_results_rejected_factory(self):
         msg = factories.SubtaskResultsRejectedFactory()
         self.assertIsInstance(msg, message.tasks.SubtaskResultsRejected)
@@ -40,8 +65,8 @@ class TasksTest(unittest.TestCase):
         reason = message.tasks.SubtaskResultsRejected.REASON\
             .VerificationNegative
         msg = factories.SubtaskResultsRejectedFactory(
-            slots__report_computed_task=rct,
-            slots__reason=reason,
+            report_computed_task=rct,
+            reason=reason,
         )
         expected = [
             ['report_computed_task', rct],
@@ -58,8 +83,8 @@ class TasksTest(unittest.TestCase):
         reason = message.tasks.SubtaskResultsRejected.REASON\
             .ForcedResourcesFailure
         msg = factories.SubtaskResultsRejectedFGTRFFactory(
-            slots__force_get_task_result_failed=fgtrf,
-            slots__reason=reason,
+            force_get_task_result_failed=fgtrf,
+            reason=reason,
         )
         expected = [
             ['report_computed_task', None],
