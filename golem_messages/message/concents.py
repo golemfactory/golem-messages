@@ -403,6 +403,58 @@ class ForceSubtaskResultsRejected(base.AbstractReasonMessage):
         RequestPremature = 'premature: still within the verification timeout'
         RequestTooLate = 'too late: past the forced communication timeout'
 
+class ForcePayment(base.Message):
+    TYPE = CONCENT_MSG_BASE + 18
+
+    __slots__ = [
+        'subtask_results_accepted_list'
+    ] + base.Message.__slots__
+
+    @base.verify_slot_list('subtask_results_accepted_list',
+                           tasks.SubtaskResultsAccepted)
+    def deserialize_slot(self, key, value):
+        return super().deserialize_slot(key, value)
+
+class ForcePaymentCommitted(base.Message):
+    TYPE = CONCENT_MSG_BASE + 19
+
+    __slots__ = [
+        # the closure time for the Concent's payment,
+        # iow, the amount paid should satisfy all pending payments
+        # up until this point in time
+        'payment_ts',
+        # the requestor's golem node address
+        'task_owner_key',
+        # provider's ethereum address
+        'provider_eth_account',
+        # the amount paid to the requestor
+        'amount_paid',
+        # the message recipient's role in the transaction
+        'recipient_type',
+        # the amount that could not have been satisfied from the deposit
+        'amount_pending',
+    ]
+
+    class Actor(enum.Enum):
+        Requestor = "requestor"
+        Provider = "provider"
+
+    @property
+    def ENUM_SLOTS(self):
+        return {
+            'recipient_type': self.Actor,
+        }
+
+class ForcePaymentRejected(base.AbstractReasonMessage):
+    TYPE = CONCENT_MSG_BASE + 20
+
+    @enum.unique
+    class REASON(enum.Enum):
+        NoUnsettledTasksFound = 'no unsettled tasks found'
+        PaymentTimestampError = 'payment timestamp error'
+
+    __slots__ = base.AbstractReasonMessage.__slots__
+
 
 deserialize_task_failure = functools.partial(
     base.deserialize_verify,

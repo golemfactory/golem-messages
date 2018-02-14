@@ -283,3 +283,67 @@ class ForceSubtaskResultsRejectedTest(RegisteredMessageTestMixin,
             msg.reason,
             concents.ForceSubtaskResultsRejected.REASON.RequestTooLate
         )
+
+
+class ForcePaymentTest(RegisteredMessageTestMixin, unittest.TestCase):
+    MSG_CLASS = concents.ForcePayment
+
+    def test_factory(self):
+        msg = factories.ForcePaymentFactory()
+        self.assertIsInstance(msg, self.MSG_CLASS)
+
+    def test_factory_generate_list(self):
+        msg = factories.ForcePaymentFactory.with_accepted_tasks()
+        self.assertIsInstance(msg.subtask_results_accepted_list, list)
+        self.assertIsInstance(
+            msg.subtask_results_accepted_list[0], # noqa pylint:disable=unsubscriptable-object
+            message.tasks.SubtaskResultsAccepted)
+
+    def test_factory_list_provided(self):
+        msg = factories.ForcePaymentFactory(
+            subtask_results_accepted_list=[
+                factories.SubtaskResultsAcceptedFactory()
+            ])
+        self.assertIsInstance(msg.subtask_results_accepted_list, list)
+        self.assertIsInstance(
+            msg.subtask_results_accepted_list[0], # noqa pylint:disable=unsubscriptable-object
+            message.tasks.SubtaskResultsAccepted)
+
+    def test_sra_list_verify(self):
+        msg = concents.ForcePayment(slots=[
+            ('subtask_results_accepted_list', [
+                factories.SubtaskResultsAcceptedFactory()
+            ]),
+        ])
+        self.assertIsInstance(msg.subtask_results_accepted_list[0],
+                              message.tasks.SubtaskResultsAccepted)
+
+    def test_sra_list_wrong_class(self):
+        with self.assertRaises(exceptions.FieldError):
+            concents.ForcePayment(slots=[
+                ('subtask_results_accepted_list', [message.base.Message()]),
+            ])
+
+class ForcePaymentCommittedTest(RegisteredMessageTestMixin, unittest.TestCase):
+    MSG_CLASS = concents.ForcePaymentCommitted
+
+    def test_factory(self):
+        msg = factories.ForcePaymentCommittedFactory()
+        self.assertIsInstance(msg, self.MSG_CLASS)
+
+    def test_factory_to_provider(self):
+        msg = factories.ForcePaymentCommittedFactory.to_provider()
+        self.assertEqual(msg.recipient_type,
+                         concents.ForcePaymentCommitted.Actor.Provider)
+
+    def test_factory_to_requestor(self):
+        msg = factories.ForcePaymentCommittedFactory.to_requestor()
+        self.assertEqual(msg.recipient_type,
+                         concents.ForcePaymentCommitted.Actor.Requestor)
+
+class ForcePaymentRejectedTest(RegisteredMessageTestMixin, unittest.TestCase):
+    MSG_CLASS = concents.ForcePaymentRejected
+
+    def test_factory(self):
+        msg = factories.ForcePaymentRejectedFactory()
+        self.assertIsInstance(msg, self.MSG_CLASS)

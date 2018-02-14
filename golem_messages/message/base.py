@@ -87,13 +87,27 @@ def verify_version(msg_version):
             )
         )
 
+def validate_slot(key, value, verify_class):
+    try:
+        verify_slot_type(value, verify_class)
+    except TypeError as e:
+        raise exceptions.FieldError(field=key, value=value) from e
+
+
 def deserialize_verify(key, value, verify_key, verify_class):
     if key == verify_key:
+        validate_slot(key, value, verify_class)
+    return value
+
+def deserialize_verify_list(key, value, verify_key, verify_class):
+    if key == verify_key:
         try:
-            verify_slot_type(value, verify_class)
+            for v in value:
+                validate_slot(key, v, verify_class)
         except TypeError as e:
             raise exceptions.FieldError(field=key, value=value) from e
     return value
+
 
 def verify_slot(slot_name, slot_class):
     """
@@ -104,6 +118,7 @@ def verify_slot(slot_name, slot_class):
     :param slot_name: the name of the slot
     :param slot_class: the class to check against
     :return: the verified value
+    :raises: FieldError
 
     :Example:
 
@@ -119,6 +134,31 @@ def verify_slot(slot_name, slot_class):
                 deserialize_verify,
                 verify_key=slot_name,
                 verify_class=slot_class,
+            )(
+                key, method(self, key, value)
+            )
+        return _
+    return deserialize_slot
+
+def verify_slot_list(slot_name, item_class):
+    """
+    decorator for Message's `deserialize_slot` method
+    ensures that the slot identified by `slot_name` is a list of messages with
+    the given instance type (provided in `item_class`)
+
+    :param slot_name: the name of the slot to verify
+    :param item_class: the class to check list items against
+    :return: the verified value
+    :raises: FieldError
+    """
+
+    def deserialize_slot(method):
+        @functools.wraps(method)
+        def _(self, key, value):
+            return functools.partial(
+                deserialize_verify_list,
+                verify_key=slot_name,
+                verify_class=item_class,
             )(
                 key, method(self, key, value)
             )
