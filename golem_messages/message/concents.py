@@ -460,6 +460,8 @@ class ForcePaymentRejected(base.AbstractReasonMessage):
 
 
 class ForceReportComputedTaskResponse(base.AbstractReasonMessage):
+    """Sent from Concent to Provider as a response to ForceReportComputedTask.
+    """
     TYPE = CONCENT_MSG_BASE + 21
 
     @enum.unique
