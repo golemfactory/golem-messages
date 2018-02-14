@@ -197,9 +197,13 @@ class SubtaskResultsAccepted(base.Message):
     TYPE = TASK_MSG_BASE + 10
 
     __slots__ = [
-        'subtask_id',
-        'payment_ts'
+        'payment_ts',
+        'task_to_compute',
     ] + base.Message.__slots__
+
+    @base.verify_slot('task_to_compute', TaskToCompute)
+    def deserialize_slot(self, key, value):
+        return super().deserialize_slot(key, value)
 
 
 class SubtaskResultsRejected(base.AbstractReasonMessage):
