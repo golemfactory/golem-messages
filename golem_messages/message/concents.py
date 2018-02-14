@@ -451,7 +451,7 @@ class ForcePaymentRejected(base.AbstractReasonMessage):
     @enum.unique
     class REASON(enum.Enum):
         NoUnsettledTasksFound = 'no unsettled tasks found'
-        PaymentTimestampError = 'payment timestamp error'
+        TimestampError = 'timestamp error - subtasks are not overdue yet'
 
     __slots__ = base.AbstractReasonMessage.__slots__
 
