@@ -17,5 +17,5 @@ jobs:
            key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
            paths:
              - "venv"
-       - run: ./venv/bin/codecov
+       - run: venv/bin/codecov
 
