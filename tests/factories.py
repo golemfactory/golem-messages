@@ -408,6 +408,7 @@ class ForcePaymentRejectedFactory(factory.Factory):
     class Meta:
         model = concents.ForcePaymentRejected
 
+    force_payment = factory.SubFactory(ForcePaymentFactory)
     reason = concents.ForcePaymentRejected.REASON.NoUnsettledTasksFound
 
 

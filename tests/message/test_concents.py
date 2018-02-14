@@ -349,6 +349,17 @@ class ForcePaymentRejectedTest(RegisteredMessageTestMixin, unittest.TestCase):
         msg = factories.ForcePaymentRejectedFactory()
         self.assertIsInstance(msg, self.MSG_CLASS)
 
+    def test_force_payment(self):
+        msg = concents.ForcePaymentRejected(slots=[
+            ('force_payment', factories.ForcePaymentFactory())
+        ])
+        self.assertIsInstance(msg.force_payment, concents.ForcePayment)
+
+    def test_force_payment_wrong_class(self):
+        with self.assertRaises(exceptions.FieldError):
+            concents.ForcePaymentRejected(slots=[
+                ('force_payment', message.base.Message())
+            ])
 
 class ForceReportComputedTaskResponseTestCase(
         RegisteredMessageTestMixin,
