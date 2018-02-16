@@ -71,10 +71,12 @@ class TaskToCompute(base.Message):
     TYPE = TASK_MSG_BASE + 2
 
     __slots__ = [
-        'requestor_id',
-        'requestor_public_key',
-        'provider_id',
-        'provider_public_key',
+        'requestor_id',  # a.k.a. node id
+        'requestor_public_key',  # ecdsa key used to msg signing and encryption
+        'requestor_ethereum_public_key',  # used for transactions on blockchain
+        'provider_id',  # a.k.a. node id
+        'provider_public_key',  # ecdsa key used to msg signing and encryption
+        'provider_ethereum_public_key',  # used for transactions on blockchain
         'compute_task_def',
         'package_hash',
         'concent_enabled',
@@ -88,6 +90,14 @@ class TaskToCompute(base.Message):
         # defaults to `True` if not specified explicitly as `False`
         if self.concent_enabled is None:
             self.concent_enabled = True
+
+    @property
+    def requestor_ethereum_address(self):
+        return '0x{}'.format(self.requestor_ethereum_public_key[:20].hex())
+
+    @property
+    def provider_ethereum_address(self):
+        return '0x{}'.format(self.provider_ethereum_public_key[:20].hex())
 
     def load_slots(self, slots):
         super().load_slots(slots)

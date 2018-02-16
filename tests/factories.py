@@ -58,10 +58,12 @@ class TaskToComputeFactory(factory.Factory):
     requestor_public_key = factory.Sequence(
         lambda n: 'requestor pubkey {}'.format(n)
     )
+    requestor_ethereum_public_key = factory.Faker('binary', length=64)
     provider_id = factory.Sequence(lambda n: 'provider {}'.format(n))
     provider_public_key = factory.Sequence(
         lambda n: 'provider pubkey {}'.format(n)
     )
+    provider_ethereum_public_key = factory.Faker('binary', length=64)
 
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
 
