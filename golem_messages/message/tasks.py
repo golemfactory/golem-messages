@@ -72,10 +72,10 @@ class TaskToCompute(base.Message):
 
     __slots__ = [
         'requestor_id',  # a.k.a. node id
-        'requestor_public_key',  # ecdsa key used to msg signing and encryption
+        'requestor_public_key',  # ecdsa key used for msg signing and encryption
         'requestor_ethereum_public_key',  # used for transactions on blockchain
         'provider_id',  # a.k.a. node id
-        'provider_public_key',  # ecdsa key used to msg signing and encryption
+        'provider_public_key',  # ecdsa key used for msg signing and encryption
         'provider_ethereum_public_key',  # used for transactions on blockchain
         'compute_task_def',
         'package_hash',
