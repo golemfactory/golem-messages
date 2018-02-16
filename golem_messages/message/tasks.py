@@ -1,6 +1,8 @@
 import enum
 import functools
 
+from ethereum.utils import sha3
+
 from golem_messages import datastructures
 from golem_messages import exceptions
 from golem_messages import validators
@@ -72,10 +74,10 @@ class TaskToCompute(base.Message):
 
     __slots__ = [
         'requestor_id',  # a.k.a. node id
-        'requestor_public_key',  # ecdsa key used for msg signing and encryption
+        'requestor_public_key',  # key used for msg signing and encryption
         'requestor_ethereum_public_key',  # used for transactions on blockchain
         'provider_id',  # a.k.a. node id
-        'provider_public_key',  # ecdsa key used for msg signing and encryption
+        'provider_public_key',  # key used for msg signing and encryption
         'provider_ethereum_public_key',  # used for transactions on blockchain
         'compute_task_def',
         'package_hash',
@@ -93,11 +95,15 @@ class TaskToCompute(base.Message):
 
     @property
     def requestor_ethereum_address(self):
-        return '0x{}'.format(self.requestor_ethereum_public_key[:20].hex())
+        return '0x{}'.format(
+            sha3(self.requestor_ethereum_public_key)[12:].hex(),
+        )
 
     @property
     def provider_ethereum_address(self):
-        return '0x{}'.format(self.provider_ethereum_public_key[:20].hex())
+        return '0x{}'.format(
+            sha3(self.provider_ethereum_public_key)[12:].hex(),
+        )
 
     def load_slots(self, slots):
         super().load_slots(slots)
