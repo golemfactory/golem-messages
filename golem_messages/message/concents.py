@@ -476,7 +476,13 @@ class ForcePaymentRejected(base.AbstractReasonMessage):
         NoUnsettledTasksFound = 'no unsettled tasks found'
         TimestampError = 'timestamp error - subtasks are not overdue yet'
 
-    __slots__ = base.AbstractReasonMessage.__slots__
+    __slots__ = [
+        'force_payment'
+    ] + base.AbstractReasonMessage.__slots__
+
+    @base.verify_slot('force_payment', ForcePayment)
+    def deserialize_slot(self, key, value):
+        return super().deserialize_slot(key, value)
 
 
 class ForceReportComputedTaskResponse(base.AbstractReasonMessage):

@@ -29,8 +29,8 @@ class PEP8TestCase(unittest.TestCase):
         base_path = pathlib.Path(golem_messages.__file__).parent
         tests_path = pathlib.Path(__file__).parent
         options = "{tests_dir} {lib_dir} -f json".format(
-            lib_dir=base_path,
-            tests_dir=tests_path,
+            lib_dir=base_path.as_posix(),
+            tests_dir=tests_path.as_posix(),
         )
         stdout_io, _ = epylint.py_run(options, return_std=True)
         stdout = stdout_io.read()

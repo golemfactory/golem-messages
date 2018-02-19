@@ -9,6 +9,7 @@ from golem_messages import shortcuts
 from tests import factories
 
 from .mixins import RegisteredMessageTestMixin
+from .mixins import SerializationMixin
 
 
 class ComputeTaskDefTestCase(unittest.TestCase):
@@ -76,7 +77,12 @@ class SubtaskResultsRejectedTest(RegisteredMessageTestMixin,
                               message.tasks.ReportComputedTask)
 
 
-class TaskToComputeTest(unittest.TestCase):
+class TaskToComputeTest(unittest.TestCase,
+                        RegisteredMessageTestMixin,
+                        SerializationMixin,):
+    FACTORY = factories.TaskToComputeFactory
+    MSG_CLASS = message.tasks.TaskToCompute
+
     def test_task_to_compute_basic(self):
         ttc = factories.TaskToComputeFactory()
         serialized = shortcuts.dump(ttc, None, None)
@@ -115,3 +121,13 @@ class TaskToComputeTest(unittest.TestCase):
     def test_concent_enabled_false(self):
         ttc = message.tasks.TaskToCompute(concent_enabled=False)
         self.assertFalse(ttc.concent_enabled)
+
+    def test_ethereum_address(self):
+        msg = factories.TaskToComputeFactory()
+        serialized = shortcuts.dump(msg, None, None)
+        msg_l = shortcuts.load(serialized, None, None)
+        for addr_slot in (
+                'requestor_ethereum_address',
+                'provider_ethereum_address'):
+            address = getattr(msg_l, addr_slot)
+            self.assertEqual(len(address), 2 + (20*2))
