@@ -29,16 +29,21 @@ class SubtaskResultsVerifyTest(RegisteredMessageTestMixin, unittest.TestCase):
 
     def test_ack_subtask_results_verify(self):
         srv = factories.SubtaskResultsVerifyFactory()
+        ftt = factories.FileTransferTokenFactory()
         msg = factories.AckSubtaskResultsVerifyFactory(
             subtask_results_verify=srv,
+            file_transfer_token=ftt,
         )
         expected = [
-            ['subtask_results_verify', srv]
+            ['subtask_results_verify', srv],
+            ['file_transfer_token', ftt]
         ]
 
         self.assertEqual(expected, msg.slots())
         self.assertIsInstance(msg.subtask_results_verify,
                               concents.SubtaskResultsVerify)
+        self.assertIsInstance(msg.file_transfer_token,
+                              concents.FileTransferToken)
 
 
 class SubtaskResultsSettledTest(RegisteredMessageTestMixin, unittest.TestCase):

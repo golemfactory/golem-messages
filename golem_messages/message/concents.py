@@ -146,6 +146,10 @@ class VerdictReportComputedTask(base.Message):
 
 
 class FileTransferToken(base.Message):
+    """
+    Sent from the Concent (usually, as an attachment in another message) to
+    enable upload/download of files pertaining to the subtask at hand.
+    """
     TYPE = CONCENT_MSG_BASE + 5
 
     __slots__ = [
@@ -195,15 +199,19 @@ class SubtaskResultsVerify(base.Message):
 class AckSubtaskResultsVerify(base.Message):
     """
     Message sent from the Concent to the Provider to acknowledge reception
-    of the `SubtaskResultsVerify` message
+    of the `SubtaskResultsVerify` message and more importantly, to pass the
+    required `FileTransferToken` message to the Provider which must use it
+    to upload files to the Concent service.
     """
     TYPE = CONCENT_MSG_BASE + 7
 
     __slots__ = [
         'subtask_results_verify',
+        'file_transfer_token',
     ] + base.Message.__slots__
 
     @base.verify_slot('subtask_results_verify', SubtaskResultsVerify)
+    @base.verify_slot('file_transfer_token', FileTransferToken)
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
 
