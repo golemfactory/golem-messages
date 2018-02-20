@@ -14,30 +14,30 @@ from .mixins import SerializationMixin
 class SubtaskResultsVerifyTest(RegisteredMessageTestMixin, unittest.TestCase):
     MSG_CLASS = concents.SubtaskResultsVerify
 
-    def test_subtask_result_verify(self):
+    def test_subtask_results_verify(self):
         srr = factories.SubtaskResultsRejectedFactory()
         msg = factories.SubtaskResultsVerifyFactory(
-            slots__subtask_result_rejected=srr,
+            subtask_results_rejected=srr,
         )
         expected = [
-            ['subtask_result_rejected', srr]
+            ['subtask_results_rejected', srr]
         ]
 
         self.assertEqual(expected, msg.slots())
-        self.assertIsInstance(msg.subtask_result_rejected,
+        self.assertIsInstance(msg.subtask_results_rejected,
                               message.tasks.SubtaskResultsRejected)
 
-    def test_ack_subtask_result_verify(self):
+    def test_ack_subtask_results_verify(self):
         srv = factories.SubtaskResultsVerifyFactory()
         msg = factories.AckSubtaskResultsVerifyFactory(
-            slots__subtask_results_verify=srv,
+            subtask_results_verify=srv,
         )
         expected = [
-            ['subtask_result_verify', srv]
+            ['subtask_results_verify', srv]
         ]
 
         self.assertEqual(expected, msg.slots())
-        self.assertIsInstance(msg.subtask_result_verify,
+        self.assertIsInstance(msg.subtask_results_verify,
                               concents.SubtaskResultsVerify)
 
 
@@ -79,7 +79,7 @@ class ConcentsTest(unittest.TestCase):
     def test_force_get_task_result(self):
         rct = factories.ReportComputedTaskFactory()
         msg = factories.ForceGetTaskResultFactory(
-            slots__report_computed_task=rct,
+            report_computed_task=rct,
         )
         expected = [
             ['report_computed_task', rct],
@@ -92,7 +92,7 @@ class ConcentsTest(unittest.TestCase):
     def test_force_get_task_result_ack(self):
         fgtr = factories.ForceGetTaskResultFactory()
         msg = factories.ForceGetTaskResultAckFactory(
-            slots__force_get_task_result=fgtr
+            force_get_task_result=fgtr
         )
         expected = [
             ['force_get_task_result', fgtr]
@@ -105,7 +105,7 @@ class ConcentsTest(unittest.TestCase):
     def test_force_get_task_result_failed(self):
         ttc = factories.TaskToComputeFactory()
         msg = factories.ForceGetTaskResultFailedFactory(
-            slots__task_to_compute=ttc
+            task_to_compute=ttc
         )
         expected = [
             ['task_to_compute', ttc]
@@ -117,7 +117,7 @@ class ConcentsTest(unittest.TestCase):
     def test_force_get_task_result_rejected(self):
         fgtr = factories.ForceGetTaskResultFactory()
         msg = factories.ForceGetTaskResultRejectedFactory(
-            slots__force_get_task_result=fgtr
+            force_get_task_result=fgtr
         )
         expected = [
             ['force_get_task_result', fgtr],
@@ -132,8 +132,8 @@ class ConcentsTest(unittest.TestCase):
         fgtr = factories.ForceGetTaskResultFactory()
         ftt = message.concents.FileTransferToken()
         msg = factories.ForceGetTaskResultUploadFactory(
-            slots__force_get_task_result=fgtr,
-            slots__file_transfer_token=ftt
+            force_get_task_result=fgtr,
+            file_transfer_token=ftt
         )
         expected = [
             ['force_get_task_result', fgtr],
@@ -150,8 +150,8 @@ class ConcentsTest(unittest.TestCase):
         fgtr = factories.ForceGetTaskResultFactory()
         ftt = message.concents.FileTransferToken()
         msg = factories.ForceGetTaskResultDownloadFactory(
-            slots__force_get_task_result=fgtr,
-            slots__file_transfer_token=ftt
+            force_get_task_result=fgtr,
+            file_transfer_token=ftt
         )
         expected = [
             ['force_get_task_result', fgtr],
