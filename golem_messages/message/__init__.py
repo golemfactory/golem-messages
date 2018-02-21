@@ -138,7 +138,7 @@ def init_messages():
             concents.AckSubtaskResultsVerify,
             concents.SubtaskResultsSettled,
             concents.ForceGetTaskResult,
-            concents.ForceGetTaskResultAck,
+            concents.AckForceGetTaskResult,
             concents.ForceGetTaskResultFailed,
             concents.ForceGetTaskResultRejected,
             concents.ForceGetTaskResultUpload,
