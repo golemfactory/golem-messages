@@ -264,7 +264,7 @@ class ForceGetTaskResult(base.Message):
         return super().deserialize_slot(key, value)
 
 
-class ForceGetTaskResultAck(base.Message):
+class AckForceGetTaskResult(base.Message):
     TYPE = CONCENT_MSG_BASE + 10
 
     __slots__ = [

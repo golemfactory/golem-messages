@@ -94,9 +94,9 @@ class ConcentsTest(unittest.TestCase):
         self.assertIsInstance(msg.report_computed_task,
                               message.tasks.ReportComputedTask)
 
-    def test_force_get_task_result_ack(self):
+    def test_ack_force_get_task_result(self):
         fgtr = factories.ForceGetTaskResultFactory()
-        msg = factories.ForceGetTaskResultAckFactory(
+        msg = factories.AckForceGetTaskResultFactory(
             force_get_task_result=fgtr
         )
         expected = [

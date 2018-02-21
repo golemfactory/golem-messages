@@ -135,9 +135,9 @@ class ForceGetTaskResultFactory(factory.Factory):
     report_computed_task = factory.SubFactory(ReportComputedTaskFactory)
 
 
-class ForceGetTaskResultAckFactory(factory.Factory):
+class AckForceGetTaskResultFactory(factory.Factory):
     class Meta:
-        model = concents.ForceGetTaskResultAck
+        model = concents.AckForceGetTaskResult
 
     force_get_task_result = factory.SubFactory(ForceGetTaskResultFactory)
 
