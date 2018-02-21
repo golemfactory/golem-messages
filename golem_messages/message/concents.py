@@ -1,5 +1,4 @@
 import enum
-import functools
 
 from golem_messages import datastructures
 
@@ -37,9 +36,9 @@ class ServiceRefused(base.AbstractReasonMessage):
         'task_to_compute',
     ] + base.AbstractReasonMessage.__slots__
 
+    @base.verify_slot('task_to_compute', tasks.TaskToCompute)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        return tasks.deserialize_task_to_compute(key, value)
+        return super().deserialize_slot(key, value)
 
 
 class ForceReportComputedTask(base.Message):
@@ -57,10 +56,9 @@ class ForceReportComputedTask(base.Message):
         'result_hash',
     ] + base.Message.__slots__
 
+    @base.verify_slot('report_computed_task', tasks.ReportComputedTask)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        value = tasks.deserialize_report_computed_task(key, value)
-        return value
+        return super().deserialize_slot(key, value)
 
 
 class AckReportComputedTask(base.Message):
@@ -81,9 +79,9 @@ class AckReportComputedTask(base.Message):
         'task_to_compute',
     ] + base.Message.__slots__
 
+    @base.verify_slot('task_to_compute', tasks.TaskToCompute)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        return tasks.deserialize_task_to_compute(key, value)
+        return super().deserialize_slot(key, value)
 
 
 class RejectReportComputedTask(base.AbstractReasonMessage):
@@ -117,12 +115,11 @@ class RejectReportComputedTask(base.AbstractReasonMessage):
         'cannot_compute_task',
     ] + base.AbstractReasonMessage.__slots__
 
+    @base.verify_slot('task_to_compute', tasks.TaskToCompute)
+    @base.verify_slot('task_failure', tasks.TaskFailure)
+    @base.verify_slot('cannot_compute_task', tasks.CannotComputeTask)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        value = tasks.deserialize_task_to_compute(key, value)
-        value = deserialize_task_failure(key, value)
-        value = deserialize_cannot_compute_task(key, value)
-        return value
+        return super().deserialize_slot(key, value)
 
 
 class VerdictReportComputedTask(base.Message):
@@ -142,11 +139,10 @@ class VerdictReportComputedTask(base.Message):
         'ack_report_computed_task',
     ] + base.Message.__slots__
 
+    @base.verify_slot('force_report_computed_task', ForceReportComputedTask)
+    @base.verify_slot('ack_report_computed_task', AckReportComputedTask)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        value = deserialize_force_report_computed_task(key, value)
-        value = deserialize_ack_report_computed_task(key, value)
-        return value
+        return super().deserialize_slot(key, value)
 
 
 class FileTransferToken(base.Message):
@@ -181,23 +177,19 @@ class SubtaskResultsVerify(base.Message):
     Message sent from a Provider to the Concent, requesting additional
     verification in case the result had been rejected by the Requestor
 
-    :param SubtaskResultsRejected subtask_result_rejected:
+    :param SubtaskResultsRejected subtask_results_rejected:
            the original reject message
 
     """
     TYPE = CONCENT_MSG_BASE + 6
 
     __slots__ = [
-        'subtask_result_rejected',
+        'subtask_results_rejected',
     ] + base.Message.__slots__
 
+    @base.verify_slot('subtask_results_rejected', tasks.SubtaskResultsRejected)
     def deserialize_slot(self, key, value):
-        return base.deserialize_verify(
-            key,
-            super().deserialize_slot(key, value),
-            verify_key='subtask_result_rejected',
-            verify_class=tasks.SubtaskResultsRejected
-        )
+        return super().deserialize_slot(key, value)
 
 
 class AckSubtaskResultsVerify(base.Message):
@@ -208,16 +200,12 @@ class AckSubtaskResultsVerify(base.Message):
     TYPE = CONCENT_MSG_BASE + 7
 
     __slots__ = [
-        'subtask_result_verify',
+        'subtask_results_verify',
     ] + base.Message.__slots__
 
+    @base.verify_slot('subtask_results_verify', SubtaskResultsVerify)
     def deserialize_slot(self, key, value):
-        return base.deserialize_verify(
-            key,
-            super().deserialize_slot(key, value),
-            verify_key='subtask_result_verify',
-            verify_class=SubtaskResultsVerify
-        )
+        return super().deserialize_slot(key, value)
 
 
 class SubtaskResultsSettled(base.Message):
@@ -251,13 +239,9 @@ class SubtaskResultsSettled(base.Message):
         'task_to_compute',
     ] + base.Message.__slots__
 
+    @base.verify_slot('task_to_compute', tasks.TaskToCompute)
     def deserialize_slot(self, key, value):
-        return base.deserialize_verify(
-            key,
-            super().deserialize_slot(key, value),
-            verify_key='task_to_compute',
-            verify_class=tasks.TaskToCompute,
-        )
+        return super().deserialize_slot(key, value)
 
 
 class ForceGetTaskResult(base.Message):
@@ -267,10 +251,9 @@ class ForceGetTaskResult(base.Message):
         'report_computed_task',
     ] + base.Message.__slots__
 
+    @base.verify_slot('report_computed_task', tasks.ReportComputedTask)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        value = tasks.deserialize_report_computed_task(key, value)
-        return value
+        return super().deserialize_slot(key, value)
 
 
 class ForceGetTaskResultAck(base.Message):
@@ -280,9 +263,9 @@ class ForceGetTaskResultAck(base.Message):
         'force_get_task_result',
     ] + base.Message.__slots__
 
+    @base.verify_slot('force_get_task_result', ForceGetTaskResult)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        return deserialize_force_get_task_result(key, value)
+        return super().deserialize_slot(key, value)
 
 
 class ForceGetTaskResultFailed(base.Message):
@@ -292,9 +275,9 @@ class ForceGetTaskResultFailed(base.Message):
         'task_to_compute',
     ] + base.Message.__slots__
 
+    @base.verify_slot('task_to_compute', tasks.TaskToCompute)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        return tasks.deserialize_task_to_compute(key, value)
+        return super().deserialize_slot(key, value)
 
 
 class ForceGetTaskResultRejected(base.AbstractReasonMessage):
@@ -307,9 +290,9 @@ class ForceGetTaskResultRejected(base.AbstractReasonMessage):
     class REASON(enum.Enum):
         AcceptanceTimeLimitExceeded = 'acceptance_time_limit_exceeded'
 
+    @base.verify_slot('force_get_task_result', ForceGetTaskResult)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        return deserialize_force_get_task_result(key, value)
+        return super().deserialize_slot(key, value)
 
 
 class ForceGetTaskResultUpload(base.Message):
@@ -320,11 +303,10 @@ class ForceGetTaskResultUpload(base.Message):
         'file_transfer_token',
     ] + base.Message.__slots__
 
+    @base.verify_slot('force_get_task_result', ForceGetTaskResult)
+    @base.verify_slot('file_transfer_token', FileTransferToken)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        value = deserialize_force_get_task_result(key, value)
-        value = deserialize_file_transfer_token(key, value)
-        return value
+        return super().deserialize_slot(key, value)
 
 
 class ForceGetTaskResultDownload(base.Message):
@@ -335,11 +317,10 @@ class ForceGetTaskResultDownload(base.Message):
         'file_transfer_token',
     ] + base.Message.__slots__
 
+    @base.verify_slot('force_get_task_result', ForceGetTaskResult)
+    @base.verify_slot('file_transfer_token', FileTransferToken)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        value = deserialize_force_get_task_result(key, value)
-        value = deserialize_file_transfer_token(key, value)
-        return value
+        return super().deserialize_slot(key, value)
 
 
 class ForceSubtaskResults(base.Message):
@@ -359,10 +340,9 @@ class ForceSubtaskResults(base.Message):
         'ack_report_computed_task',
     ] + base.Message.__slots__
 
+    @base.verify_slot('ack_report_computed_task', AckReportComputedTask)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        value = deserialize_ack_report_computed_task(key, value)
-        return value
+        return super().deserialize_slot(key, value)
 
 
 class ForceSubtaskResultsResponse(base.Message):
@@ -520,46 +500,3 @@ class ForceReportComputedTaskResponse(base.AbstractReasonMessage):
     )
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
-
-
-deserialize_task_failure = functools.partial(
-    base.deserialize_verify,
-    verify_key='task_failure',
-    verify_class=tasks.TaskFailure,
-)
-
-deserialize_cannot_compute_task = functools.partial(
-    base.deserialize_verify,
-    verify_key='cannot_compute_task',
-    verify_class=tasks.CannotComputeTask,
-)
-
-deserialize_force_report_computed_task = functools.partial(
-    base.deserialize_verify,
-    verify_key='force_report_computed_task',
-    verify_class=ForceReportComputedTask,
-)
-
-deserialize_ack_report_computed_task = functools.partial(
-    base.deserialize_verify,
-    verify_key='ack_report_computed_task',
-    verify_class=AckReportComputedTask,
-)
-
-deserialize_force_get_task_result = functools.partial(
-    base.deserialize_verify,
-    verify_key='force_get_task_result',
-    verify_class=ForceGetTaskResult,
-)
-
-deserialize_file_transfer_token = functools.partial(
-    base.deserialize_verify,
-    verify_key='file_transfer_token',
-    verify_class=FileTransferToken,
-)
-
-deserialize_force_get_task_result_failed = functools.partial(
-    base.deserialize_verify,
-    verify_key='force_get_task_result_failed',
-    verify_class=ForceGetTaskResultFailed,
-)

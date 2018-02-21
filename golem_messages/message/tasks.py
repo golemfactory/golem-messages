@@ -170,9 +170,9 @@ class ReportComputedTask(base.Message):
         'checksum',
     ] + base.Message.__slots__
 
+    @base.verify_slot('task_to_compute', TaskToCompute)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        return deserialize_task_to_compute(key, value)
+        return super().deserialize_slot(key, value)
 
 
 class GetTaskResult(base.Message):
@@ -251,10 +251,9 @@ class SubtaskResultsRejected(base.AbstractReasonMessage):
         ResourcesFailure = \
             'Could not retrieve resources'
 
+    @base.verify_slot('report_computed_task', ReportComputedTask)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        value = deserialize_report_computed_task(key, value)
-        return value
+        return super().deserialize_slot(key, value)
 
 
 class DeltaParts(base.Message):
@@ -293,9 +292,9 @@ class TaskFailure(base.Message):
         'task_to_compute',
     ] + base.Message.__slots__
 
+    @base.verify_slot('task_to_compute', TaskToCompute)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        return deserialize_task_to_compute(key, value)
+        return super().deserialize_slot(key, value)
 
 
 class StartSessionResponse(base.Message):
@@ -334,9 +333,9 @@ class CannotComputeTask(base.AbstractReasonMessage):
         NoSourceCode = 'no_source_code'
         WrongDockerImages = 'wrong_docker_images'
 
+    @base.verify_slot('task_to_compute', TaskToCompute)
     def deserialize_slot(self, key, value):
-        value = super().deserialize_slot(key, value)
-        return deserialize_task_to_compute(key, value)
+        return super().deserialize_slot(key, value)
 
 
 class SubtaskPayment(base.Message):
@@ -373,16 +372,3 @@ class SubtaskPaymentRequest(base.Message):
     TYPE = TASK_MSG_BASE + 28
 
     __slots__ = ['subtask_id'] + base.Message.__slots__
-
-
-deserialize_task_to_compute = functools.partial(
-    base.deserialize_verify,
-    verify_key='task_to_compute',
-    verify_class=TaskToCompute,
-)
-
-deserialize_report_computed_task = functools.partial(
-    base.deserialize_verify,
-    verify_key='report_computed_task',
-    verify_class=ReportComputedTask,
-)

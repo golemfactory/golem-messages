@@ -52,16 +52,6 @@ def _fake_sign(_):
     return b'\0' * Message.SIG_LEN
 
 
-def verify_slot_type(value, class_):
-    if not isinstance(value, (class_, type(None))):
-        raise TypeError(
-            "Invalid nested message type {} should be {}".format(
-                type(value),
-                class_
-            )
-        )
-
-
 def verify_version(msg_version):
     try:
         theirs_v = semantic_version.Version(msg_version)
@@ -88,9 +78,19 @@ def verify_version(msg_version):
         )
 
 
-def validate_slot(key, value, verify_class):
+def _verify_slot_type(value, class_):
+    if not isinstance(value, (class_, type(None))):
+        raise TypeError(
+            "Invalid nested message type {} should be {}".format(
+                type(value),
+                class_
+            )
+        )
+
+
+def _validate_slot(key, value, verify_class):
     try:
-        verify_slot_type(value, verify_class)
+        _verify_slot_type(value, verify_class)
     except TypeError as e:
         raise exceptions.FieldError(
             "Should an instance of {should_be} not {is_now}".format(
@@ -104,7 +104,7 @@ def validate_slot(key, value, verify_class):
 
 def deserialize_verify(key, value, verify_key, verify_class):
     if key == verify_key:
-        validate_slot(key, value, verify_class)
+        _validate_slot(key, value, verify_class)
     return value
 
 
@@ -112,7 +112,7 @@ def deserialize_verify_list(key, value, verify_key, verify_class):
     if key == verify_key:
         try:
             for v in value:
-                validate_slot(key, v, verify_class)
+                _validate_slot(key, v, verify_class)
         except TypeError as e:
             raise exceptions.FieldError(
                 "Should be a list of {verify_class}".format(
