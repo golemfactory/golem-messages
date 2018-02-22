@@ -349,3 +349,16 @@ class MessagesTestCase(unittest.TestCase):
             ['options', options],
         ]
         self.assertEqual(expected, msg.slots())
+
+    def test_message_remove_task_container(self):
+        task_id = 'test-{}'.format(uuid.uuid4())
+        msg_remove = message.RemoveTask(task_id=task_id)
+        msg = message.RemoveTaskContainer(remove_task=msg_remove)
+        expected = [
+            ['remove_task', msg_remove]
+        ]
+        self.assertEqual(expected, msg.slots())
+        self.assertIsInstance(
+            msg.remove_task,
+            message.p2p.RemoveTask
+        )

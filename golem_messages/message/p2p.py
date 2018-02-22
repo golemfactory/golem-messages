@@ -141,3 +141,13 @@ class SetTaskSession(base.Message):
         'conn_id',
         'super_node_info',
     ] + base.Message.__slots__
+
+
+class RemoveTaskContainer(base.Message):
+    TYPE = P2P_MESSAGE_BASE + 17
+
+    __slots__ = ['remove_task'] + base.Message.__slots__
+
+    @base.verify_slot('remove_task', RemoveTask)
+    def deserialize_slot(self, key, value):
+        return super().deserialize_slot(key, value)

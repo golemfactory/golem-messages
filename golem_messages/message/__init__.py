@@ -22,6 +22,7 @@ from golem_messages.message.p2p import Degree  # noqa
 from golem_messages.message.p2p import Gossip  # noqa
 from golem_messages.message.p2p import StopGossip  # noqa
 from golem_messages.message.p2p import LocRank  # noqa
+from golem_messages.message.p2p import RemoveTaskContainer  # noqa
 from golem_messages.message.tasks import ComputeTaskDef  # noqa
 from golem_messages.message.tasks import CannotAssignTask  # noqa
 from golem_messages.message.tasks import CannotComputeTask  # noqa
@@ -85,6 +86,7 @@ def init_messages():
             p2p.Peers,
             p2p.Tasks,
             p2p.RemoveTask,
+            p2p.RemoveTaskContainer,
             p2p.FindNode,
             p2p.GetResourcePeers,
             p2p.ResourcePeers,
