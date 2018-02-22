@@ -372,3 +372,11 @@ class ForceReportComputedTaskResponseTestCase(
         unittest.TestCase):
     MSG_CLASS = concents.ForceReportComputedTaskResponse
     FACTORY = factories.ForceReportComputedTaskResponseFactory
+
+
+class ClientAuthorizationTestCase(
+        RegisteredMessageTestMixin,
+        SerializationMixin,
+        unittest.TestCase):
+    MSG_CLASS = concents.ClientAuthorization
+    FACTORY = factories.ClientAuthorizationFactory

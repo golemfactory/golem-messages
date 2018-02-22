@@ -508,3 +508,18 @@ class ForceReportComputedTaskResponse(base.AbstractReasonMessage):
     )
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
+
+
+class ClientAuthorization(base.Message):
+    """
+    Message sent from a Provider or Requestor to the Concent,
+    used to identify and authenticate him in communication process.
+
+    This message must be signed with the key it contains.
+    This the proof that the client indeed has the private part of that key.
+    """
+    TYPE = CONCENT_MSG_BASE + 22
+
+    __slots__ = [
+        'client_public_key',
+    ] + base.Message.__slots__
