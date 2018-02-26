@@ -5,6 +5,7 @@ import unittest
 import unittest.mock as mock
 import uuid
 
+from golem_messages import cryptography
 from golem_messages import datastructures
 from golem_messages import message
 from golem_messages import shortcuts
@@ -181,7 +182,6 @@ class MessagesTestCase(unittest.TestCase):
 
     def test_uuid_messages(self):
         for message_class, key in (
-                (message.RemoveTask, 'task_id',),
                 (message.FindNode, 'node_key_id'),
                 (message.GetTaskResult, 'subtask_id'),
                 (message.StartSessionResponse, 'conn_id'),
@@ -194,6 +194,18 @@ class MessagesTestCase(unittest.TestCase):
                 [key, value]
             ]
             self.assertEqual(expected, msg.slots())
+
+    def test_message_remove_task(self):
+        task_id = 'test-{}'.format(uuid.uuid4())
+        ecc = cryptography.ECCx(None)
+        owner_signature = ecc.sign("REMOVE " + task_id)
+        msg = message.RemoveTask(task_id=task_id,
+                                 owner_signature=owner_signature)
+        expected = [
+            ['task_id', task_id],
+            ['owner_signature', owner_signature]
+        ]
+        self.assertEqual(expected, msg.slots())
 
     def test_message_loc_rank(self):
         node_id = 'test-{}'.format(uuid.uuid4())

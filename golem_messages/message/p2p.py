@@ -59,7 +59,7 @@ class Tasks(base.Message):
 class RemoveTask(base.Message):
     TYPE = P2P_MESSAGE_BASE + 7
 
-    __slots__ = ['task_id'] + base.Message.__slots__
+    __slots__ = ['task_id', 'owner_signature'] + base.Message.__slots__
 
 
 class GetResourcePeers(base.Message):
