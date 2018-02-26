@@ -334,3 +334,10 @@ class ForceReportComputedTaskResponseFactory(factory.Factory):
     reject_report_computed_task = factory.SubFactory(
         RejectReportComputedTaskFactory
     )
+
+
+class ClientAuthorizationFactory(factory.Factory):
+    class Meta:
+        model = concents.ClientAuthorization
+
+    client_public_key = factory.Faker('binary', length=64)
