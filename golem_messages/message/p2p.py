@@ -149,14 +149,14 @@ class SetTaskSession(base.Message):
 
 class RemoveTaskContainer(base.Message):
     """
-    Message that contains RemoveTask message signed by task owner. Other nodes
-    uses this container to propagate information about task cancellation.
+    Message that contains RemoveTask messages signed by task owners. Other nodes
+    uses this container to propagate information about tasks cancellation.
     """
 
     TYPE = P2P_MESSAGE_BASE + 17
 
-    __slots__ = ['remove_task'] + base.Message.__slots__
+    __slots__ = ['remove_tasks'] + base.Message.__slots__
 
-    @base.verify_slot('remove_task', RemoveTask)
+    @base.verify_slot_list('remove_tasks', RemoveTask)
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
