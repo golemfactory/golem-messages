@@ -3,6 +3,7 @@ import math
 
 from .constants import DEFAULT_UPLOAD_RATE, DOWNLOAD_LEADIN_TIME
 
+
 def maximum_download_time(
         size: int, rate: int = DEFAULT_UPLOAD_RATE) -> datetime.timedelta:
     """
