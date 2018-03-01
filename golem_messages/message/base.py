@@ -242,7 +242,11 @@ class Message():
             return False
         if not self.TYPE == obj.TYPE:
             return False
-        return self.__slots__ == obj.__slots__
+        if not self.header == obj.header:
+            return False
+        if not self.sig == obj.sig:
+            return False
+        return self.slots() == obj.slots()
 
     def __repr__(self):
         return "{name}(header={header}, sig={sig}, slots={slots})".format(
@@ -559,6 +563,11 @@ class Hello(Message):
             super().__repr__(),
             getattr(self, '_version', '<undefined>'),
         )
+
+    def __eq__(self, obj):
+        if not self._version == getattr(obj, '_version', None):
+            return False
+        return super().__eq__(obj)
 
 
 class RandVal(Message):

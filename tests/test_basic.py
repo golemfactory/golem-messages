@@ -32,6 +32,35 @@ class BasicTestCase(unittest.TestCase):
                                    self.ecc.raw_pubkey)
         self.assertEqual(msg, msg2)
 
+    def test_equality(self):
+        msg1 = message.RandVal(rand_val=1)
+        golem_messages.dump(msg1, self.ecc.raw_privkey, None)  # sign
+        msg2 = message.RandVal(
+            header=msg1.header,
+            sig=msg1.sig,
+            slots=msg1.slots(),
+        )
+        self.assertIsNot(msg1, msg2)
+        self.assertEqual(msg1, msg2)
+
+    def test_inequal_slots(self):
+        msg1 = message.RandVal(rand_val=1)
+        msg2 = message.RandVal(rand_val=2)
+        self.assertNotEqual(msg1, msg2)
+
+    def test_inequal_header(self):
+        msg1 = message.Ping()
+        msg2 = message.Ping()
+        msg2.encrypted = True
+        self.assertNotEqual(msg1, msg2)
+
+    def test_inequal_sig(self):
+        msg1 = message.Ping()
+        msg1.sig = 1
+        msg2 = message.Ping()
+        msg2.sig = 2
+        self.assertNotEqual(msg1, msg2)
+
     def test_deserialization(self):
         """Deserialization should work even if we haven't created any messages
         """
@@ -133,6 +162,22 @@ class BasicTestCase(unittest.TestCase):
         msg._version = 'haxior'
         with self.assertRaises(exceptions.InvalidSignature):
             self.ecc.verify(msg.sig, msg.get_short_hash())
+
+    @mock.patch('golem_messages.message.base.Message.__eq__')
+    def test_hello_version_equality(self, eq_mock):
+        eq_mock.return_value = True
+        msg1 = message.Hello()
+        msg2 = message.Hello()
+        self.assertEqual(msg1, msg2)
+        eq_mock.assert_called_once_with(msg2)
+
+    @mock.patch('golem_messages.message.base.Message.__eq__')
+    def test_hello_version_inequality(self, eq_mock):
+        msg1 = message.Hello()
+        msg2 = message.Hello()
+        msg2._version = 'haxior'
+        self.assertNotEqual(msg1, msg2)
+        eq_mock.assert_not_called()
 
     @mock.patch("golem_messages.message.base.RandVal")
     def test_init_messages_error(self, mock_message_rand_val):
