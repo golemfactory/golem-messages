@@ -25,8 +25,10 @@ class MessageTestCase(unittest.TestCase):
             )
         decrypt.assert_called_once_with(mock.ANY)
 
+
 class VerifySlotChild(base.Message):
     pass
+
 
 class VerifySlotParent(base.Message):
     __slots__ = [
@@ -37,6 +39,7 @@ class VerifySlotParent(base.Message):
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
 
+
 class VerifySlotListParent(base.Message):
     __slots__ = [
         'child_list'
@@ -46,17 +49,18 @@ class VerifySlotListParent(base.Message):
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
 
+
 class VerifySlotTest(unittest.TestCase):
     def setUp(self):
         self.child = VerifySlotChild()
 
     def test_verify_slot(self):
-        msg = VerifySlotParent(slots=[('child', self.child),])
+        msg = VerifySlotParent(slots=[('child', self.child), ])
         self.assertIsInstance(msg.child, VerifySlotChild)
 
     def test_verify_slot_not_expected_class(self):
         with self.assertRaises(exceptions.FieldError):
-            VerifySlotParent(slots=[('child', base.Message()),])
+            VerifySlotParent(slots=[('child', base.Message()), ])
 
     def test_verify_slot_list(self):
         msg = VerifySlotListParent(slots=[('child_list', [self.child, ]), ])
