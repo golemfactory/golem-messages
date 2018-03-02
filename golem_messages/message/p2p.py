@@ -57,6 +57,10 @@ class Tasks(base.Message):
 
 
 class RemoveTask(base.Message):
+    """
+    Message that is send by requestor that wants to cancel further
+    broadcasting information about this task.
+    """
     TYPE = P2P_MESSAGE_BASE + 7
 
     __slots__ = ['task_id'] + base.Message.__slots__
@@ -141,3 +145,18 @@ class SetTaskSession(base.Message):
         'conn_id',
         'super_node_info',
     ] + base.Message.__slots__
+
+
+class RemoveTaskContainer(base.Message):
+    """
+    Message that contains RemoveTask messages signed by task owners. Other nodes
+    uses this container to propagate information about tasks cancellation.
+    """
+
+    TYPE = P2P_MESSAGE_BASE + 17
+
+    __slots__ = ['remove_tasks'] + base.Message.__slots__
+
+    @base.verify_slot_list('remove_tasks', RemoveTask)
+    def deserialize_slot(self, key, value):
+        return super().deserialize_slot(key, value)
