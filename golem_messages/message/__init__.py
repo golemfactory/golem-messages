@@ -28,9 +28,7 @@ from golem_messages.message.tasks import CannotComputeTask  # noqa
 from golem_messages.message.tasks import TaskToCompute  # noqa
 from golem_messages.message.tasks import WantToComputeTask  # noqa
 from golem_messages.message.tasks import ReportComputedTask  # noqa
-from golem_messages.message.tasks import TaskResultHash  # noqa
 from golem_messages.message.tasks import TaskFailure  # noqa
-from golem_messages.message.tasks import GetTaskResult  # noqa
 from golem_messages.message.tasks import StartSessionResponse  # noqa
 from golem_messages.message.tasks import WaitingForResults  # noqa
 from golem_messages.message.tasks import DeltaParts  # noqa
@@ -102,9 +100,7 @@ def init_messages():
             tasks.TaskToCompute,
             tasks.WantToComputeTask,
             tasks.ReportComputedTask,
-            tasks.TaskResultHash,
             tasks.TaskFailure,
-            tasks.GetTaskResult,
             tasks.StartSessionResponse,
 
             tasks.WaitingForResults,
