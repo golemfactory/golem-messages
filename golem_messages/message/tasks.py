@@ -167,31 +167,14 @@ class ReportComputedTask(base.Message):
         'eth_account',
         'task_to_compute',
         'size',
-        'checksum',
+        'multihash',
+        'secret',
+        'options',
     ] + base.Message.__slots__
 
     @base.verify_slot('task_to_compute', TaskToCompute)
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
-
-
-class GetTaskResult(base.Message):
-    """Request task result"""
-    TYPE = TASK_MSG_BASE + 5
-
-    __slots__ = ['subtask_id'] + base.Message.__slots__
-
-
-class TaskResultHash(base.Message):
-    TYPE = TASK_MSG_BASE + 7
-
-    __slots__ = [
-        'subtask_id',
-        'multihash',
-        'secret',
-        'options'
-    ] + base.Message.__slots__
-
 
 class GetResource(base.Message):
     """Request a resource for a given task"""

@@ -183,7 +183,6 @@ class MessagesTestCase(unittest.TestCase):
         for message_class, key in (
                 (message.RemoveTask, 'task_id',),
                 (message.FindNode, 'node_key_id'),
-                (message.GetTaskResult, 'subtask_id'),
                 (message.StartSessionResponse, 'conn_id'),
                 (message.HasResource, 'resource'),
                 (message.WantsResource, 'resource'),
