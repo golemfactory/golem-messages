@@ -4,7 +4,6 @@ import functools
 from ethereum.utils import sha3
 
 from golem_messages import datastructures
-from golem_messages import exceptions
 from golem_messages import validators
 
 from . import base
@@ -24,15 +23,8 @@ class ComputeTaskDef(datastructures.FrozenDict):
         'src_code': '',
         'extra_data': {},  # safe because of copy in parent.__missing__()
         'short_description': '',
-        'return_address': '',
-        'return_port': 0,
-        # task_owner is a dict from golem.network.p2p.node.Node.to_dict()
-        # - requestor
-        'task_owner': None,
-        'key_id': 0,
         'working_directory': '',
         'performance': 0,
-        'environment': '',
         'docker_images': None,
     }
 
@@ -104,23 +96,6 @@ class TaskToCompute(base.Message):
         return '0x{}'.format(
             sha3(self.provider_ethereum_public_key)[12:].hex(),
         )
-
-    def load_slots(self, slots):
-        super().load_slots(slots)
-        self.validate_compute_task_def(self.compute_task_def)
-
-    def validate_compute_task_def(self, value):
-        try:
-            node_key = value['task_owner']['key']
-        except (TypeError, KeyError):
-            return
-        if node_key != self.requestor_id:
-            errmsg = "requestor_id: {} != compute_task_def['task_owner']['key']"
-            raise exceptions.FieldError(
-                errmsg.format(self.requestor_id, node_key),
-                field='compute_task_def',
-                value=value,
-            )
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)

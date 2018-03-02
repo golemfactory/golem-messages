@@ -22,7 +22,6 @@ class ComputeTaskDefFactory(factory.DictFactory):
     class Meta:
         model = tasks.ComputeTaskDef
 
-    task_owner = factory.SubFactory(TaskOwnerFactory)
     task_id = factory.Faker('uuid4')
     subtask_id = factory.Faker('uuid4')
 
@@ -43,21 +42,6 @@ class TaskToComputeFactory(factory.Factory):
     provider_ethereum_public_key = factory.Faker('binary', length=64)
 
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
-
-    @classmethod
-    def _create(cls, *args, **kwargs):
-        # ensure the `requestor_id` is the same as `task_owner['key']`
-        # unless they're explicitly set
-        if 'requestor_id' in kwargs and 'compute_task_def' not in kwargs:
-            kwargs['compute_task_def'] = ComputeTaskDefFactory(
-                task_owner__key=kwargs['requestor_id']
-            )
-        else:
-            task_def = kwargs.setdefault('compute_task_def',
-                                         ComputeTaskDefFactory())
-            kwargs['requestor_id'] = task_def.get('task_owner').get('key')
-
-        return super()._create(*args, **kwargs)
 
 
 class SubtaskResultsAcceptedFactory(factory.Factory):
