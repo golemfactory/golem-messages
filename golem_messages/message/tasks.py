@@ -142,7 +142,9 @@ class ReportComputedTask(base.Message):
         'eth_account',
         'task_to_compute',
         'size',
-        'multihash',
+        'package_hash',  # sha1 hash of the package file (the zip file)
+        'multihash',     # hyperg record used when transferring
+                         # the result directly between the nodes
         'secret',
         'options',
     ] + base.Message.__slots__
