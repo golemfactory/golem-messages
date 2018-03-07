@@ -2,10 +2,9 @@ import time
 import uuid
 import random
 
+from ethereum.utils import denoms
 import factory
 import faker
-
-from ethereum.utils import denoms
 
 from golem_messages.message import concents
 from golem_messages.message import tasks
