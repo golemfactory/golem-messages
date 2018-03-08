@@ -297,6 +297,10 @@ class Message():
 
         if sign_func is None:
             sign_func = _fake_sign
+        elif self.sig is not None:
+            # If you wish to overwrite signature,
+            # first set it to None explicitly
+            raise exceptions.SignatureAlreadyExists()
 
         self.encrypted = bool(self.ENCRYPT and encrypt_func)
         payload = serializer.dumps(self.slots())

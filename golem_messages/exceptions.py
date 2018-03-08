@@ -58,5 +58,9 @@ class SerializationError(MessageError):
     pass
 
 
+class SignatureAlreadyExists(SerializationError):
+    pass
+
+
 class VersionMismatchError(MessageError):
     pass
