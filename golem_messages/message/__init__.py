@@ -140,6 +140,7 @@ def init_messages():
             concents.ForceGetTaskResultFailed,
             concents.ForceGetTaskResultRejected,
             concents.ForceGetTaskResultUpload,
+            concents.ForceGetTaskResultDownload,
             concents.ForceSubtaskResults,
             concents.ForceSubtaskResultsResponse,
             concents.ForceSubtaskResultsRejected,

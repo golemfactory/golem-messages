@@ -13,6 +13,12 @@ from golem_messages.message import tasks
 # pylint: disable=too-few-public-methods,unnecessary-lambda
 
 
+class FileInfoFactory(factory.DictFactory):
+    path = factory.Faker('file_path')
+    checksum = factory.Faker('sha1')
+    size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
+
+
 class TaskOwnerFactory(factory.DictFactory):
     key = factory.Faker('binary', length=64)
     node_name = factory.Faker('name')
@@ -68,7 +74,11 @@ class ReportComputedTaskFactory(factory.Factory):
     class Meta:
         model = tasks.ReportComputedTask
 
-    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    subtask_id = factory.Faker('uuid4')
+    task_to_compute = factory.SubFactory(
+        TaskToComputeFactory,
+        compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
+    )
 
 
 class ForceReportComputedTaskFactory(factory.Factory):
@@ -146,6 +156,9 @@ class FileTransferTokenFactory(factory.Factory):
 
     subtask_id = factory.LazyFunction(
         lambda: 'test-si-{}'.format(uuid.uuid4()))
+    files = factory.List([
+        factory.SubFactory(FileInfoFactory)
+    ])
 
 
 class ForceGetTaskResultUploadFactory(factory.Factory):
@@ -211,14 +224,22 @@ class AckReportComputedTaskFactory(factory.Factory):
     class Meta:
         model = concents.AckReportComputedTask
 
-    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    subtask_id = factory.Faker('uuid4')
+    task_to_compute = factory.SubFactory(
+        TaskToComputeFactory,
+        compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
+    )
 
 
 class RejectReportComputedTaskFactory(factory.Factory):
     class Meta:
         model = concents.RejectReportComputedTask
 
-    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    subtask_id = factory.Faker('uuid4')
+    task_to_compute = factory.SubFactory(
+        TaskToComputeFactory,
+        compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
+    )
 
 
 class ForceSubtaskResultsFactory(factory.Factory):
@@ -316,7 +337,27 @@ class ForceReportComputedTaskResponseFactory(factory.Factory):
 
     ack_report_computed_task = factory.SubFactory(AckReportComputedTaskFactory)
     reject_report_computed_task = factory.SubFactory(
-        RejectReportComputedTaskFactory
+        RejectReportComputedTaskFactory,
+        subtask_id=factory.SelfAttribute(
+            '..ack_report_computed_task.task_to_compute.subtask_id'),
+        task_to_compute__compute_task_def__task_id=factory.SelfAttribute(
+            '....ack_report_computed_task.task_to_compute.task_id'),
+    )
+
+
+class VerdictReportComputedTaskFactory(factory.Factory):
+    class Meta:
+        model = concents.VerdictReportComputedTask
+
+    force_report_computed_task = factory.SubFactory(
+        ForceReportComputedTaskFactory)
+    ack_report_computed_task = factory.SubFactory(
+        AckReportComputedTaskFactory,
+        subtask_id=factory.SelfAttribute(
+            '..force_report_computed_task.subtask_id'),
+        task_to_compute__compute_task_def__task_id=factory.SelfAttribute(
+            # noqa pylint:disable=line-too-long
+            '....force_report_computed_task.task_id'),
     )
 
 
@@ -325,3 +366,14 @@ class ClientAuthorizationFactory(factory.Factory):
         model = concents.ClientAuthorization
 
     client_public_key = factory.Faker('binary', length=64)
+
+
+class ServiceRefusedFactory(factory.Factory):
+    class Meta:
+        model = concents.ServiceRefused
+
+    subtask_id = factory.Faker('uuid4')
+    task_to_compute = factory.SubFactory(
+        TaskToComputeFactory,
+        compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
+    )

@@ -50,21 +50,23 @@ class TaskMessageMixin():
     __slots__ = []
     TASK_ID_PROVIDERS = ()
 
-    @property
-    def task_id(self):
-        msgs = [slot for slot in self.TASK_ID_PROVIDERS if hasattr(self, slot)]
+    def _get_task_value(self, attr_name):
+        msgs = [getattr(self, slot)
+                for slot in self.TASK_ID_PROVIDERS
+                if hasattr(self, slot)]
+
         for msg in msgs:
-            if hasattr(msg, 'task_id'):
-                return msg.task_id
+            if hasattr(msg, attr_name):
+                return getattr(msg, attr_name)
         return None
 
     @property
+    def task_id(self):
+        return self._get_task_value('task_id')
+
+    @property
     def subtask_id(self):
-        msgs = [slot for slot in self.TASK_ID_PROVIDERS if hasattr(self, slot)]
-        for msg in msgs:
-            if hasattr(msg, 'subtask_id'):
-                return msg.subtask_id
-        return None
+        return self._get_task_value('subtask_id')
 
 
 class WantToComputeTask(base.Message):
@@ -163,6 +165,8 @@ class ReportComputedTask(TaskMessageMixin, base.Message):
     TASK_ID_PROVIDERS = ('task_to_compute', )
 
     __slots__ = [
+        # @todo I'd remove the `subtask_id` from here as it's
+        # present within `task_to_compute` anyway...
         'subtask_id',
         # TODO why do we need the type here?
         'result_type',
