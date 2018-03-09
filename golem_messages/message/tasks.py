@@ -46,6 +46,28 @@ class ComputeTaskDef(datastructures.FrozenDict):
         max_length=128,
     )
 
+class TaskMessageMixin():
+    __slots__ = []
+    TASK_ID_PROVIDERS = ()
+
+    def _get_task_value(self, attr_name):
+        msgs = [getattr(self, slot)
+                for slot in self.TASK_ID_PROVIDERS
+                if hasattr(self, slot)]
+
+        for msg in msgs:
+            if hasattr(msg, attr_name):
+                return getattr(msg, attr_name)
+        return None
+
+    @property
+    def task_id(self):
+        return self._get_task_value('task_id')
+
+    @property
+    def subtask_id(self):
+        return self._get_task_value('subtask_id')
+
 
 class WantToComputeTask(base.Message):
     TYPE = TASK_MSG_BASE + 1
@@ -61,7 +83,7 @@ class WantToComputeTask(base.Message):
     ] + base.Message.__slots__
 
 
-class TaskToCompute(base.Message):
+class TaskToCompute(TaskMessageMixin, base.Message):
     TYPE = TASK_MSG_BASE + 2
 
     __slots__ = [
@@ -103,6 +125,18 @@ class TaskToCompute(base.Message):
             value = ComputeTaskDef(value)
         return value
 
+    @property
+    def task_id(self):
+        if self.compute_task_def:
+            return self.compute_task_def.get('task_id')
+        return None
+
+    @property
+    def subtask_id(self):
+        if self.compute_task_def:
+            return self.compute_task_def.get('subtask_id')
+        return None
+
 
 class CannotAssignTask(base.AbstractReasonMessage):
     TYPE = TASK_MSG_BASE + 3
@@ -116,7 +150,7 @@ class CannotAssignTask(base.AbstractReasonMessage):
         NoMoreSubtasks = 'no_more_subtasks'
 
 
-class ReportComputedTask(base.Message):
+class ReportComputedTask(TaskMessageMixin, base.Message):
     """
     Message sent from a Provider to a Requestor, announcing completion
     of the assigned subtask (attached as `task_to_compute`)
@@ -128,7 +162,11 @@ class ReportComputedTask(base.Message):
         'FILES': 1,
     }
 
+    TASK_ID_PROVIDERS = ('task_to_compute', )
+
     __slots__ = [
+        # @todo I'd remove the `subtask_id` from here as it's
+        # present within `task_to_compute` anyway...
         'subtask_id',
         # TODO why do we need the type here?
         'result_type',
@@ -153,6 +191,7 @@ class ReportComputedTask(base.Message):
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
 
+
 class GetResource(base.Message):
     """Request a resource for a given task"""
     TYPE = TASK_MSG_BASE + 8
@@ -163,7 +202,7 @@ class GetResource(base.Message):
     ] + base.Message.__slots__
 
 
-class SubtaskResultsAccepted(base.Message):
+class SubtaskResultsAccepted(TaskMessageMixin, base.Message):
     """
     Sent from the Requestor to the Provider, accepting the provider's
     completed task results.
@@ -171,6 +210,7 @@ class SubtaskResultsAccepted(base.Message):
     Having received this message, the Provider expects payment to follow.
     """
     TYPE = TASK_MSG_BASE + 10
+    TASK_ID_PROVIDERS = ('task_to_compute', )
 
     __slots__ = [
         'payment_ts',
@@ -182,7 +222,7 @@ class SubtaskResultsAccepted(base.Message):
         return super().deserialize_slot(key, value)
 
 
-class SubtaskResultsRejected(base.AbstractReasonMessage):
+class SubtaskResultsRejected(TaskMessageMixin, base.AbstractReasonMessage):
     """
     Sent from the Requestor to the Provider, rejecting the provider's
     completed task results
@@ -195,6 +235,7 @@ class SubtaskResultsRejected(base.AbstractReasonMessage):
     results could not have been retrieved.)
     """
     TYPE = TASK_MSG_BASE + 11
+    TASK_ID_PROVIDERS = ('report_computed_task', )
 
     __slots__ = [
         'report_computed_task',
@@ -214,7 +255,6 @@ class SubtaskResultsRejected(base.AbstractReasonMessage):
     @base.verify_slot('report_computed_task', ReportComputedTask)
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
-
 
 class DeltaParts(base.Message):
     """base.Message with resource description in form of "delta parts".
@@ -243,8 +283,9 @@ class DeltaParts(base.Message):
     ] + base.Message.__slots__
 
 
-class TaskFailure(base.Message):
+class TaskFailure(TaskMessageMixin, base.Message):
     TYPE = TASK_MSG_BASE + 15
+    TASK_ID_PROVIDERS = ('task_to_compute', )
 
     __slots__ = [
         'subtask_id',
@@ -279,6 +320,7 @@ class WaitingForResults(base.Message):
 
 class CannotComputeTask(base.AbstractReasonMessage):
     TYPE = TASK_MSG_BASE + 26
+    TASK_ID_PROVIDERS = ('task_to_compute', )
 
     __slots__ = [
         'subtask_id',
