@@ -16,6 +16,9 @@ MTD = datetime.timedelta(minutes=0, seconds=10)
 # machine operation.
 MAT = datetime.timedelta(minutes=2, seconds=15)
 
+# Maximum Download Time
+MDT = datetime.timedelta(minutes=10)
+
 # the download timeout margin independent from the size of the result
 DOWNLOAD_LEADIN_TIME = datetime.timedelta(minutes=1)
 
@@ -23,6 +26,8 @@ DOWNLOAD_LEADIN_TIME = datetime.timedelta(minutes=1)
 DEFAULT_UPLOAD_RATE = int(384 / 8)  # KB/s = kbps / 8
 
 DEFAULT_MSG_LIFETIME = (3 * MMTT + 3 * MAT)
+
+SUBTASK_VERIFICATION_TIME = (4 * DEFAULT_MSG_LIFETIME) * (3 * MDT)
 
 # Time to wait before sending a message
 MSG_DELAYS = collections.defaultdict(
