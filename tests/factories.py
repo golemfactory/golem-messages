@@ -1,5 +1,4 @@
 import time
-import uuid
 import random
 
 from ethereum.utils import denoms
@@ -13,6 +12,9 @@ from golem_messages.message import tasks
 
 
 class FileInfoFactory(factory.DictFactory):
+    class Meta:
+        model = concents.FileTransferToken.FileInfo
+
     path = factory.Faker('file_path')
     checksum = factory.Faker('sha1')
     size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
@@ -153,11 +155,34 @@ class FileTransferTokenFactory(factory.Factory):
     class Meta:
         model = concents.FileTransferToken
 
-    subtask_id = factory.LazyFunction(
-        lambda: 'test-si-{}'.format(uuid.uuid4()))
+    subtask_id = factory.Faker('uuid4')
+    token_expiration_deadline = 1800
+    storage_cluster_address = factory.Faker('uri')
+    authorized_client_public_key = factory.Faker('binary', length=64)
+    operation = concents.FileTransferToken.Operation.upload
     files = factory.List([
         factory.SubFactory(FileInfoFactory)
     ])
+
+    # pylint: disable=no-self-argument
+
+    @factory.post_generation
+    def upload(obj, create, extracted, **_):
+        if not create:
+            return
+
+        if extracted:
+            obj.operation = concents.FileTransferToken.Operation.upload
+
+    @factory.post_generation
+    def download(obj, create, extracted, **_):
+        if not create:
+            return
+
+        if extracted:
+            obj.operation = concents.FileTransferToken.Operation.download
+
+    # pylint: enable=no-self-argument
 
 
 class ForceGetTaskResultUploadFactory(factory.Factory):

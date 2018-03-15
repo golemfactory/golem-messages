@@ -1,6 +1,6 @@
 import collections
 import copy
-
+import enum
 
 MessageHeader = collections.namedtuple(
     "MessageHeader",
@@ -38,3 +38,13 @@ class FrozenDict(dict):
 
     def __setattr__(self, key, value):
         raise AttributeError("Read only. Use mapping interface")
+
+
+class StringEnum(str, enum.Enum):
+
+    # pylint: disable=no-self-argument
+
+    def _generate_next_value_(name: str, *_):
+        return name
+
+    # pylint: enable=no-self-argument
