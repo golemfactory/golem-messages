@@ -1,16 +1,23 @@
 import time
-import uuid
 import random
 
+from ethereum.utils import denoms
 import factory
 import faker
-
-from ethereum.utils import denoms
 
 from golem_messages.message import concents
 from golem_messages.message import tasks
 
 # pylint: disable=too-few-public-methods,unnecessary-lambda
+
+
+class FileInfoFactory(factory.DictFactory):
+    class Meta:
+        model = concents.FileTransferToken.FileInfo
+
+    path = factory.Faker('file_path')
+    checksum = factory.Faker('sha1')
+    size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
 
 
 class TaskOwnerFactory(factory.DictFactory):
@@ -22,7 +29,6 @@ class ComputeTaskDefFactory(factory.DictFactory):
     class Meta:
         model = tasks.ComputeTaskDef
 
-    task_owner = factory.SubFactory(TaskOwnerFactory)
     task_id = factory.Faker('uuid4')
     subtask_id = factory.Faker('uuid4')
 
@@ -43,21 +49,6 @@ class TaskToComputeFactory(factory.Factory):
     provider_ethereum_public_key = factory.Faker('binary', length=64)
 
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
-
-    @classmethod
-    def _create(cls, *args, **kwargs):
-        # ensure the `requestor_id` is the same as `task_owner['key']`
-        # unless they're explicitly set
-        if 'requestor_id' in kwargs and 'compute_task_def' not in kwargs:
-            kwargs['compute_task_def'] = ComputeTaskDefFactory(
-                task_owner__key=kwargs['requestor_id']
-            )
-        else:
-            task_def = kwargs.setdefault('compute_task_def',
-                                         ComputeTaskDefFactory())
-            kwargs['requestor_id'] = task_def.get('task_owner').get('key')
-
-        return super()._create(*args, **kwargs)
 
 
 class SubtaskResultsAcceptedFactory(factory.Factory):
@@ -84,7 +75,11 @@ class ReportComputedTaskFactory(factory.Factory):
     class Meta:
         model = tasks.ReportComputedTask
 
-    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    subtask_id = factory.Faker('uuid4')
+    task_to_compute = factory.SubFactory(
+        TaskToComputeFactory,
+        compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
+    )
 
 
 class ForceReportComputedTaskFactory(factory.Factory):
@@ -155,14 +150,6 @@ class ForceGetTaskResultRejectedFactory(factory.Factory):
 
     force_get_task_result = factory.SubFactory(ForceGetTaskResultFactory)
 
-class FileInfoFactory(factory.DictFactory):
-    class Meta:
-        model = concents.FileTransferToken.FileInfo
-
-    path = factory.Faker('uri_path')
-    checksum = factory.Faker('sha1')
-    size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
-
 
 class FileTransferTokenFactory(factory.Factory):
     class Meta:
@@ -173,28 +160,11 @@ class FileTransferTokenFactory(factory.Factory):
     storage_cluster_address = factory.Faker('uri')
     authorized_client_public_key = factory.Faker('binary', length=64)
     operation = concents.FileTransferToken.Operation.Upload
-
-    @classmethod
-    def with_files(cls, *args, **kwargs):
-        kwargs['files__generate'] = 1
-        return cls(*args, **kwargs)
+    files = factory.List([
+        factory.SubFactory(FileInfoFactory)
+    ])
 
     # pylint: disable=no-self-argument
-
-    @factory.post_generation
-    def files(obj, create, extracted, **kwargs):
-        if not create:
-            return
-
-        files = extracted
-        if not files and kwargs and kwargs.get('generate'):
-            files = []
-            num_files = kwargs.pop('generate')
-            for _ in range(num_files):
-                files.append(FileInfoFactory(**kwargs))
-
-        if files:
-            setattr(obj, 'files', files)
 
     @factory.post_generation
     def upload(obj, create, extracted, **_):
@@ -213,6 +183,7 @@ class FileTransferTokenFactory(factory.Factory):
             obj.operation = concents.FileTransferToken.Operation.Download
 
     # pylint: enable=no-self-argument
+
 
 class ForceGetTaskResultUploadFactory(factory.Factory):
     class Meta:
@@ -277,14 +248,22 @@ class AckReportComputedTaskFactory(factory.Factory):
     class Meta:
         model = concents.AckReportComputedTask
 
-    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    subtask_id = factory.Faker('uuid4')
+    task_to_compute = factory.SubFactory(
+        TaskToComputeFactory,
+        compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
+    )
 
 
 class RejectReportComputedTaskFactory(factory.Factory):
     class Meta:
         model = concents.RejectReportComputedTask
 
-    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    subtask_id = factory.Faker('uuid4')
+    task_to_compute = factory.SubFactory(
+        TaskToComputeFactory,
+        compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
+    )
 
 
 class ForceSubtaskResultsFactory(factory.Factory):
@@ -382,7 +361,27 @@ class ForceReportComputedTaskResponseFactory(factory.Factory):
 
     ack_report_computed_task = factory.SubFactory(AckReportComputedTaskFactory)
     reject_report_computed_task = factory.SubFactory(
-        RejectReportComputedTaskFactory
+        RejectReportComputedTaskFactory,
+        subtask_id=factory.SelfAttribute(
+            '..ack_report_computed_task.task_to_compute.subtask_id'),
+        task_to_compute__compute_task_def__task_id=factory.SelfAttribute(
+            '....ack_report_computed_task.task_to_compute.task_id'),
+    )
+
+
+class VerdictReportComputedTaskFactory(factory.Factory):
+    class Meta:
+        model = concents.VerdictReportComputedTask
+
+    force_report_computed_task = factory.SubFactory(
+        ForceReportComputedTaskFactory)
+    ack_report_computed_task = factory.SubFactory(
+        AckReportComputedTaskFactory,
+        subtask_id=factory.SelfAttribute(
+            '..force_report_computed_task.subtask_id'),
+        task_to_compute__compute_task_def__task_id=factory.SelfAttribute(
+            # noqa pylint:disable=line-too-long
+            '....force_report_computed_task.task_id'),
     )
 
 
@@ -391,3 +390,14 @@ class ClientAuthorizationFactory(factory.Factory):
         model = concents.ClientAuthorization
 
     client_public_key = factory.Faker('binary', length=64)
+
+
+class ServiceRefusedFactory(factory.Factory):
+    class Meta:
+        model = concents.ServiceRefused
+
+    subtask_id = factory.Faker('uuid4')
+    task_to_compute = factory.SubFactory(
+        TaskToComputeFactory,
+        compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
+    )

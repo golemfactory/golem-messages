@@ -4,8 +4,8 @@ import datetime
 import unittest
 import unittest.mock as mock
 
-from freezegun import freeze_time
 import semantic_version
+from freezegun import freeze_time
 
 import golem_messages
 from golem_messages import exceptions
@@ -205,6 +205,20 @@ class BasicTestCase(unittest.TestCase):
         raw_header = struct.pack('!HQ?', 1, 1516272285269707, False)
         with self.assertRaises(exceptions.HeaderError):
             message.base.Message.deserialize_header(raw_header)
+
+    def test_signature_overwriting(self):
+        msg = message.p2p.Ping()
+
+        # First signature generated
+        serialized = msg.serialize()
+        msg2 = message.base.Message.deserialize(serialized, None)
+        self.assertIsNotNone(msg2.sig)
+
+        # Serialization with default sig_func should succeed
+        msg2.serialize()
+
+        with self.assertRaises(exceptions.SignatureAlreadyExists):
+            golem_messages.dump(msg, self.ecc.raw_privkey, self.ecc.raw_pubkey)
 
 
 testnow = datetime.datetime.utcnow().replace(microsecond=0)

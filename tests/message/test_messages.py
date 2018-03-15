@@ -348,3 +348,25 @@ class MessagesTestCase(unittest.TestCase):
             ['options', options],
         ]
         self.assertEqual(expected, msg.slots())
+
+    def test_message_remove_task_container(self):
+        test_cases = 10
+        task_ids = ['test-{}'.format(uuid.uuid4()) for _ in range(test_cases)]
+        remove_tasks = [message.RemoveTask(task_id=task_ids[i])
+                        for i in range(test_cases)]
+        msg = message.RemoveTaskContainer(remove_tasks=remove_tasks)
+        serialized = shortcuts.dump(msg, None, None)
+        msg_l = shortcuts.load(serialized, None, None)
+
+        expected = [
+            ['remove_tasks', remove_tasks]
+        ]
+        self.assertEqual(expected, msg_l.slots())
+        self.assertEqual(len(msg_l.remove_tasks), test_cases)
+        for msg_remove_task in msg_l.remove_tasks:
+            self.assertIsInstance(
+                msg_remove_task,
+                message.p2p.RemoveTask
+            )
+        for i in range(test_cases):
+            self.assertEqual(msg_l.remove_tasks[i].task_id, task_ids[i])

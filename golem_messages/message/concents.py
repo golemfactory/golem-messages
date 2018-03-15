@@ -9,7 +9,7 @@ from . import tasks
 CONCENT_MSG_BASE = 4000
 
 
-class ServiceRefused(base.AbstractReasonMessage):
+class ServiceRefused(tasks.TaskMessageMixin, base.AbstractReasonMessage):
     """
     Sent (synchronously) as a response from the Concent to the calling party
     (either a Provider or a Requestor), informing them that the Concent refuses
@@ -20,6 +20,7 @@ class ServiceRefused(base.AbstractReasonMessage):
     :param REASON reason: the reason for the refusal
     """
     TYPE = CONCENT_MSG_BASE
+    TASK_ID_PROVIDERS = ('task_to_compute', )
 
     @enum.unique
     class REASON(enum.Enum):
@@ -32,6 +33,7 @@ class ServiceRefused(base.AbstractReasonMessage):
         ConcentDisabled = 'CONCENT_SERVICE_IS_NOT_ENABLED_FOR_THIS_SUBTASK'
 
     __slots__ = [
+        # @todo `subtask_id` is superfluous here
         'subtask_id',
         'task_to_compute',
     ] + base.AbstractReasonMessage.__slots__
@@ -41,7 +43,7 @@ class ServiceRefused(base.AbstractReasonMessage):
         return super().deserialize_slot(key, value)
 
 
-class ForceReportComputedTask(base.Message):
+class ForceReportComputedTask(tasks.TaskMessageMixin, base.Message):
     """
     Message sent from a Provider to the Concent, requesting an forced
     acknowledgment of the reception of the `ReportComputedTask` message
@@ -50,6 +52,7 @@ class ForceReportComputedTask(base.Message):
     The same, rewritten message is then sent from the Concent to the Requestor.
     """
     TYPE = CONCENT_MSG_BASE + 1
+    TASK_ID_PROVIDERS = ('report_computed_task', )
 
     __slots__ = [
         'report_computed_task',
@@ -61,7 +64,7 @@ class ForceReportComputedTask(base.Message):
         return super().deserialize_slot(key, value)
 
 
-class AckReportComputedTask(base.Message):
+class AckReportComputedTask(tasks.TaskMessageMixin, base.Message):
     """
     Sent from Requestor to the Provider, acknowledging reception of the
     `ReportComputedTask` message.
@@ -73,8 +76,10 @@ class AckReportComputedTask(base.Message):
     """
 
     TYPE = CONCENT_MSG_BASE + 2
+    TASK_ID_PROVIDERS = ('task_to_compute', )
 
     __slots__ = [
+        # @todo `subtask_id` is superfluous here
         'subtask_id',
         'task_to_compute',
     ] + base.Message.__slots__
@@ -84,8 +89,12 @@ class AckReportComputedTask(base.Message):
         return super().deserialize_slot(key, value)
 
 
-class RejectReportComputedTask(base.AbstractReasonMessage):
+class RejectReportComputedTask(tasks.TaskMessageMixin,
+                               base.AbstractReasonMessage):
     TYPE = CONCENT_MSG_BASE + 3
+    TASK_ID_PROVIDERS = ('task_to_compute',
+                         'task_failure',
+                         'cannot_compute_task', )
 
     @enum.unique
     class REASON(enum.Enum):
@@ -109,6 +118,7 @@ class RejectReportComputedTask(base.AbstractReasonMessage):
         GotMessageTaskFailure = 'GOT_MESSAGE_TASK_FAILURE'
 
     __slots__ = [
+        # @todo `subtask_id` is superfluous here
         'subtask_id',
         'task_to_compute',
         'task_failure',
@@ -122,7 +132,7 @@ class RejectReportComputedTask(base.AbstractReasonMessage):
         return super().deserialize_slot(key, value)
 
 
-class VerdictReportComputedTask(base.Message):
+class VerdictReportComputedTask(tasks.TaskMessageMixin, base.Message):
     """
     Informational message sent from from the Concent to the affected
     Requestor, informing them that the `ReportComputedTask` has been implicitly
@@ -133,6 +143,8 @@ class VerdictReportComputedTask(base.Message):
     as if the Requestor sent the `AckReportComputedTask` on their own.
     """
     TYPE = CONCENT_MSG_BASE + 4
+    TASK_ID_PROVIDERS = ('force_report_computed_task',
+                         'ack_report_computed_task', )
 
     __slots__ = [
         'force_report_computed_task',
@@ -185,7 +197,7 @@ class FileTransferToken(base.Message):
         }
 
 
-class SubtaskResultsVerify(base.Message):
+class SubtaskResultsVerify(tasks.TaskMessageMixin, base.Message):
     """
     Message sent from a Provider to the Concent, requesting additional
     verification in case the result had been rejected by the Requestor
@@ -195,6 +207,7 @@ class SubtaskResultsVerify(base.Message):
 
     """
     TYPE = CONCENT_MSG_BASE + 6
+    TASK_ID_PROVIDERS = ('subtask_results_rejected', )
 
     __slots__ = [
         'subtask_results_rejected',
@@ -205,7 +218,7 @@ class SubtaskResultsVerify(base.Message):
         return super().deserialize_slot(key, value)
 
 
-class AckSubtaskResultsVerify(base.Message):
+class AckSubtaskResultsVerify(tasks.TaskMessageMixin, base.Message):
     """
     Message sent from the Concent to the Provider to acknowledge reception
     of the `SubtaskResultsVerify` message and more importantly, to pass the
@@ -213,6 +226,7 @@ class AckSubtaskResultsVerify(base.Message):
     to upload files to the Concent service.
     """
     TYPE = CONCENT_MSG_BASE + 7
+    TASK_ID_PROVIDERS = ('subtask_results_verify', )
 
     __slots__ = [
         'subtask_results_verify',
@@ -225,7 +239,7 @@ class AckSubtaskResultsVerify(base.Message):
         return super().deserialize_slot(key, value)
 
 
-class SubtaskResultsSettled(base.Message):
+class SubtaskResultsSettled(tasks.TaskMessageMixin, base.Message):
     """
     Message sent from the Concent to both the Provider and the Requestor
     informing of positive acceptance of the results by the Concent and the
@@ -241,6 +255,7 @@ class SubtaskResultsSettled(base.Message):
     """
 
     TYPE = CONCENT_MSG_BASE + 8
+    TASK_ID_PROVIDERS = ('task_to_compute', )
 
     @enum.unique
     class Origin(enum.Enum):
@@ -261,8 +276,9 @@ class SubtaskResultsSettled(base.Message):
         return super().deserialize_slot(key, value)
 
 
-class ForceGetTaskResult(base.Message):
+class ForceGetTaskResult(tasks.TaskMessageMixin, base.Message):
     TYPE = CONCENT_MSG_BASE + 9
+    TASK_ID_PROVIDERS = ('report_computed_task', )
 
     __slots__ = [
         'report_computed_task',
@@ -273,8 +289,9 @@ class ForceGetTaskResult(base.Message):
         return super().deserialize_slot(key, value)
 
 
-class AckForceGetTaskResult(base.Message):
+class AckForceGetTaskResult(tasks.TaskMessageMixin, base.Message):
     TYPE = CONCENT_MSG_BASE + 10
+    TASK_ID_PROVIDERS = ('force_get_task_result', )
 
     __slots__ = [
         'force_get_task_result',
@@ -285,8 +302,17 @@ class AckForceGetTaskResult(base.Message):
         return super().deserialize_slot(key, value)
 
 
-class ForceGetTaskResultFailed(base.Message):
+class ForceGetTaskResultFailed(tasks.TaskMessageMixin, base.Message):
+    """
+    Sent from the Concent to the Requestor to announce a failure to retrieve
+    the results from the Provider.
+
+    Having received this message, the Requestor can use it later on
+    to reject any attempt at forced acceptance by proving the result
+    could not have been downloaded in the first place.
+    """
     TYPE = CONCENT_MSG_BASE + 11
+    TASK_ID_PROVIDERS = ('task_to_compute', )
 
     __slots__ = [
         'task_to_compute',
@@ -297,8 +323,10 @@ class ForceGetTaskResultFailed(base.Message):
         return super().deserialize_slot(key, value)
 
 
-class ForceGetTaskResultRejected(base.AbstractReasonMessage):
+class ForceGetTaskResultRejected(tasks.TaskMessageMixin,
+                                 base.AbstractReasonMessage):
     TYPE = CONCENT_MSG_BASE + 12
+    TASK_ID_PROVIDERS = ('force_get_task_result', )
 
     __slots__ = [
         'force_get_task_result',
@@ -312,8 +340,9 @@ class ForceGetTaskResultRejected(base.AbstractReasonMessage):
         return super().deserialize_slot(key, value)
 
 
-class ForceGetTaskResultUpload(base.Message):
+class ForceGetTaskResultUpload(tasks.TaskMessageMixin, base.Message):
     TYPE = CONCENT_MSG_BASE + 13
+    TASK_ID_PROVIDERS = ('force_get_task_result', )
 
     __slots__ = [
         'force_get_task_result',
@@ -326,8 +355,9 @@ class ForceGetTaskResultUpload(base.Message):
         return super().deserialize_slot(key, value)
 
 
-class ForceGetTaskResultDownload(base.Message):
+class ForceGetTaskResultDownload(tasks.TaskMessageMixin, base.Message):
     TYPE = CONCENT_MSG_BASE + 14
+    TASK_ID_PROVIDERS = ('force_get_task_result', )
 
     __slots__ = [
         'force_get_task_result',
@@ -340,7 +370,7 @@ class ForceGetTaskResultDownload(base.Message):
         return super().deserialize_slot(key, value)
 
 
-class ForceSubtaskResults(base.Message):
+class ForceSubtaskResults(tasks.TaskMessageMixin, base.Message):
     """
     Sent from the Provider to the Concent, in an effort to force the
     `SubtaskResultsAccepted/Rejected` message from the Requestor
@@ -352,6 +382,7 @@ class ForceSubtaskResults(base.Message):
                                                            of the RCT message
     """
     TYPE = CONCENT_MSG_BASE + 15
+    TASK_ID_PROVIDERS = ('ack_report_computed_task', )
 
     __slots__ = [
         'ack_report_computed_task',
@@ -362,7 +393,7 @@ class ForceSubtaskResults(base.Message):
         return super().deserialize_slot(key, value)
 
 
-class ForceSubtaskResultsResponse(base.Message):
+class ForceSubtaskResultsResponse(tasks.TaskMessageMixin, base.Message):
     """
     Sent from the Concent to the Provider to communicate the final resolution
     of the forced results verdict.
@@ -373,6 +404,8 @@ class ForceSubtaskResultsResponse(base.Message):
     :param SubtaskResultsRejected subtask_results_rejected:
     """
     TYPE = CONCENT_MSG_BASE + 16
+    TASK_ID_PROVIDERS = ('subtask_results_accepted',
+                         'subtask_results_rejected', )
 
     __slots__ = [
         'subtask_results_accepted',
@@ -482,10 +515,13 @@ class ForcePaymentRejected(base.AbstractReasonMessage):
         return super().deserialize_slot(key, value)
 
 
-class ForceReportComputedTaskResponse(base.AbstractReasonMessage):
+class ForceReportComputedTaskResponse(tasks.TaskMessageMixin,
+                                      base.AbstractReasonMessage):
     """Sent from Concent to Provider as a response to ForceReportComputedTask.
     """
     TYPE = CONCENT_MSG_BASE + 21
+    TASK_ID_PROVIDERS = ('ack_report_computed_task',
+                         'reject_report_computed_task', )
 
     @enum.unique
     class REASON(enum.Enum):
