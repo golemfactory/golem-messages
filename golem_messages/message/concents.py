@@ -152,6 +152,15 @@ class FileTransferToken(base.Message):
     """
     TYPE = CONCENT_MSG_BASE + 5
 
+    @enum.unique
+    class Operation(enum.Enum):
+        Upload = 'upload'
+        Download = 'download'
+
+    ENUM_SLOTS = {
+        'operation': Operation,
+    }
+
     __slots__ = [
         'subtask_id',
         'token_expiration_deadline',

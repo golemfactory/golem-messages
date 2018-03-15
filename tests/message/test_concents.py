@@ -11,6 +11,29 @@ from .mixins import RegisteredMessageTestMixin
 from .mixins import SerializationMixin
 
 
+class FileTranferTokenTest(RegisteredMessageTestMixin, unittest.TestCase):
+    MSG_CLASS = concents.FileTransferToken
+
+    def test_operation_upload(self):
+        ftt = concents.FileTransferToken(slots=(
+            ('operation', concents.FileTransferToken.Operation.Upload),
+        ))
+        self.assertEqual(dict(ftt.slots()).get('operation'),
+                         concents.FileTransferToken.Operation.Upload.value)
+
+    def test_operation_download(self):
+        ftt = concents.FileTransferToken(slots=(
+            ('operation', concents.FileTransferToken.Operation.Download),
+        ))
+        self.assertEqual(dict(ftt.slots()).get('operation'),
+                         concents.FileTransferToken.Operation.Download.value)
+
+    def test_operation_other(self):
+        with self.assertRaises(exceptions.FieldError):
+            concents.FileTransferToken(slots=(
+                ('operation', 'other'),
+            ))
+
 class SubtaskResultsVerifyTest(RegisteredMessageTestMixin, unittest.TestCase):
     MSG_CLASS = concents.SubtaskResultsVerify
 

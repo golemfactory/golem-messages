@@ -155,14 +155,64 @@ class ForceGetTaskResultRejectedFactory(factory.Factory):
 
     force_get_task_result = factory.SubFactory(ForceGetTaskResultFactory)
 
+class FileInfoFactory(factory.DictFactory):
+    class Meta:
+        model = concents.FileTransferToken.FileInfo
+
+    path = factory.Faker('uri_path')
+    checksum = factory.Faker('sha1')
+    size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
+
 
 class FileTransferTokenFactory(factory.Factory):
     class Meta:
         model = concents.FileTransferToken
 
-    subtask_id = factory.LazyFunction(
-        lambda: 'test-si-{}'.format(uuid.uuid4()))
+    subtask_id = factory.Faker('uuid4')
+    token_expiration_deadline = 1800
+    storage_cluster_address = factory.Faker('uri')
+    authorized_client_public_key = factory.Faker('binary', length=64)
+    operation = concents.FileTransferToken.Operation.Upload
 
+    @classmethod
+    def with_files(cls, *args, **kwargs):
+        kwargs['files__generate'] = 1
+        return cls(*args, **kwargs)
+
+    # pylint: disable=no-self-argument
+
+    @factory.post_generation
+    def files(obj, create, extracted, **kwargs):
+        if not create:
+            return
+
+        files = extracted
+        if not files and kwargs and kwargs.get('generate'):
+            files = []
+            num_files = kwargs.pop('generate')
+            for _ in range(num_files):
+                files.append(FileInfoFactory(**kwargs))
+
+        if files:
+            setattr(obj, 'files', files)
+
+    @factory.post_generation
+    def upload(obj, create, extracted, **_):
+        if not create:
+            return
+
+        if extracted:
+            obj.operation = concents.FileTransferToken.Operation.Upload
+
+    @factory.post_generation
+    def download(obj, create, extracted, **_):
+        if not create:
+            return
+
+        if extracted:
+            obj.operation = concents.FileTransferToken.Operation.Download
+
+    # pylint: enable=no-self-argument
 
 class ForceGetTaskResultUploadFactory(factory.Factory):
     class Meta:
