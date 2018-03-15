@@ -12,13 +12,11 @@ def maximum_results_patience(report_computed_task) -> datetime.timedelta:
         report_computed_task.task_to_compute.compute_task_def['deadline'],
     )
     deadline_delay = now - deadline
-    subtask_verification_time = 4 * constants.DEFAULTS_MSG_LIFETIME
+    subtask_verification_time = 4 * constants.DEFAULT_MSG_LIFETIME
     subtask_verification_time += 3 * maximum_download_time(
         size=report_computed_task.size
     )
-    final_delay = datetime.timedelta(
-        seconds=subtask_verification_time,
-    ) + deadline_delay
+    final_delay = subtask_verification_time + deadline_delay
     return final_delay
 
 
