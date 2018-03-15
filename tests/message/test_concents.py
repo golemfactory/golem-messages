@@ -22,17 +22,17 @@ class FileTranferTokenTest(mixins.RegisteredMessageTestMixin,
 
     def test_operation_upload(self):
         ftt = concents.FileTransferToken(slots=(
-            ('operation', concents.FileTransferToken.Operation.Upload),
+            ('operation', concents.FileTransferToken.Operation.upload),
         ))
         self.assertEqual(dict(ftt.slots()).get('operation'),
-                         concents.FileTransferToken.Operation.Upload.value)
+                         concents.FileTransferToken.Operation.upload.value)
 
     def test_operation_download(self):
         ftt = concents.FileTransferToken(slots=(
-            ('operation', concents.FileTransferToken.Operation.Download),
+            ('operation', concents.FileTransferToken.Operation.download),
         ))
         self.assertEqual(dict(ftt.slots()).get('operation'),
-                         concents.FileTransferToken.Operation.Download.value)
+                         concents.FileTransferToken.Operation.download.value)
 
     def test_operation_other(self):
         with self.assertRaises(exceptions.FieldError):

@@ -159,7 +159,7 @@ class FileTransferTokenFactory(factory.Factory):
     token_expiration_deadline = 1800
     storage_cluster_address = factory.Faker('uri')
     authorized_client_public_key = factory.Faker('binary', length=64)
-    operation = concents.FileTransferToken.Operation.Upload
+    operation = concents.FileTransferToken.Operation.upload
     files = factory.List([
         factory.SubFactory(FileInfoFactory)
     ])
@@ -172,7 +172,7 @@ class FileTransferTokenFactory(factory.Factory):
             return
 
         if extracted:
-            obj.operation = concents.FileTransferToken.Operation.Upload
+            obj.operation = concents.FileTransferToken.Operation.upload
 
     @factory.post_generation
     def download(obj, create, extracted, **_):
@@ -180,7 +180,7 @@ class FileTransferTokenFactory(factory.Factory):
             return
 
         if extracted:
-            obj.operation = concents.FileTransferToken.Operation.Download
+            obj.operation = concents.FileTransferToken.Operation.download
 
     # pylint: enable=no-self-argument
 
