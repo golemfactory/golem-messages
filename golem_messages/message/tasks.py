@@ -17,6 +17,7 @@ class ComputeTaskDef(datastructures.FrozenDict):
     ITEMS = {
         'task_id': '',
         'subtask_id': '',
+        'task_type': '',
         # deadline represents subtask timeout in UTC timestamp (float or int)
         # If you're looking for whole TASK deadline SEE: task_header.deadline
         # Task headers are received in MessageTasks.tasks.
@@ -26,7 +27,6 @@ class ComputeTaskDef(datastructures.FrozenDict):
         'short_description': '',
         'working_directory': '',
         'performance': 0,
-        'docker_images': None,
     }
 
     def __setitem__(self, key, value):
