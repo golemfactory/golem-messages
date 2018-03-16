@@ -26,6 +26,8 @@ class FileTranferTokenTest(mixins.RegisteredMessageTestMixin,
         ))
         self.assertEqual(dict(ftt.slots()).get('operation'),
                          concents.FileTransferToken.Operation.upload.value)
+        self.assertTrue(ftt.is_upload)
+        self.assertFalse(ftt.is_download)
 
     def test_operation_download(self):
         ftt = concents.FileTransferToken(slots=(
@@ -33,6 +35,8 @@ class FileTranferTokenTest(mixins.RegisteredMessageTestMixin,
         ))
         self.assertEqual(dict(ftt.slots()).get('operation'),
                          concents.FileTransferToken.Operation.download.value)
+        self.assertTrue(ftt.is_download)
+        self.assertFalse(ftt.is_upload)
 
     def test_operation_other(self):
         with self.assertRaises(exceptions.FieldError):

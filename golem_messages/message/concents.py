@@ -196,6 +196,14 @@ class FileTransferToken(base.Message):
             'size': 0,
         }
 
+    @property
+    def is_upload(self):
+        return self.operation == self.Operation.upload
+
+    @property
+    def is_download(self):
+        return self.operation == self.Operation.download
+
 
 class SubtaskResultsVerify(tasks.TaskMessageMixin, base.Message):
     """
