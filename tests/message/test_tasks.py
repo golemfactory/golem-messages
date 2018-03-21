@@ -118,11 +118,11 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
 
     def test_task_id(self):
         self.assertEqual(self.msg.task_id,
-                         self.msg.compute_task_def['task_id'])
+                         self.msg.compute_task_def['task_id'])  # noqa pylint:disable=unsubscriptable-object
 
     def test_subtask_id(self):
         self.assertEqual(self.msg.subtask_id,
-                         self.msg.compute_task_def['subtask_id'])
+                         self.msg.compute_task_def['subtask_id'])  # noqa pylint:disable=unsubscriptable-object
 
 
 class ReportComputedTaskTest(mixins.RegisteredMessageTestMixin,
