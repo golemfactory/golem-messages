@@ -252,33 +252,6 @@ class MessagesTestCase(unittest.TestCase):
         ]
         self.assertEqual(expected, msg.slots())
 
-    def test_message_delta_parts(self):
-        task_id = 'test-ti-{}'.format(uuid.uuid4())
-        delta_header = 'test-dh-{}'.format(uuid.uuid4())
-        parts = ['test-p{}-{}'.format(x, uuid.uuid4()) for x in range(10)]
-        node_name = 'test-nn-{}'.format(uuid.uuid4())
-        node_info = 'test-ni-{}'.format(uuid.uuid4())
-        address = '8.8.8.8'
-        port = random.randint(0, 2**16) + 1
-        msg = message.DeltaParts(
-            task_id=task_id,
-            delta_header=delta_header,
-            parts=parts,
-            node_name=node_name,
-            node_info=node_info,
-            address=address,
-            port=port)
-        expected = [
-            ['task_id', task_id],
-            ['delta_header', delta_header],
-            ['parts', parts],
-            ['node_name', node_name],
-            ['address', address],
-            ['port', port],
-            ['node_info', node_info],
-        ]
-        self.assertEqual(expected, msg.slots())
-
     def test_message_task_failure(self):
         subtask_id = 'test-si-{}'.format(uuid.uuid4())
         err = (
