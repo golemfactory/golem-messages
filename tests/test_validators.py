@@ -30,3 +30,21 @@ class ValidateVarcharTestCase(unittest.TestCase):
     def test_value_invalid_type(self):
         with self.assertRaises(exceptions.FieldError):
             self.validate(fake.pyint())
+
+
+class ValidateIntegerTestCase(unittest.TestCase):
+    def setUp(self):
+        self.field_name = fake.word()
+
+    def validate(self, value):
+        return validators.validate_integer(
+            field_name=self.field_name,
+            value=value,
+        )
+
+    def test_value_valid(self):
+        self.validate(fake.pyint())
+
+    def test_value_invalid_type(self):
+        with self.assertRaises(exceptions.FieldError):
+            self.validate(fake.word())
