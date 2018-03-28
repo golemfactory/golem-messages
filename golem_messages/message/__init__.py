@@ -32,7 +32,6 @@ from golem_messages.message.tasks import ReportComputedTask  # noqa
 from golem_messages.message.tasks import TaskFailure  # noqa
 from golem_messages.message.tasks import StartSessionResponse  # noqa
 from golem_messages.message.tasks import WaitingForResults  # noqa
-from golem_messages.message.tasks import DeltaParts  # noqa
 from golem_messages.message.tasks import SubtaskPayment  # noqa
 from golem_messages.message.tasks import SubtaskPaymentRequest  # noqa
 from golem_messages.message.tasks import GetResource  # noqa
@@ -108,7 +107,6 @@ def init_messages():
             tasks.WaitingForResults,
             tasks.SubtaskResultsAccepted,
             tasks.SubtaskResultsRejected,
-            tasks.DeltaParts,
             tasks.GetResource,
 
             # Resource messages

@@ -256,32 +256,6 @@ class SubtaskResultsRejected(TaskMessageMixin, base.AbstractReasonMessage):
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
 
-class DeltaParts(base.Message):
-    """base.Message with resource description in form of "delta parts".
-
-    :param task_id: resources are for task with this id
-    :param TaskResourceHeader delta_header: resource header containing
-                                            only parts that computing
-                                            node doesn't have
-    :param list parts: list of all files that are needed to create
-                       resources
-    :param str node_name: resource owner name
-    :param Node node_info: information about resource owner
-    :param address: resource owner address
-    :param port: resource owner port
-    """
-    TYPE = TASK_MSG_BASE + 12
-
-    __slots__ = [
-        'task_id',
-        'delta_header',
-        'parts',
-        'node_name',
-        'address',
-        'port',
-        'node_info',
-    ] + base.Message.__slots__
-
 
 class TaskFailure(TaskMessageMixin, base.Message):
     TYPE = TASK_MSG_BASE + 15
