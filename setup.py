@@ -37,7 +37,7 @@ setup(
         'cbor2==3.0.4',
         'coincurve>=7.1.0',
         'ethereum==1.6.1',
-        'pyelliptic==1.5.9',
+        'pyelliptic==1.5.10',
         'pytz',
         'semantic_version',
     ],
