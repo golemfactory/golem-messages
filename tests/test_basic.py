@@ -118,7 +118,7 @@ class BasicTestCase(unittest.TestCase):
         msg = message.Hello()
         self.assertEqual(msg._version, v_mock)
 
-        msg = message.Hello(deserialized=True)
+        msg = message.Hello(deserialized=True, header=message.Hello().header)
         self.assertFalse(hasattr(msg, '_version'))
 
         version_kwarg = object()
