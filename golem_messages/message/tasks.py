@@ -96,7 +96,7 @@ class TaskToCompute(TaskMessageMixin, base.Message):
         'compute_task_def',
         'package_hash',
         'concent_enabled',
-        'price', # total subtask price computed as price*subtask_timesout
+        'price', # total subtask price computed as `price * subtask_timeout`
     ] + base.Message.__slots__
 
     def __init__(self, header: datastructures.MessageHeader = None,
