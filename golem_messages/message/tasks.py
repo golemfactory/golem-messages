@@ -96,6 +96,7 @@ class TaskToCompute(TaskMessageMixin, base.Message):
         'compute_task_def',
         'package_hash',
         'concent_enabled',
+        'price', # total subtask price computed as `price * subtask_timeout`
     ] + base.Message.__slots__
 
     def __init__(self, header: datastructures.MessageHeader = None,
@@ -123,6 +124,11 @@ class TaskToCompute(TaskMessageMixin, base.Message):
         value = super().deserialize_slot(key, value)
         if key == 'compute_task_def':
             value = ComputeTaskDef(value)
+        if key == 'price':
+            validators.validate_integer(
+                field_name='price',
+                value=value,
+            )
         return value
 
     @property
