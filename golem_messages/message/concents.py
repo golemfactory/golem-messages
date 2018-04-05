@@ -33,8 +33,6 @@ class ServiceRefused(tasks.TaskMessageMixin, base.AbstractReasonMessage):
         ConcentDisabled = 'CONCENT_SERVICE_IS_NOT_ENABLED_FOR_THIS_SUBTASK'
 
     __slots__ = [
-        # @todo `subtask_id` is superfluous here
-        'subtask_id',
         'task_to_compute',
     ] + base.AbstractReasonMessage.__slots__
 
@@ -76,15 +74,13 @@ class AckReportComputedTask(tasks.TaskMessageMixin, base.Message):
     """
 
     TYPE = CONCENT_MSG_BASE + 2
-    TASK_ID_PROVIDERS = ('task_to_compute', )
+    TASK_ID_PROVIDERS = ('report_computed_task', )
 
     __slots__ = [
-        # @todo `subtask_id` is superfluous here
-        'subtask_id',
-        'task_to_compute',
+        'report_computed_task',
     ] + base.Message.__slots__
 
-    @base.verify_slot('task_to_compute', tasks.TaskToCompute)
+    @base.verify_slot('report_computed_task', tasks.ReportComputedTask)
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
 
@@ -118,8 +114,6 @@ class RejectReportComputedTask(tasks.TaskMessageMixin,
         GotMessageTaskFailure = 'GOT_MESSAGE_TASK_FAILURE'
 
     __slots__ = [
-        # @todo `subtask_id` is superfluous here
-        'subtask_id',
         'task_to_compute',
         'task_failure',
         'cannot_compute_task',

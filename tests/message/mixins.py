@@ -25,6 +25,7 @@ class SerializationMixin():
         msg2 = golem_messages.load(s_msg, None, None)
         self.assertEqual(msg, msg2)
 
+
 class TaskIdMixinBase():
     TASK_ID_PROVIDER = None
 

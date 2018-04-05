@@ -46,6 +46,7 @@ class ComputeTaskDef(datastructures.FrozenDict):
         max_length=128,
     )
 
+
 class TaskMessageMixin():
     __slots__ = []
     TASK_ID_PROVIDERS = ()
@@ -171,9 +172,6 @@ class ReportComputedTask(TaskMessageMixin, base.Message):
     TASK_ID_PROVIDERS = ('task_to_compute', )
 
     __slots__ = [
-        # @todo I'd remove the `subtask_id` from here as it's
-        # present within `task_to_compute` anyway...
-        'subtask_id',
         # TODO why do we need the type here?
         'result_type',
         'computation_time',

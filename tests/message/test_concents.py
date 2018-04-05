@@ -8,6 +8,7 @@ from golem_messages.message import concents
 from tests import factories
 from tests.message import mixins
 
+
 class ServiceRefusedTest(mixins.RegisteredMessageTestMixin,
                          mixins.SerializationMixin,
                          mixins.TaskIdTaskToComputeTestMixin,
@@ -548,7 +549,7 @@ class ForceReportComputedTaskResponseTestCase(
 
 class AckReportComputedTaskTestCase(
         mixins.RegisteredMessageTestMixin,
-        mixins.TaskIdTaskToComputeTestMixin,
+        mixins.TaskIdReportComputedTaskTestMixin,
         mixins.SerializationMixin,
         unittest.TestCase):
     MSG_CLASS = concents.AckReportComputedTask
