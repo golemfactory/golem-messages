@@ -50,6 +50,8 @@ class TaskToComputeFactory(factory.Factory):
 
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
 
+    price = factory.Faker('random_int', min=1 << 20, max=10 << 20)
+
 
 class SubtaskResultsAcceptedFactory(factory.Factory):
     class Meta:
