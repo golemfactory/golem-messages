@@ -5,7 +5,7 @@ from golem_messages import message
 from golem_messages import serializer
 from golem_messages import shortcuts
 
-from tests import factories
+from golem_messages import factories
 
 
 class MessageTestCase(unittest.TestCase):
@@ -33,7 +33,7 @@ class MessageTestCase(unittest.TestCase):
         provider_keys = cryptography.ECCx(None)
         requestor_keys = cryptography.ECCx(None)
 
-        report_computed_task = factories.ReportComputedTaskFactory()
+        report_computed_task = factories.tasks.ReportComputedTaskFactory()
 
         # Dump TaskToCompute to make it signed
         s_rct = shortcuts.dump(

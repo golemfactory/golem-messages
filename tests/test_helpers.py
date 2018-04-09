@@ -6,7 +6,7 @@ from freezegun import freeze_time
 
 from golem_messages import helpers
 from golem_messages.constants import DEFAULT_UPLOAD_RATE, DOWNLOAD_LEADIN_TIME
-from tests import factories
+from golem_messages import factories
 
 
 class MaximumDownloadTimeTest(TestCase):
@@ -25,7 +25,7 @@ class MaximumDownloadTimeTest(TestCase):
 
 class MaximumResultsPatienceTest(TestCase):
     def setUp(self):
-        self.msg = factories.ReportComputedTaskFactory(
+        self.msg = factories.tasks.ReportComputedTaskFactory(
             task_to_compute__compute_task_def__deadline=200,
         )
 

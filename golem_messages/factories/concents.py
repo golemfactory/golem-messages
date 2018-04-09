@@ -1,14 +1,16 @@
-import time
+# pylint: disable=too-few-public-methods,unnecessary-lambda
 import random
+import time
 
 from ethereum.utils import denoms
 import factory
 import faker
 
 from golem_messages.message import concents
-from golem_messages.message import tasks
 
-# pylint: disable=too-few-public-methods,unnecessary-lambda
+from .tasks import (
+    SubtaskResultsAcceptedFactory, SubtaskResultsRejectedFactory
+)
 
 
 class FileInfoFactory(factory.DictFactory):
@@ -20,80 +22,20 @@ class FileInfoFactory(factory.DictFactory):
     size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
 
 
-class TaskOwnerFactory(factory.DictFactory):
-    key = factory.Faker('binary', length=64)
-    node_name = factory.Faker('name')
-
-
-class ComputeTaskDefFactory(factory.DictFactory):
-    class Meta:
-        model = tasks.ComputeTaskDef
-
-    task_id = factory.Faker('uuid4')
-    subtask_id = factory.Faker('uuid4')
-
-
-class TaskToComputeFactory(factory.Factory):
-    class Meta:
-        model = tasks.TaskToCompute
-
-    requestor_id = factory.Sequence(lambda n: 'requestor {}'.format(n))
-    requestor_public_key = factory.Sequence(
-        lambda n: 'requestor pubkey {}'.format(n)
-    )
-    requestor_ethereum_public_key = factory.Faker('binary', length=64)
-    provider_id = factory.Sequence(lambda n: 'provider {}'.format(n))
-    provider_public_key = factory.Sequence(
-        lambda n: 'provider pubkey {}'.format(n)
-    )
-    provider_ethereum_public_key = factory.Faker('binary', length=64)
-
-    compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
-
-
-class SubtaskResultsAcceptedFactory(factory.Factory):
-    class Meta:
-        model = tasks.SubtaskResultsAccepted
-
-    task_to_compute = factory.SubFactory(
-        'tests.factories.TaskToComputeFactory')
-
-
-class SubtaskResultsRejectedFactory(factory.Factory):
-    """
-    Produces a regular `SubtaskResultsRejected` message, containing the earlier
-    `ReportComputedTask` message
-    """
-    class Meta:
-        model = tasks.SubtaskResultsRejected
-
-    report_computed_task = factory.SubFactory(
-        'tests.factories.ReportComputedTaskFactory')
-
-
-class ReportComputedTaskFactory(factory.Factory):
-    class Meta:
-        model = tasks.ReportComputedTask
-
-    subtask_id = factory.Faker('uuid4')
-    task_to_compute = factory.SubFactory(
-        TaskToComputeFactory,
-        compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
-    )
-
-
 class ForceReportComputedTaskFactory(factory.Factory):
     class Meta:
         model = concents.ForceReportComputedTask
 
-    report_computed_task = factory.SubFactory(ReportComputedTaskFactory)
+    report_computed_task = factory.SubFactory(
+        'golem_messages.factories.tasks.ReportComputedTaskFactory')
 
 
 class SubtaskResultsVerifyFactory(factory.Factory):
     class Meta:
         model = concents.SubtaskResultsVerify
 
-    subtask_results_rejected = factory.SubFactory(SubtaskResultsRejectedFactory)
+    subtask_results_rejected = factory.SubFactory(
+        'golem_messages.factories.tasks.SubtaskResultsRejectedFactory')
 
 
 class AckSubtaskResultsVerifyFactory(factory.Factory):
@@ -102,13 +44,13 @@ class AckSubtaskResultsVerifyFactory(factory.Factory):
 
     subtask_results_verify = factory.SubFactory(SubtaskResultsVerifyFactory)
 
-
 class SubtaskResultsSettledFactory(factory.Factory):
     class Meta:
         model = concents.SubtaskResultsSettled
 
     origin = concents.SubtaskResultsSettled.Origin.ResultsAcceptedTimeout
-    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    task_to_compute = factory.SubFactory(
+        'golem_messages.factories.tasks.TaskToComputeFactory')
 
     @classmethod
     def origin_acceptance_timeout(cls, *args, **kwargs):
@@ -127,7 +69,8 @@ class ForceGetTaskResultFactory(factory.Factory):
     class Meta:
         model = concents.ForceGetTaskResult
 
-    report_computed_task = factory.SubFactory(ReportComputedTaskFactory)
+    report_computed_task = factory.SubFactory(
+        'golem_messages.factories.tasks.ReportComputedTaskFactory')
 
 
 class AckForceGetTaskResultFactory(factory.Factory):
@@ -141,7 +84,8 @@ class ForceGetTaskResultFailedFactory(factory.Factory):
     class Meta:
         model = concents.ForceGetTaskResultFailed
 
-    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    task_to_compute = factory.SubFactory(
+        'golem_messages.factories.tasks.TaskToComputeFactory')
 
 
 class ForceGetTaskResultRejectedFactory(factory.Factory):
@@ -244,33 +188,12 @@ class ForceSubtaskResultsResponseFactory(factory.Factory):
     # pylint: enable=no-self-argument
 
 
-class AckReportComputedTaskFactory(factory.Factory):
-    class Meta:
-        model = concents.AckReportComputedTask
-
-    subtask_id = factory.Faker('uuid4')
-    task_to_compute = factory.SubFactory(
-        TaskToComputeFactory,
-        compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
-    )
-
-
-class RejectReportComputedTaskFactory(factory.Factory):
-    class Meta:
-        model = concents.RejectReportComputedTask
-
-    subtask_id = factory.Faker('uuid4')
-    task_to_compute = factory.SubFactory(
-        TaskToComputeFactory,
-        compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
-    )
-
-
 class ForceSubtaskResultsFactory(factory.Factory):
     class Meta:
         model = concents.ForceSubtaskResults
 
-    ack_report_computed_task = factory.SubFactory(AckReportComputedTaskFactory)
+    ack_report_computed_task = factory.SubFactory(
+        'golem_messages.factories.tasks.AckReportComputedTaskFactory')
 
 
 class ForceSubtaskResultsRejectedFactory(factory.Factory):
@@ -359,9 +282,10 @@ class ForceReportComputedTaskResponseFactory(factory.Factory):
     class Meta:
         model = concents.ForceReportComputedTaskResponse
 
-    ack_report_computed_task = factory.SubFactory(AckReportComputedTaskFactory)
+    ack_report_computed_task = factory.SubFactory(
+        'golem_messages.factories.tasks.AckReportComputedTaskFactory')
     reject_report_computed_task = factory.SubFactory(
-        RejectReportComputedTaskFactory,
+        'golem_messages.factories.tasks.RejectReportComputedTaskFactory',
         subtask_id=factory.SelfAttribute(
             '..ack_report_computed_task.task_to_compute.subtask_id'),
         task_to_compute__compute_task_def__task_id=factory.SelfAttribute(
@@ -376,7 +300,7 @@ class VerdictReportComputedTaskFactory(factory.Factory):
     force_report_computed_task = factory.SubFactory(
         ForceReportComputedTaskFactory)
     ack_report_computed_task = factory.SubFactory(
-        AckReportComputedTaskFactory,
+        'golem_messages.factories.tasks.AckReportComputedTaskFactory',
         subtask_id=factory.SelfAttribute(
             '..force_report_computed_task.subtask_id'),
         task_to_compute__compute_task_def__task_id=factory.SelfAttribute(
@@ -398,6 +322,6 @@ class ServiceRefusedFactory(factory.Factory):
 
     subtask_id = factory.Faker('uuid4')
     task_to_compute = factory.SubFactory(
-        TaskToComputeFactory,
+        'golem_messages.factories.tasks.TaskToComputeFactory',
         compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
     )
