@@ -42,37 +42,28 @@ class TaskToComputeFactory(factory.Factory):
 
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
 
+    price = factory.Faker('random_int', min=1 << 20, max=10 << 20)
+
 
 class ReportComputedTaskFactory(factory.Factory):
     class Meta:
         model = tasks.ReportComputedTask
 
-    subtask_id = factory.Faker('uuid4')
-    task_to_compute = factory.SubFactory(
-        TaskToComputeFactory,
-        compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
-    )
+    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+
 
 class AckReportComputedTaskFactory(factory.Factory):
     class Meta:
         model = tasks.AckReportComputedTask
 
-    subtask_id = factory.Faker('uuid4')
-    task_to_compute = factory.SubFactory(
-        TaskToComputeFactory,
-        compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
-    )
+    report_computed_task = factory.SubFactory(ReportComputedTaskFactory)
 
 
 class RejectReportComputedTaskFactory(factory.Factory):
     class Meta:
         model = tasks.RejectReportComputedTask
 
-    subtask_id = factory.Faker('uuid4')
-    task_to_compute = factory.SubFactory(
-        TaskToComputeFactory,
-        compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
-    )
+    task_to_compute = factory.SubFactory(TaskToComputeFactory)
 
 
 class SubtaskResultsAcceptedFactory(factory.Factory):

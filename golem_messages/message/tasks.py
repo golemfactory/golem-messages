@@ -46,6 +46,7 @@ class ComputeTaskDef(datastructures.FrozenDict):
         max_length=128,
     )
 
+
 class TaskMessageMixin():
     __slots__ = []
     TASK_ID_PROVIDERS = ()
@@ -96,6 +97,7 @@ class TaskToCompute(TaskMessageMixin, base.Message):
         'compute_task_def',
         'package_hash',
         'concent_enabled',
+        'price', # total subtask price computed as `price * subtask_timeout`
     ] + base.Message.__slots__
 
     def __init__(self, header: datastructures.MessageHeader = None,
@@ -123,6 +125,11 @@ class TaskToCompute(TaskMessageMixin, base.Message):
         value = super().deserialize_slot(key, value)
         if key == 'compute_task_def':
             value = ComputeTaskDef(value)
+        if key == 'price':
+            validators.validate_integer(
+                field_name='price',
+                value=value,
+            )
         return value
 
     @property
@@ -165,9 +172,6 @@ class ReportComputedTask(TaskMessageMixin, base.Message):
     TASK_ID_PROVIDERS = ('task_to_compute', )
 
     __slots__ = [
-        # @todo I'd remove the `subtask_id` from here as it's
-        # present within `task_to_compute` anyway...
-        'subtask_id',
         # TODO why do we need the type here?
         'result_type',
         'computation_time',
@@ -362,15 +366,13 @@ class AckReportComputedTask(TaskMessageMixin, base.Message):
     """
 
     TYPE = TASK_MSG_BASE + 29
-    TASK_ID_PROVIDERS = ('task_to_compute', )
+    TASK_ID_PROVIDERS = ('report_computed_task', )
 
     __slots__ = [
-        # @todo `subtask_id` is superfluous here
-        'subtask_id',
-        'task_to_compute',
+        'report_computed_task',
     ] + base.Message.__slots__
 
-    @base.verify_slot('task_to_compute', TaskToCompute)
+    @base.verify_slot('report_computed_task', ReportComputedTask)
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
 
@@ -403,8 +405,6 @@ class RejectReportComputedTask(TaskMessageMixin, base.AbstractReasonMessage):
         GotMessageTaskFailure = 'GOT_MESSAGE_TASK_FAILURE'
 
     __slots__ = [
-        # @todo `subtask_id` is superfluous here
-        'subtask_id',
         'task_to_compute',
         'task_failure',
         'cannot_compute_task',

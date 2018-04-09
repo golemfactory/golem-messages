@@ -33,8 +33,6 @@ class ServiceRefused(tasks.TaskMessageMixin, base.AbstractReasonMessage):
         ConcentDisabled = 'CONCENT_SERVICE_IS_NOT_ENABLED_FOR_THIS_SUBTASK'
 
     __slots__ = [
-        # @todo `subtask_id` is superfluous here
-        'subtask_id',
         'task_to_compute',
     ] + base.AbstractReasonMessage.__slots__
 

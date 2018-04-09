@@ -145,7 +145,7 @@ class ReportComputedTaskTest(mixins.RegisteredMessageTestMixin,
 
 class AckReportComputedTaskTestCase(
         mixins.RegisteredMessageTestMixin,
-        mixins.TaskIdTaskToComputeTestMixin,
+        mixins.TaskIdReportComputedTaskTestMixin,
         mixins.SerializationMixin,
         unittest.TestCase):
     MSG_CLASS = message.tasks.AckReportComputedTask

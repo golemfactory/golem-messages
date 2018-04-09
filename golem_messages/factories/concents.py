@@ -286,10 +286,12 @@ class ForceReportComputedTaskResponseFactory(factory.Factory):
         'golem_messages.factories.tasks.AckReportComputedTaskFactory')
     reject_report_computed_task = factory.SubFactory(
         'golem_messages.factories.tasks.RejectReportComputedTaskFactory',
-        subtask_id=factory.SelfAttribute(
-            '..ack_report_computed_task.task_to_compute.subtask_id'),
+        task_to_compute__compute_task_def__subtask_id=factory.SelfAttribute(
+            '....ack_report_computed_task.'
+            'report_computed_task.task_to_compute.subtask_id'),
         task_to_compute__compute_task_def__task_id=factory.SelfAttribute(
-            '....ack_report_computed_task.task_to_compute.task_id'),
+            '....ack_report_computed_task.'
+            'report_computed_task.task_to_compute.task_id'),
     )
 
 
@@ -301,11 +303,10 @@ class VerdictReportComputedTaskFactory(factory.Factory):
         ForceReportComputedTaskFactory)
     ack_report_computed_task = factory.SubFactory(
         'golem_messages.factories.tasks.AckReportComputedTaskFactory',
-        subtask_id=factory.SelfAttribute(
-            '..force_report_computed_task.subtask_id'),
-        task_to_compute__compute_task_def__task_id=factory.SelfAttribute(
-            # noqa pylint:disable=line-too-long
-            '....force_report_computed_task.task_id'),
+        report_computed_task__task_to_compute__compute_task_def__subtask_id=factory.SelfAttribute(  # noqa pylint:disable=line-too-long
+            '.....force_report_computed_task.subtask_id'),
+        report_computed_task__task_to_compute__compute_task_def__task_id=factory.SelfAttribute(  # noqa pylint:disable=line-too-long
+            '.....force_report_computed_task.task_id'),
     )
 
 
@@ -320,8 +321,5 @@ class ServiceRefusedFactory(factory.Factory):
     class Meta:
         model = concents.ServiceRefused
 
-    subtask_id = factory.Faker('uuid4')
     task_to_compute = factory.SubFactory(
-        'golem_messages.factories.tasks.TaskToComputeFactory',
-        compute_task_def__subtask_id=factory.SelfAttribute('...subtask_id'),
-    )
+        'golem_messages.factories.tasks.TaskToComputeFactory')
