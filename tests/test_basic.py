@@ -19,12 +19,26 @@ def dt_to_ts(dt):
     return calendar.timegm(dt.utctimetuple())
 
 
-class BasicTestCase(unittest.TestCase):
+class RandValClone(message.RandVal):
+    TYPE = -667
+
+    __slots__ = ['rand_val'] + message.Message.__slots__
+
+
+class MessageEqualityTest(unittest.TestCase):
     def setUp(self):
         self.ecc = golem_messages.ECCx(None)
-        self.ecc2 = golem_messages.ECCx(None)
 
-    def test_total_basic(self):
+    @staticmethod
+    def _clone_message(msg, override_class=None):
+        msg_class = override_class or msg.__class__
+        return msg_class(
+            header=msg.header,
+            sig=msg.sig,
+            slots=msg.slots(),
+        )
+
+    def test_dump_load(self):
         msg = message.Ping()
         payload = golem_messages.dump(msg, self.ecc.raw_privkey,
                                       self.ecc.raw_pubkey)
@@ -32,34 +46,45 @@ class BasicTestCase(unittest.TestCase):
                                    self.ecc.raw_pubkey)
         self.assertEqual(msg, msg2)
 
-    def test_equality(self):
+    def test_equal(self):
         msg1 = message.RandVal(rand_val=1)
         golem_messages.dump(msg1, self.ecc.raw_privkey, None)  # sign
-        msg2 = message.RandVal(
-            header=msg1.header,
-            sig=msg1.sig,
-            slots=msg1.slots(),
-        )
+        msg2 = self._clone_message(msg1)
         self.assertIsNot(msg1, msg2)
         self.assertEqual(msg1, msg2)
 
     def test_inequal_slots(self):
         msg1 = message.RandVal(rand_val=1)
-        msg2 = message.RandVal(rand_val=2)
+        msg2 = self._clone_message(msg1)
+        msg2.rand_val = 2
         self.assertNotEqual(msg1, msg2)
 
     def test_inequal_header(self):
-        msg1 = message.Ping()
-        msg2 = message.Ping()
+        msg1 = message.RandVal(rand_val=1)
+        msg2 = self._clone_message(msg1)
         msg2.encrypted = True
         self.assertNotEqual(msg1, msg2)
 
     def test_inequal_sig(self):
-        msg1 = message.Ping()
+        msg1 = message.RandVal(rand_val=1)
+        msg2 = self._clone_message(msg1)
         msg1.sig = 1
-        msg2 = message.Ping()
         msg2.sig = 2
         self.assertNotEqual(msg1, msg2)
+
+    def test_inequal_type(self):
+        msg1 = message.RandVal(rand_val=1)
+        msg2 = self._clone_message(msg1, override_class=RandValClone)
+        self.assertNotEqual(msg1, msg2)
+
+        # ensure the signature of the original RandVal didn't change
+        self.assertEqual(msg1.header, msg2.header)
+        self.assertEqual(msg1.slots(), msg2.slots())
+
+
+class BasicTestCase(unittest.TestCase):
+    def setUp(self):
+        self.ecc = golem_messages.ECCx(None)
 
     def test_deserialization(self):
         """Deserialization should work even if we haven't created any messages
