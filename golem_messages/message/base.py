@@ -241,7 +241,8 @@ class Message():
         return (
             isinstance(obj, Message)
             and self.TYPE == obj.TYPE
-            and self.header == obj.header
+            and self.header.type_ == obj.header.type_
+            and self.timestamp == obj.timestamp
             and self.sig == obj.sig
             and self.slots() == obj.slots()
         )
