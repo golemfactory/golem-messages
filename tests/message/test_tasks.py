@@ -3,16 +3,17 @@ import unittest
 import unittest.mock as mock
 
 from golem_messages import exceptions
+from golem_messages import factories
 from golem_messages import message
 from golem_messages import shortcuts
 
-from tests import factories
 from tests.message import mixins
+
 
 class ComputeTaskDefTestCase(unittest.TestCase):
     @mock.patch('golem_messages.message.tasks.ComputeTaskDef.validate_task_id')
     def test_task_id_validator(self, v_mock):
-        ctd = factories.ComputeTaskDefFactory()
+        ctd = factories.tasks.ComputeTaskDefFactory()
         v_mock.assert_called_once_with(
             value=ctd['task_id'],
         )
@@ -21,7 +22,7 @@ class ComputeTaskDefTestCase(unittest.TestCase):
         'golem_messages.message.tasks.ComputeTaskDef.validate_subtask_id',
     )
     def test_subtask_id_validator(self, v_mock):
-        ctd = factories.ComputeTaskDefFactory()
+        ctd = factories.tasks.ComputeTaskDefFactory()
         v_mock.assert_called_once_with(
             value=ctd['subtask_id'],
         )
@@ -31,7 +32,7 @@ class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
                                  mixins.SerializationMixin,
                                  mixins.TaskIdTaskToComputeTestMixin,
                                  unittest.TestCase):
-    FACTORY = factories.SubtaskResultsAcceptedFactory
+    FACTORY = factories.tasks.SubtaskResultsAcceptedFactory
     MSG_CLASS = message.tasks.SubtaskResultsAccepted
 
     def test_factory(self):
@@ -45,7 +46,7 @@ class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
 
     def test_task_to_compute_correct(self):
         msg = message.tasks.SubtaskResultsAccepted(slots=(
-            ('task_to_compute', factories.TaskToComputeFactory()),
+            ('task_to_compute', factories.tasks.TaskToComputeFactory()),
         ))
         self.assertIsInstance(msg.task_to_compute, message.tasks.TaskToCompute)
 
@@ -54,18 +55,18 @@ class SubtaskResultsRejectedTest(mixins.RegisteredMessageTestMixin,
                                  mixins.SerializationMixin,
                                  mixins.TaskIdReportComputedTaskTestMixin,
                                  unittest.TestCase):
-    FACTORY = factories.SubtaskResultsRejectedFactory
+    FACTORY = factories.tasks.SubtaskResultsRejectedFactory
     MSG_CLASS = message.tasks.SubtaskResultsRejected
 
     def test_subtask_results_rejected_factory(self):
-        msg = factories.SubtaskResultsRejectedFactory()
+        msg = factories.tasks.SubtaskResultsRejectedFactory()
         self.assertIsInstance(msg, message.tasks.SubtaskResultsRejected)
 
     def test_subtask_results_rejected(self):
-        rct = factories.ReportComputedTaskFactory()
+        rct = factories.tasks.ReportComputedTaskFactory()
         reason = message.tasks.SubtaskResultsRejected.REASON\
             .VerificationNegative
-        msg = factories.SubtaskResultsRejectedFactory(
+        msg = factories.tasks.SubtaskResultsRejectedFactory(
             report_computed_task=rct,
             reason=reason,
         )
@@ -82,20 +83,20 @@ class SubtaskResultsRejectedTest(mixins.RegisteredMessageTestMixin,
 class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
                         mixins.SerializationMixin,
                         unittest.TestCase, ):
-    FACTORY = factories.TaskToComputeFactory
+    FACTORY = factories.tasks.TaskToComputeFactory
     MSG_CLASS = message.tasks.TaskToCompute
 
     def setUp(self):
         self.msg = self.FACTORY()
 
     def test_task_to_compute_basic(self):
-        ttc = factories.TaskToComputeFactory()
+        ttc = factories.tasks.TaskToComputeFactory()
         serialized = shortcuts.dump(ttc, None, None)
         msg = shortcuts.load(serialized, None, None)
         self.assertIsInstance(msg, message.tasks.TaskToCompute)
 
     def test_concent_enabled_attribute(self):
-        ttc = factories.TaskToComputeFactory(concent_enabled=True)
+        ttc = factories.tasks.TaskToComputeFactory(concent_enabled=True)
         self.assertTrue(ttc.concent_enabled)
 
     def test_concent_enabled_default_true(self):
@@ -107,7 +108,7 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         self.assertFalse(ttc.concent_enabled)
 
     def test_ethereum_address(self):
-        msg = factories.TaskToComputeFactory()
+        msg = factories.tasks.TaskToComputeFactory()
         serialized = shortcuts.dump(msg, None, None)
         msg_l = shortcuts.load(serialized, None, None)
         for addr_slot in (
@@ -128,7 +129,7 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
 class ReportComputedTaskTest(mixins.RegisteredMessageTestMixin,
                              mixins.SerializationMixin,
                              unittest.TestCase):
-    FACTORY = factories.ReportComputedTaskFactory
+    FACTORY = factories.tasks.ReportComputedTaskFactory
     MSG_CLASS = message.tasks.ReportComputedTask
 
     def setUp(self):
@@ -140,3 +141,21 @@ class ReportComputedTaskTest(mixins.RegisteredMessageTestMixin,
     def test_factory_subtask_id(self):
         self.assertEqual(self.msg.subtask_id,
                          self.msg.task_to_compute.subtask_id)
+
+
+class AckReportComputedTaskTestCase(
+        mixins.RegisteredMessageTestMixin,
+        mixins.TaskIdReportComputedTaskTestMixin,
+        mixins.SerializationMixin,
+        unittest.TestCase):
+    MSG_CLASS = message.tasks.AckReportComputedTask
+    FACTORY = factories.tasks.AckReportComputedTaskFactory
+
+
+class RejectReportComputedTaskTestCase(
+        mixins.RegisteredMessageTestMixin,
+        mixins.TaskIdTaskToComputeTestMixin,
+        mixins.SerializationMixin,
+        unittest.TestCase):
+    MSG_CLASS = message.tasks.RejectReportComputedTask
+    FACTORY = factories.tasks.RejectReportComputedTaskFactory

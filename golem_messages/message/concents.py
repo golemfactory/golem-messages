@@ -62,70 +62,6 @@ class ForceReportComputedTask(tasks.TaskMessageMixin, base.Message):
         return super().deserialize_slot(key, value)
 
 
-class AckReportComputedTask(tasks.TaskMessageMixin, base.Message):
-    """
-    Sent from Requestor to the Provider, acknowledging reception of the
-    `ReportComputedTask` message.
-
-    If the requestor fails to respond to the `ReportComputedTask` message
-    before the timeout and Provider then uses Concent to acquire the
-    acknowledgement, this message will be sent from the Concent to the Provider
-    and has the same effect as the regular Requestor's acknowledgement.
-    """
-
-    TYPE = CONCENT_MSG_BASE + 2
-    TASK_ID_PROVIDERS = ('report_computed_task', )
-
-    __slots__ = [
-        'report_computed_task',
-    ] + base.Message.__slots__
-
-    @base.verify_slot('report_computed_task', tasks.ReportComputedTask)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
-
-
-class RejectReportComputedTask(tasks.TaskMessageMixin,
-                               base.AbstractReasonMessage):
-    TYPE = CONCENT_MSG_BASE + 3
-    TASK_ID_PROVIDERS = ('task_to_compute',
-                         'task_failure',
-                         'cannot_compute_task', )
-
-    @enum.unique
-    class REASON(enum.Enum):
-        """
-        since python 3.6 it's possible to do this:
-
-        class StringEnum(str, enum.Enum):
-            def _generate_next_value_(name: str, *_):
-                return name
-
-        @enum.unique
-        class REASON(StringEnum):
-            TASK_TIME_LIMIT_EXCEEDED = enum.auto()
-            SUBTASK_TIME_LIMIT_EXCEEDED = enum.auto()
-            GOT_MESSAGE_CANNOT_COMPUTE_TASK = enum.auto()
-            GOT_MESSAGE_TASK_FAILURE = enum.auto()
-        """
-        TaskTimeLimitExceeded = 'TASK_TIME_LIMIT_EXCEEDED'
-        SubtaskTimeLimitExceeded = 'SUBTASK_TIME_LIMIT_EXCEEDED'
-        GotMessageCannotComputeTask = 'GOT_MESSAGE_CANNOT_COMPUTE_TASK'
-        GotMessageTaskFailure = 'GOT_MESSAGE_TASK_FAILURE'
-
-    __slots__ = [
-        'task_to_compute',
-        'task_failure',
-        'cannot_compute_task',
-    ] + base.AbstractReasonMessage.__slots__
-
-    @base.verify_slot('task_to_compute', tasks.TaskToCompute)
-    @base.verify_slot('task_failure', tasks.TaskFailure)
-    @base.verify_slot('cannot_compute_task', tasks.CannotComputeTask)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
-
-
 class VerdictReportComputedTask(tasks.TaskMessageMixin, base.Message):
     """
     Informational message sent from from the Concent to the affected
@@ -146,7 +82,7 @@ class VerdictReportComputedTask(tasks.TaskMessageMixin, base.Message):
     ] + base.Message.__slots__
 
     @base.verify_slot('force_report_computed_task', ForceReportComputedTask)
-    @base.verify_slot('ack_report_computed_task', AckReportComputedTask)
+    @base.verify_slot('ack_report_computed_task', tasks.AckReportComputedTask)
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
 
@@ -390,7 +326,7 @@ class ForceSubtaskResults(tasks.TaskMessageMixin, base.Message):
         'ack_report_computed_task',
     ] + base.Message.__slots__
 
-    @base.verify_slot('ack_report_computed_task', AckReportComputedTask)
+    @base.verify_slot('ack_report_computed_task', tasks.AckReportComputedTask)
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
 
@@ -547,11 +483,11 @@ class ForceReportComputedTaskResponse(tasks.TaskMessageMixin,
 
     @base.verify_slot(
         'ack_report_computed_task',
-        AckReportComputedTask,
+        tasks.AckReportComputedTask,
     )
     @base.verify_slot(
         'reject_report_computed_task',
-        RejectReportComputedTask,
+        tasks.RejectReportComputedTask,
     )
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)

@@ -352,3 +352,66 @@ class SubtaskPaymentRequest(base.Message):
     TYPE = TASK_MSG_BASE + 28
 
     __slots__ = ['subtask_id'] + base.Message.__slots__
+
+
+class AckReportComputedTask(TaskMessageMixin, base.Message):
+    """
+    Sent from Requestor to the Provider, acknowledging reception of the
+    `ReportComputedTask` message.
+
+    If the requestor fails to respond to the `ReportComputedTask` message
+    before the timeout and Provider then uses Concent to acquire the
+    acknowledgement, this message will be sent from the Concent to the Provider
+    and has the same effect as the regular Requestor's acknowledgement.
+    """
+
+    TYPE = TASK_MSG_BASE + 29
+    TASK_ID_PROVIDERS = ('report_computed_task', )
+
+    __slots__ = [
+        'report_computed_task',
+    ] + base.Message.__slots__
+
+    @base.verify_slot('report_computed_task', ReportComputedTask)
+    def deserialize_slot(self, key, value):
+        return super().deserialize_slot(key, value)
+
+
+class RejectReportComputedTask(TaskMessageMixin, base.AbstractReasonMessage):
+    TYPE = TASK_MSG_BASE + 30
+    TASK_ID_PROVIDERS = ('task_to_compute',
+                         'task_failure',
+                         'cannot_compute_task', )
+
+    @enum.unique
+    class REASON(enum.Enum):
+        """
+        since python 3.6 it's possible to do this:
+
+        class StringEnum(str, enum.Enum):
+            def _generate_next_value_(name: str, *_):
+                return name
+
+        @enum.unique
+        class REASON(StringEnum):
+            TASK_TIME_LIMIT_EXCEEDED = enum.auto()
+            SUBTASK_TIME_LIMIT_EXCEEDED = enum.auto()
+            GOT_MESSAGE_CANNOT_COMPUTE_TASK = enum.auto()
+            GOT_MESSAGE_TASK_FAILURE = enum.auto()
+        """
+        TaskTimeLimitExceeded = 'TASK_TIME_LIMIT_EXCEEDED'
+        SubtaskTimeLimitExceeded = 'SUBTASK_TIME_LIMIT_EXCEEDED'
+        GotMessageCannotComputeTask = 'GOT_MESSAGE_CANNOT_COMPUTE_TASK'
+        GotMessageTaskFailure = 'GOT_MESSAGE_TASK_FAILURE'
+
+    __slots__ = [
+        'task_to_compute',
+        'task_failure',
+        'cannot_compute_task',
+    ] + base.AbstractReasonMessage.__slots__
+
+    @base.verify_slot('task_to_compute', TaskToCompute)
+    @base.verify_slot('task_failure', TaskFailure)
+    @base.verify_slot('cannot_compute_task', CannotComputeTask)
+    def deserialize_slot(self, key, value):
+        return super().deserialize_slot(key, value)

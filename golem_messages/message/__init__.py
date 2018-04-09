@@ -46,8 +46,8 @@ from golem_messages.message.resources import ResourceHandshakeNonce  # noqa
 from golem_messages.message.resources import ResourceHandshakeVerdict  # noqa
 from golem_messages.message.concents import ServiceRefused  # noqa
 from golem_messages.message.concents import ForceReportComputedTask  # noqa
-from golem_messages.message.concents import AckReportComputedTask  # noqa
-from golem_messages.message.concents import RejectReportComputedTask  # noqa
+from golem_messages.message.tasks import AckReportComputedTask  # noqa
+from golem_messages.message.tasks import RejectReportComputedTask  # noqa
 from golem_messages.message.concents import VerdictReportComputedTask  # noqa
 from golem_messages.message.concents import FileTransferToken  # noqa
 # pylint: enable=unused-import
@@ -109,6 +109,9 @@ def init_messages():
             tasks.SubtaskResultsRejected,
             tasks.GetResource,
 
+            tasks.AckReportComputedTask,
+            tasks.RejectReportComputedTask,
+
             # Resource messages
             resources.PushResource,
             resources.HasResource,
@@ -126,8 +129,6 @@ def init_messages():
 
             # Concent messages
             concents.ServiceRefused,
-            concents.AckReportComputedTask,
-            concents.RejectReportComputedTask,
             concents.VerdictReportComputedTask,
             concents.FileTransferToken,
             concents.SubtaskResultsVerify,
