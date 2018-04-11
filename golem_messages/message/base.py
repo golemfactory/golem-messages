@@ -238,15 +238,22 @@ class Message():
         self.sig = sig
 
     def __eq__(self, obj):
-        if not isinstance(obj, Message):
-            return False
-        if not self.TYPE == obj.TYPE:
-            return False
-        if not self.header == obj.header:
-            return False
-        if not self.sig == obj.sig:
-            return False
-        return self.slots() == obj.slots()
+        """
+        for the equality check, we're concerned with the message type,
+        timestamp, and most importantly its content and signature
+
+        we're specifically ignoring the `encrypted` flag as it doesn't
+        pertain to the message's content but rather to its mode of transport
+        """
+
+        return (
+            isinstance(obj, Message)
+            and self.TYPE == obj.TYPE
+            and self.header.type_ == obj.header.type_
+            and self.timestamp == obj.timestamp
+            and self.sig == obj.sig
+            and self.slots() == obj.slots()
+        )
 
     def __repr__(self):
         return "{name}(header={header}, sig={sig}, slots={slots})".format(
