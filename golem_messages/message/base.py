@@ -217,7 +217,12 @@ class Message():
         # Set attributes
         for key in kwargs:
             if getattr(self, key, None) is None:
-                setattr(self, key, kwargs[key])
+                try:
+                    setattr(self, key, kwargs[key])
+                except AttributeError:
+                    raise AttributeError(
+                        "Can't set attribute `%s` on `%s`" % (
+                            key, self.__class__.__name__))
 
         if deserialized and not (header and header.timestamp):
             warnings.warn(
