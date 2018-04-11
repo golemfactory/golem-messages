@@ -25,6 +25,7 @@ setup(
     packages=[
         'golem_messages',
         'golem_messages.message',
+        'golem_messages.factories',
     ],
     package_data={
         'golem_messages': [
