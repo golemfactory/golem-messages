@@ -11,6 +11,7 @@ import golem_messages
 from golem_messages import exceptions
 from golem_messages import message
 from golem_messages import serializer
+from golem_messages import datastructures
 
 one_second = datetime.timedelta(seconds=1)
 
@@ -59,10 +60,24 @@ class MessageEqualityTest(unittest.TestCase):
         msg2.rand_val = 2
         self.assertNotEqual(msg1, msg2)
 
-    def test_inequal_header(self):
+    def test_inequal_header_timestamp(self):
         msg1 = message.RandVal(rand_val=1)
         msg2 = self._clone_message(msg1)
-        msg2.encrypted = True
+        msg2.header = datastructures.MessageHeader(
+            msg1.header.type_,
+            msg1.header.timestamp + 1,
+            msg1.header.encrypted,
+        )
+        self.assertNotEqual(msg1, msg2)
+
+    def test_inequal_header_type(self):
+        msg1 = message.RandVal(rand_val=1)
+        msg2 = self._clone_message(msg1)
+        msg2.header = datastructures.MessageHeader(
+            msg1.header.type_ + 1,
+            msg1.header.timestamp,
+            msg1.header.encrypted,
+        )
         self.assertNotEqual(msg1, msg2)
 
     def test_inequal_sig(self):
