@@ -13,6 +13,8 @@ from golem_messages import message
 from golem_messages import serializer
 from golem_messages import datastructures
 
+from golem_messages.factories.helpers import clone_message
+
 one_second = datetime.timedelta(seconds=1)
 
 
@@ -30,15 +32,6 @@ class MessageEqualityTest(unittest.TestCase):
     def setUp(self):
         self.ecc = golem_messages.ECCx(None)
 
-    @staticmethod
-    def _clone_message(msg, override_class=None):
-        msg_class = override_class or msg.__class__
-        return msg_class(
-            header=msg.header,
-            sig=msg.sig,
-            slots=msg.slots(),
-        )
-
     def test_dump_load(self):
         msg = message.Ping()
         payload = golem_messages.dump(msg, self.ecc.raw_privkey,
@@ -50,19 +43,19 @@ class MessageEqualityTest(unittest.TestCase):
     def test_equal(self):
         msg1 = message.RandVal(rand_val=1)
         golem_messages.dump(msg1, self.ecc.raw_privkey, None)  # sign
-        msg2 = self._clone_message(msg1)
+        msg2 = clone_message(msg1)
         self.assertIsNot(msg1, msg2)
         self.assertEqual(msg1, msg2)
 
     def test_inequal_slots(self):
         msg1 = message.RandVal(rand_val=1)
-        msg2 = self._clone_message(msg1)
+        msg2 = clone_message(msg1)
         msg2.rand_val = 2
         self.assertNotEqual(msg1, msg2)
 
     def test_inequal_header_timestamp(self):
         msg1 = message.RandVal(rand_val=1)
-        msg2 = self._clone_message(msg1)
+        msg2 = clone_message(msg1)
         msg2.header = datastructures.MessageHeader(
             msg1.header.type_,
             msg1.header.timestamp + 1,
@@ -72,7 +65,7 @@ class MessageEqualityTest(unittest.TestCase):
 
     def test_inequal_header_type(self):
         msg1 = message.RandVal(rand_val=1)
-        msg2 = self._clone_message(msg1)
+        msg2 = clone_message(msg1)
         msg2.header = datastructures.MessageHeader(
             msg1.header.type_ + 1,
             msg1.header.timestamp,
@@ -82,14 +75,14 @@ class MessageEqualityTest(unittest.TestCase):
 
     def test_inequal_sig(self):
         msg1 = message.RandVal(rand_val=1)
-        msg2 = self._clone_message(msg1)
+        msg2 = clone_message(msg1)
         msg1.sig = 1
         msg2.sig = 2
         self.assertNotEqual(msg1, msg2)
 
     def test_inequal_type(self):
         msg1 = message.RandVal(rand_val=1)
-        msg2 = self._clone_message(msg1, override_class=RandValClone)
+        msg2 = clone_message(msg1, override_class=RandValClone)
         self.assertNotEqual(msg1, msg2)
 
         # ensure the signature of the original RandVal didn't change

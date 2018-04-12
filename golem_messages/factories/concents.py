@@ -8,6 +8,7 @@ import faker
 
 from golem_messages.message import concents
 
+from .helpers import clone_message
 from .tasks import (
     SubtaskResultsAcceptedFactory, SubtaskResultsRejectedFactory
 )
@@ -313,11 +314,22 @@ class VerdictReportComputedTaskFactory(factory.Factory):
         ForceReportComputedTaskFactory)
     ack_report_computed_task = factory.SubFactory(
         'golem_messages.factories.tasks.AckReportComputedTaskFactory',
-        report_computed_task__task_to_compute__compute_task_def__subtask_id=factory.SelfAttribute(  # noqa pylint:disable=line-too-long
-            '.....force_report_computed_task.subtask_id'),
-        report_computed_task__task_to_compute__compute_task_def__task_id=factory.SelfAttribute(  # noqa pylint:disable=line-too-long
-            '.....force_report_computed_task.task_id'),
     )
+
+    # pylint: disable=no-self-argument
+
+    @factory.post_generation
+    def arct_report_computed_task(msg, _create, _extracted, **kwargs):
+        rct = clone_message(
+            msg.force_report_computed_task.report_computed_task
+        )
+
+        for k, v in kwargs.items():
+            setattr(rct, k, v)
+
+        msg.ack_report_computed_task.report_computed_task = rct
+
+    # pylint: enable=no-self-argument
 
 
 class ClientAuthorizationFactory(factory.Factory):
