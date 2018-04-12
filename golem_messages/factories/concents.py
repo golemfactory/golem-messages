@@ -303,6 +303,9 @@ class ForceReportComputedTaskResponseFactory(factory.Factory):
         task_to_compute__compute_task_def__task_id=factory.SelfAttribute(
             '....ack_report_computed_task.'
             'report_computed_task.task_to_compute.task_id'),
+        task_to_compute__requestor_id=factory.SelfAttribute(
+            '...ack_report_computed_task.'
+            'report_computed_task.task_to_compute.requestor_id'),
     )
 
 
