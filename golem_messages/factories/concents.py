@@ -3,7 +3,7 @@ import random
 import time
 
 from ethereum.utils import denoms
-import factory
+import factory.fuzzy
 import faker
 
 from golem_messages.message import concents
@@ -26,6 +26,7 @@ class ForceReportComputedTaskFactory(factory.Factory):
     class Meta:
         model = concents.ForceReportComputedTask
 
+    result_hash = factory.Faker('text')
     report_computed_task = factory.SubFactory(
         'golem_messages.factories.tasks.ReportComputedTaskFactory')
 
@@ -134,11 +135,17 @@ class ForceGetTaskResultUploadFactory(factory.Factory):
         model = concents.ForceGetTaskResultUpload
 
     force_get_task_result = factory.SubFactory(ForceGetTaskResultFactory)
-    file_transfer_token = factory.SubFactory(FileTransferTokenFactory)
+    file_transfer_token = factory.SubFactory(
+        FileTransferTokenFactory, upload=True)
 
 
-class ForceGetTaskResultDownloadFactory(ForceGetTaskResultUploadFactory):
-    pass
+class ForceGetTaskResultDownloadFactory(factory.Factory):
+    class Meta:
+        model = concents.ForceGetTaskResultDownload
+
+    force_get_task_result = factory.SubFactory(ForceGetTaskResultFactory)
+    file_transfer_token = factory.SubFactory(
+        FileTransferTokenFactory, download=True)
 
 
 class ForceSubtaskResultsResponseFactory(factory.Factory):
@@ -282,6 +289,9 @@ class ForceReportComputedTaskResponseFactory(factory.Factory):
     class Meta:
         model = concents.ForceReportComputedTaskResponse
 
+    reason = factory.fuzzy.FuzzyChoice(
+        concents.ForceReportComputedTaskResponse.REASON
+    )
     ack_report_computed_task = factory.SubFactory(
         'golem_messages.factories.tasks.AckReportComputedTaskFactory')
     reject_report_computed_task = factory.SubFactory(
@@ -321,5 +331,6 @@ class ServiceRefusedFactory(factory.Factory):
     class Meta:
         model = concents.ServiceRefused
 
+    reason = factory.fuzzy.FuzzyChoice(concents.ServiceRefused.REASON)
     task_to_compute = factory.SubFactory(
         'golem_messages.factories.tasks.TaskToComputeFactory')

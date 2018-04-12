@@ -43,6 +43,7 @@ setup(
         'semantic_version',
     ],
     tests_require=[
+        'eth-utils==0.7.4',
         'Faker==0.8.9',
         'factory-boy==2.9.2',
         'pycodestyle',
