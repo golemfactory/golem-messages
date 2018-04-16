@@ -1,4 +1,6 @@
 # pylint: disable=no-self-use
+import calendar
+import time
 import unittest
 import unittest.mock as mock
 
@@ -124,6 +126,11 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
     def test_subtask_id(self):
         self.assertEqual(self.msg.subtask_id,
                          self.msg.compute_task_def['subtask_id'])  # noqa pylint:disable=unsubscriptable-object
+
+    def test_past_deadline(self):
+        now = calendar.timegm(time.gmtime())
+        ttc = factories.tasks.TaskToComputeFactory.past_deadline()
+        self.assertGreater(now, ttc.compute_task_def.get('deadline'))
 
 
 class ReportComputedTaskTest(mixins.RegisteredMessageTestMixin,

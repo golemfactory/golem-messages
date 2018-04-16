@@ -50,6 +50,15 @@ class TaskToComputeFactory(factory.Factory):
 
     price = factory.Faker('random_int', min=1 << 20, max=10 << 20)
 
+    @classmethod
+    def past_deadline(cls, *args, **kwargs):
+        past_deadline = calendar.timegm(time.gmtime()) - \
+                        int(datetime.timedelta(days=1).total_seconds())
+        kwargs.update({
+            'compute_task_def__deadline': past_deadline
+        })
+        return cls(*args, **kwargs)
+
 
 class CannotComputeTaskFactory(factory.Factory):
     class Meta:
