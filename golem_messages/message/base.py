@@ -12,6 +12,7 @@ import semantic_version
 
 import golem_messages
 
+from golem_messages import cryptography
 from golem_messages import datastructures
 from golem_messages import exceptions
 from golem_messages import serializer
@@ -619,3 +620,11 @@ class ChallengeSolution(Message):
     TYPE = 3
 
     __slots__ = ['solution'] + Message.__slots__
+
+
+def verify_message_signature(msg: Message, public_key) -> bool:
+    return cryptography.ecdsa_verify(
+        pubkey=public_key,
+        signature=msg.sig,
+        message=msg.get_short_hash()
+    )

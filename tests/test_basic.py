@@ -8,7 +8,9 @@ import semantic_version
 from freezegun import freeze_time
 
 import golem_messages
+from golem_messages import cryptography
 from golem_messages import exceptions
+from golem_messages import factories
 from golem_messages import message
 from golem_messages import serializer
 from golem_messages import datastructures
@@ -253,6 +255,56 @@ class BasicTestCase(unittest.TestCase):
         with self.assertRaises(exceptions.SignatureAlreadyExists):
             golem_messages.dump(msg, self.ecc.raw_privkey, self.ecc.raw_pubkey)
 
+
+class VerifyMessageSignatureTest(unittest.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.keys = cryptography.ECCx(None)
+        self.keys2 = cryptography.ECCx(None)
+
+    def add_sig(self, msg):
+        golem_messages.dump(msg, self.keys.raw_privkey, None)
+        self.assertIsNotNone(msg.sig)
+
+    def test_verify(self):
+        msg = message.Hello()
+        self.add_sig(msg)
+        message.base.verify_message_signature(msg, self.keys.raw_pubkey)
+
+    def test_verify_nosig(self):
+        msg = message.Hello()
+        self.assertIsNone(msg.sig)
+        with self.assertRaises(exceptions.CoincurveError):
+            message.base.verify_message_signature(msg, self.keys.raw_pubkey)
+
+    def test_verify_different(self):
+        msg = message.Hello()
+        self.add_sig(msg)
+        with self.assertRaises(exceptions.InvalidSignature):
+            message.base.verify_message_signature(msg, self.keys2.raw_pubkey)
+
+    def test_verify_cloned(self):
+        msg = message.Hello()
+        self.add_sig(msg)
+        msg2 = factories.helpers.clone_message(msg)
+        message.base.verify_message_signature(msg2, self.keys.raw_pubkey)
+
+    def test_verify_updated_header(self):
+        msg = message.Hello()
+        self.add_sig(msg)
+
+        msg2 = factories.helpers.clone_message(
+            msg,
+            override_header=datastructures.MessageHeader(
+                msg.TYPE,
+                msg.timestamp + 667,
+                msg.encrypted,
+            )
+        )
+
+        with self.assertRaises(exceptions.InvalidSignature):
+            message.base.verify_message_signature(msg2, self.keys.raw_pubkey)
 
 testnow = datetime.datetime.utcnow().replace(microsecond=0)
 
