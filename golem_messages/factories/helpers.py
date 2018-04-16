@@ -6,7 +6,7 @@ if typing.TYPE_CHECKING:
 
 def clone_message(
         msg: 'Message',
-        override_class: 'Message'=None,
+        override_class: 'Message' = None,
         override_header=None) -> 'Message':
     msg_class = override_class or msg.__class__
     return msg_class(

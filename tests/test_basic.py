@@ -306,6 +306,7 @@ class VerifyMessageSignatureTest(unittest.TestCase):
         with self.assertRaises(exceptions.InvalidSignature):
             message.base.verify_message_signature(msg2, self.keys.raw_pubkey)
 
+
 testnow = datetime.datetime.utcnow().replace(microsecond=0)
 
 
