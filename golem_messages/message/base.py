@@ -495,6 +495,23 @@ class Message():
             and (name not in Message.__slots__) \
             and (name in self.__slots__)
 
+    def verify_signature(self, public_key: bytes) -> bool:
+        """
+        Verify the message's signature using the provided public key.
+        Ensures that the message's content is intact and that it has been
+        indeed signed by the expected party.
+
+        :param public_key: the public key of the expected sender
+        :return: `True` if the signature is correct.
+        :raises: `exceptions.CoincurveError` if the signature is missing
+        :raises: `exceptions.InvalidSignature` if the signature is corrupted
+        """
+        return cryptography.ecdsa_verify(
+            pubkey=public_key,
+            signature=self.sig,
+            message=self.get_short_hash()
+        )
+
 
 class AbstractReasonMessage(Message):
     __slots__ = [
@@ -620,11 +637,3 @@ class ChallengeSolution(Message):
     TYPE = 3
 
     __slots__ = ['solution'] + Message.__slots__
-
-
-def verify_message_signature(msg: Message, public_key) -> bool:
-    return cryptography.ecdsa_verify(
-        pubkey=public_key,
-        signature=msg.sig,
-        message=msg.get_short_hash()
-    )

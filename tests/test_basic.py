@@ -27,7 +27,7 @@ def dt_to_ts(dt):
 class RandValClone(message.RandVal):
     TYPE = -667
 
-    __slots__ = ['rand_val'] + message.Message.__slots__
+    __slots__ = message.RandVal.__slots__
 
 
 class MessageEqualityTest(unittest.TestCase):
@@ -87,7 +87,7 @@ class MessageEqualityTest(unittest.TestCase):
         msg2 = clone_message(msg1, override_class=RandValClone)
         self.assertNotEqual(msg1, msg2)
 
-        # ensure the signature of the original RandVal didn't change
+        # ensure the contents  of the original RandVal didn't change
         self.assertEqual(msg1.header, msg2.header)
         self.assertEqual(msg1.slots(), msg2.slots())
 
@@ -270,25 +270,25 @@ class VerifyMessageSignatureTest(unittest.TestCase):
     def test_verify(self):
         msg = message.Hello()
         self.add_sig(msg)
-        message.base.verify_message_signature(msg, self.keys.raw_pubkey)
+        msg.verify_signature(self.keys.raw_pubkey)
 
     def test_verify_nosig(self):
         msg = message.Hello()
         self.assertIsNone(msg.sig)
         with self.assertRaises(exceptions.CoincurveError):
-            message.base.verify_message_signature(msg, self.keys.raw_pubkey)
+            msg.verify_signature(self.keys.raw_pubkey)
 
     def test_verify_different(self):
         msg = message.Hello()
         self.add_sig(msg)
         with self.assertRaises(exceptions.InvalidSignature):
-            message.base.verify_message_signature(msg, self.keys2.raw_pubkey)
+            msg.verify_signature(self.keys2.raw_pubkey)
 
     def test_verify_cloned(self):
         msg = message.Hello()
         self.add_sig(msg)
         msg2 = factories.helpers.clone_message(msg)
-        message.base.verify_message_signature(msg2, self.keys.raw_pubkey)
+        msg2.verify_signature(self.keys.raw_pubkey)
 
     def test_verify_updated_header(self):
         msg = message.Hello()
@@ -304,7 +304,7 @@ class VerifyMessageSignatureTest(unittest.TestCase):
         )
 
         with self.assertRaises(exceptions.InvalidSignature):
-            message.base.verify_message_signature(msg2, self.keys.raw_pubkey)
+            msg2.verify_signature(self.keys.raw_pubkey)
 
 
 testnow = datetime.datetime.utcnow().replace(microsecond=0)
