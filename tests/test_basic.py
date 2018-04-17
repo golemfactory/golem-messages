@@ -260,7 +260,7 @@ class BasicTestCase(unittest.TestCase):
         data = golem_messages.dump(msg, self.ecc.raw_privkey, None)
 
         msg_deserialized = message.base.Message.deserialize(
-            data, lambda d: d, verify_sender=self.ecc.raw_pubkey)
+            data, lambda d: d, sender_public_key=self.ecc.raw_pubkey)
 
         self.assertEqual(msg, msg_deserialized)
 
@@ -271,7 +271,7 @@ class BasicTestCase(unittest.TestCase):
 
         with self.assertRaises(exceptions.InvalidSignature):
             message.base.Message.deserialize(
-                data, lambda d: d, verify_sender=ecc2.raw_pubkey)
+                data, lambda d: d, sender_public_key=ecc2.raw_pubkey)
 
 
 class MessageSignatureTest(unittest.TestCase):

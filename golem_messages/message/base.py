@@ -404,14 +404,14 @@ class Message():
     def deserialize(cls, msg,
                     decrypt_func,
                     check_time=True,
-                    verify_sender: bytes = None):
+                    sender_public_key: bytes = None):
         """
         Deserialize single message
         :param str msg: serialized message
         :param bool check_time: whether the message's timestamp
                                 should be validated
         :param function(data) decrypt_func: decryption function
-        :param bytes verify_sender: if specified, sender's public key against
+        :param bytes sender_public_key: if specified, sender's public key against
                                     which the signature is verified
         :return Message|None: deserialized message or none if this message
                               type is unknown
@@ -434,12 +434,12 @@ class Message():
             header,
             data,
             decrypt_func,
-            verify_sender=verify_sender,
+            sender_public_key=sender_public_key,
         )
 
     @classmethod
     def deserialize_with_header(cls, header, data,
-                                decrypt_func, verify_sender: bytes = None,
+                                decrypt_func, sender_public_key: bytes = None,
                                 **kwargs):
         sig = data[:cls.SIG_LEN]
         payload = data[cls.SIG_LEN:]
@@ -463,9 +463,9 @@ class Message():
             **kwargs,
         )
 
-        if verify_sender:
+        if sender_public_key:
             instance.verify_signature(
-                verify_sender, msg_hash=instance.get_short_hash(payload))
+                sender_public_key, msg_hash=instance.get_short_hash(payload))
         return instance
 
     def load_slots(self, slots):

@@ -23,5 +23,5 @@ def load(data, privkey, pubkey, check_time=True):
         return ecc.decrypt(payload)
 
     msg = base.Message.deserialize(
-        data, decrypt, check_time, verify_sender=pubkey)
+        data, decrypt, check_time, sender_public_key=pubkey)
     return msg
