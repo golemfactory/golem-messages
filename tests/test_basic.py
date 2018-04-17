@@ -255,6 +255,24 @@ class BasicTestCase(unittest.TestCase):
         with self.assertRaises(exceptions.SignatureAlreadyExists):
             golem_messages.dump(msg, self.ecc.raw_privkey, self.ecc.raw_pubkey)
 
+    def test_deserialize_verify_sender(self):
+        msg = message.Hello()
+        data = golem_messages.dump(msg, self.ecc.raw_privkey, None)
+
+        msg_deserialized = message.base.Message.deserialize(
+            data, lambda d: d, verify_sender=self.ecc.raw_pubkey)
+
+        self.assertEqual(msg, msg_deserialized)
+
+    def test_deserialize_verify_sender_fails(self):
+        ecc2 = golem_messages.ECCx(None)
+        msg = message.Hello()
+        data = golem_messages.dump(msg, self.ecc.raw_privkey, None)
+
+        with self.assertRaises(exceptions.InvalidSignature):
+            message.base.Message.deserialize(
+                data, lambda d: d, verify_sender=ecc2.raw_pubkey)
+
 
 class VerifyMessageSignatureTest(unittest.TestCase):
 
@@ -275,7 +293,7 @@ class VerifyMessageSignatureTest(unittest.TestCase):
     def test_verify_nosig(self):
         msg = message.Hello()
         self.assertIsNone(msg.sig)
-        with self.assertRaises(exceptions.CoincurveError):
+        with self.assertRaises(exceptions.InvalidSignature):
             msg.verify_signature(self.keys.raw_pubkey)
 
     def test_verify_different(self):

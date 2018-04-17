@@ -26,14 +26,6 @@ def load(data, privkey, pubkey, check_time=True):
         ecc = cryptography.ECCx(privkey)
         return ecc.decrypt(payload)
 
-    def verify(msg_hash, signature):
-        if not pubkey:
-            return
-        cryptography.ecdsa_verify(
-            pubkey=pubkey,
-            signature=signature,
-            message=msg_hash
-        )
-
-    msg = base.Message.deserialize(data, decrypt, check_time, verify)
+    msg = base.Message.deserialize(
+        data, decrypt, check_time, verify_sender=pubkey)
     return msg

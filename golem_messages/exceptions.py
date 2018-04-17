@@ -38,10 +38,6 @@ class CryptoError(MessageError):
     pass
 
 
-class CoincurveError(CryptoError):
-    pass
-
-
 class InvalidSignature(CryptoError):
     pass
 

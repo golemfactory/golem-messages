@@ -401,11 +401,18 @@ class Message():
         return header
 
     @classmethod
-    def deserialize(cls, msg, decrypt_func, check_time=True, verify_func=None):
+    def deserialize(cls, msg,
+                    decrypt_func,
+                    check_time=True,
+                    verify_sender: bytes = None):
         """
         Deserialize single message
         :param str msg: serialized message
+        :param bool check_time: whether the message's timestamp
+                                should be validated
         :param function(data) decrypt_func: decryption function
+        :param bytes verify_sender: if specified, sender's public key against
+                                    which the signature is verified
         :return Message|None: deserialized message or none if this message
                               type is unknown
         """
@@ -427,11 +434,12 @@ class Message():
             header,
             data,
             decrypt_func,
-            verify_func,
+            verify_sender=verify_sender,
         )
 
     @classmethod
-    def deserialize_with_header(cls, header, data, decrypt_func, verify_func,
+    def deserialize_with_header(cls, header, data,
+                                decrypt_func, verify_sender: bytes = None,
                                 **kwargs):
         sig = data[:cls.SIG_LEN]
         payload = data[cls.SIG_LEN:]
@@ -455,8 +463,9 @@ class Message():
             **kwargs,
         )
 
-        if verify_func is not None:
-            verify_func(instance.get_short_hash(payload), sig)
+        if verify_sender:
+            instance.verify_signature(
+                verify_sender, msg_hash=instance.get_short_hash(payload))
         return instance
 
     def load_slots(self, slots):
@@ -495,13 +504,17 @@ class Message():
             and (name not in Message.__slots__) \
             and (name in self.__slots__)
 
-    def verify_signature(self, public_key: bytes) -> bool:
+    def verify_signature(self,
+                         public_key: bytes,
+                         msg_hash: bytes = None) -> bool:
         """
         Verify the message's signature using the provided public key.
         Ensures that the message's content is intact and that it has been
         indeed signed by the expected party.
 
         :param public_key: the public key of the expected sender
+        :param msg_hash: if provided, a call to `get_short_hash()`
+                         will be skipped and the provided hash used instead
         :return: `True` if the signature is correct.
         :raises: `exceptions.CoincurveError` if the signature is missing
         :raises: `exceptions.InvalidSignature` if the signature is corrupted
@@ -509,7 +522,7 @@ class Message():
         return cryptography.ecdsa_verify(
             pubkey=public_key,
             signature=self.sig,
-            message=self.get_short_hash()
+            message=msg_hash or self.get_short_hash()
         )
 
 
