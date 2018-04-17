@@ -49,10 +49,6 @@ def verify_time(timestamp):
         )
 
 
-def _fake_sign(_):
-    return b'\0' * Message.SIG_LEN
-
-
 def verify_version(msg_version):
     try:
         theirs_v = semantic_version.Version(msg_version)
@@ -285,7 +281,7 @@ class Message():
             value,
         )
 
-    def get_short_hash(self, payload=None):
+    def get_short_hash(self, payload=None) -> bytes:
         """Return short message representation for signature
         :return bytes: sha1(TYPE, timestamp, payload)
         """
@@ -304,13 +300,11 @@ class Message():
         sha.update(payload or b'')
         return sha.digest()
 
-    def serialize(self, sign_func=None, encrypt_func=None):
+    def serialize(self, sign_as: bytes = None, encrypt_func=None):
         """ Return serialized message
         :return str: serialized message """
 
-        if sign_func is None:
-            sign_func = _fake_sign
-        elif self.sig is not None:
+        if sign_as and self.sig:
             # If you wish to overwrite signature,
             # first set it to None explicitly
             raise exceptions.SignatureAlreadyExists()
@@ -321,7 +315,13 @@ class Message():
         # When nesting one message inside another it's important
         # not to overwrite original signature.
         if self.sig is None:
-            self.sig = sign_func(self.get_short_hash(payload))
+            if sign_as:
+                self.sign_message(
+                    private_key=sign_as,
+                    msg_hash=self.get_short_hash(payload)
+                )
+            else:
+                self._fake_sign()
 
         if self.encrypted:
             payload = encrypt_func(payload)
@@ -504,9 +504,8 @@ class Message():
             and (name not in Message.__slots__) \
             and (name in self.__slots__)
 
-    def verify_signature(self,
-                         public_key: bytes,
-                         msg_hash: bytes = None) -> bool:
+    def verify_signature(
+            self, public_key: bytes, msg_hash: bytes = None) -> bool:
         """
         Verify the message's signature using the provided public key.
         Ensures that the message's content is intact and that it has been
@@ -525,6 +524,22 @@ class Message():
             message=msg_hash or self.get_short_hash()
         )
 
+    def sign_message(
+            self, private_key: bytes, msg_hash: bytes = None) -> None:
+        """
+        Calculate and set message signature using the provided private key.
+
+        :param private_key: sender's private key
+        :param msg_hash: if provided, a call to `get_short_hash()`
+                         will be skipped and the provided hash used instead
+        """
+        self.sig = cryptography.ecdsa_sign(
+            privkey=private_key,
+            msghash=msg_hash or self.get_short_hash()
+        )
+
+    def _fake_sign(self):
+        self.sig = b'\0' * Message.SIG_LEN
 
 class AbstractReasonMessage(Message):
     __slots__ = [

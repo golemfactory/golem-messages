@@ -274,7 +274,7 @@ class BasicTestCase(unittest.TestCase):
                 data, lambda d: d, verify_sender=ecc2.raw_pubkey)
 
 
-class VerifyMessageSignatureTest(unittest.TestCase):
+class MessageSignatureTest(unittest.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -282,7 +282,7 @@ class VerifyMessageSignatureTest(unittest.TestCase):
         self.keys2 = cryptography.ECCx(None)
 
     def add_sig(self, msg):
-        golem_messages.dump(msg, self.keys.raw_privkey, None)
+        msg.sign_message(self.keys.raw_privkey)
         self.assertIsNotNone(msg.sig)
 
     def test_verify(self):
