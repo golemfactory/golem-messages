@@ -140,7 +140,7 @@ def ecdsa_verify(pubkey, signature, message):
             signature, message, hasher=None
         )
     except Exception as e:
-        raise exceptions.CoincurveError() from e
+        raise exceptions.InvalidSignature() from e
     if not pk.format(compressed=False) == b'\04' + pubkey:
         raise exceptions.InvalidSignature()
     return True

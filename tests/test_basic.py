@@ -8,7 +8,9 @@ import semantic_version
 from freezegun import freeze_time
 
 import golem_messages
+from golem_messages import cryptography
 from golem_messages import exceptions
+from golem_messages import factories
 from golem_messages import message
 from golem_messages import serializer
 from golem_messages import datastructures
@@ -25,7 +27,7 @@ def dt_to_ts(dt):
 class RandValClone(message.RandVal):
     TYPE = -667
 
-    __slots__ = ['rand_val'] + message.Message.__slots__
+    __slots__ = message.RandVal.__slots__
 
 
 class MessageEqualityTest(unittest.TestCase):
@@ -85,7 +87,7 @@ class MessageEqualityTest(unittest.TestCase):
         msg2 = clone_message(msg1, override_class=RandValClone)
         self.assertNotEqual(msg1, msg2)
 
-        # ensure the signature of the original RandVal didn't change
+        # ensure the contents  of the original RandVal didn't change
         self.assertEqual(msg1.header, msg2.header)
         self.assertEqual(msg1.slots(), msg2.slots())
 
@@ -252,6 +254,75 @@ class BasicTestCase(unittest.TestCase):
 
         with self.assertRaises(exceptions.SignatureAlreadyExists):
             golem_messages.dump(msg, self.ecc.raw_privkey, self.ecc.raw_pubkey)
+
+    def test_deserialize_verify_sender(self):
+        msg = message.Hello()
+        data = golem_messages.dump(msg, self.ecc.raw_privkey, None)
+
+        msg_deserialized = message.base.Message.deserialize(
+            data, lambda d: d, sender_public_key=self.ecc.raw_pubkey)
+
+        self.assertEqual(msg, msg_deserialized)
+
+    def test_deserialize_verify_sender_fails(self):
+        ecc2 = golem_messages.ECCx(None)
+        msg = message.Hello()
+        data = golem_messages.dump(msg, self.ecc.raw_privkey, None)
+
+        with self.assertRaises(exceptions.InvalidSignature):
+            message.base.Message.deserialize(
+                data, lambda d: d, sender_public_key=ecc2.raw_pubkey)
+
+
+class MessageSignatureTest(unittest.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.keys = cryptography.ECCx(None)
+        self.keys2 = cryptography.ECCx(None)
+
+    def add_sig(self, msg):
+        msg.sign_message(self.keys.raw_privkey)
+        self.assertIsNotNone(msg.sig)
+
+    def test_verify(self):
+        msg = message.Hello()
+        self.add_sig(msg)
+        msg.verify_signature(self.keys.raw_pubkey)
+
+    def test_verify_nosig(self):
+        msg = message.Hello()
+        self.assertIsNone(msg.sig)
+        with self.assertRaises(exceptions.InvalidSignature):
+            msg.verify_signature(self.keys.raw_pubkey)
+
+    def test_verify_different(self):
+        msg = message.Hello()
+        self.add_sig(msg)
+        with self.assertRaises(exceptions.InvalidSignature):
+            msg.verify_signature(self.keys2.raw_pubkey)
+
+    def test_verify_cloned(self):
+        msg = message.Hello()
+        self.add_sig(msg)
+        msg2 = factories.helpers.clone_message(msg)
+        msg2.verify_signature(self.keys.raw_pubkey)
+
+    def test_verify_updated_header(self):
+        msg = message.Hello()
+        self.add_sig(msg)
+
+        msg2 = factories.helpers.clone_message(
+            msg,
+            override_header=datastructures.MessageHeader(
+                msg.TYPE,
+                msg.timestamp + 667,
+                msg.encrypted,
+            )
+        )
+
+        with self.assertRaises(exceptions.InvalidSignature):
+            msg2.verify_signature(self.keys.raw_pubkey)
 
 
 testnow = datetime.datetime.utcnow().replace(microsecond=0)

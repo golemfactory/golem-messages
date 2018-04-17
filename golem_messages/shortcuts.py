@@ -5,10 +5,6 @@ from . import cryptography
 
 
 def dump(msg, privkey, pubkey):
-    if privkey:
-        sign = functools.partial(cryptography.ecdsa_sign, privkey)
-    else:
-        sign = None
     if pubkey:
         encrypt = functools.partial(
             cryptography.ECCx.encrypt,
@@ -16,7 +12,7 @@ def dump(msg, privkey, pubkey):
         )
     else:
         encrypt = None
-    return msg.serialize(sign_func=sign, encrypt_func=encrypt)
+    return msg.serialize(sign_as=privkey, encrypt_func=encrypt)
 
 
 def load(data, privkey, pubkey, check_time=True):
@@ -26,14 +22,6 @@ def load(data, privkey, pubkey, check_time=True):
         ecc = cryptography.ECCx(privkey)
         return ecc.decrypt(payload)
 
-    def verify(msg_hash, signature):
-        if not pubkey:
-            return
-        cryptography.ecdsa_verify(
-            pubkey=pubkey,
-            signature=signature,
-            message=msg_hash
-        )
-
-    msg = base.Message.deserialize(data, decrypt, check_time, verify)
+    msg = base.Message.deserialize(
+        data, decrypt, check_time, sender_public_key=pubkey)
     return msg
