@@ -2,9 +2,10 @@
 import factory
 
 from golem_messages.message import base
+from . import helpers
 
 
-class HelloFactory(factory.Factory):
+class HelloFactory(helpers.MessageFactory):
     class Meta:
         model = base.Hello
 

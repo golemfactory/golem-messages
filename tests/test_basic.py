@@ -288,7 +288,8 @@ class MessageSignatureTest(unittest.TestCase):
     def test_verify(self):
         msg = message.Hello()
         self.add_sig(msg)
-        msg.verify_signature(self.keys.raw_pubkey)
+        self.assertTrue(
+            msg.verify_signature(self.keys.raw_pubkey))
 
     def test_verify_nosig(self):
         msg = message.Hello()
@@ -306,7 +307,8 @@ class MessageSignatureTest(unittest.TestCase):
         msg = message.Hello()
         self.add_sig(msg)
         msg2 = factories.helpers.clone_message(msg)
-        msg2.verify_signature(self.keys.raw_pubkey)
+        self.assertTrue(
+            msg2.verify_signature(self.keys.raw_pubkey))
 
     def test_verify_updated_header(self):
         msg = message.Hello()
@@ -323,6 +325,37 @@ class MessageSignatureTest(unittest.TestCase):
 
         with self.assertRaises(exceptions.InvalidSignature):
             msg2.verify_signature(self.keys.raw_pubkey)
+
+
+class MessageFactoryTest(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.keys = cryptography.ECCx(None)
+        self.keys2 = cryptography.ECCx(None)
+
+    def test_dont_sign(self):
+        msg = factories.base.HelloFactory()
+        self.assertIsNone(msg.sig)
+
+    def test_sign(self):
+        msg = factories.base.HelloFactory(sign__privkey=self.keys.raw_privkey)
+        self.assertIsNotNone(msg.sig)
+        self.assertTrue(
+            msg.verify_signature(self.keys.raw_pubkey)
+        )
+
+    def test_sign_nested(self):
+        rct = factories.tasks.ReportComputedTaskFactory(
+            task_to_compute__sign__privkey=self.keys2.raw_privkey,
+            sign__privkey=self.keys.raw_privkey,
+        )
+        self.assertIsNotNone(rct.task_to_compute.sig)
+        self.assertTrue(
+            rct.verify_signature(self.keys.raw_pubkey)
+        )
+        self.assertTrue(
+            rct.task_to_compute.verify_signature(self.keys2.raw_pubkey)
+        )
 
 
 testnow = datetime.datetime.utcnow().replace(microsecond=0)
