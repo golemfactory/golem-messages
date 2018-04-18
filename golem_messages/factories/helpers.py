@@ -1,4 +1,6 @@
+# pylint: disable=too-few-public-methods
 import typing
+import factory
 
 if typing.TYPE_CHECKING:
     from golem_messages.message.base import Message  # noqa pylint:disable=unused-import
@@ -14,3 +16,21 @@ def clone_message(
         sig=msg.sig,
         slots=msg.slots(),
     )
+
+
+class MessageFactory(factory.Factory):
+
+    # pylint: disable=no-self-argument
+
+    @factory.post_generation
+    def sign(msg: 'Message', _, __, **kwargs):
+        privkey = kwargs.pop('privkey', None)
+
+        if kwargs:
+            raise factory.errors.InvalidDeclarationError(
+                "Unknown arguments encountered %s" % list(kwargs.keys()))
+
+        if privkey:
+            msg.sign_message(privkey)
+
+    # pylint: enable=no-self-argument

@@ -8,8 +8,9 @@ import factory.fuzzy
 from eth_utils import encode_hex
 
 from golem_messages import cryptography
-
 from golem_messages.message import tasks
+
+from . import helpers
 
 
 class TaskOwnerFactory(factory.DictFactory):
@@ -29,7 +30,7 @@ class ComputeTaskDefFactory(factory.DictFactory):
     src_code = factory.Faker('text')
 
 
-class TaskToComputeFactory(factory.Factory):
+class TaskToComputeFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.TaskToCompute
 
@@ -60,7 +61,7 @@ class TaskToComputeFactory(factory.Factory):
         return cls(*args, **kwargs)
 
 
-class CannotComputeTaskFactory(factory.Factory):
+class CannotComputeTaskFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.CannotComputeTask
 
@@ -68,7 +69,7 @@ class CannotComputeTaskFactory(factory.Factory):
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
 
 
-class TaskFailureFactory(factory.Factory):
+class TaskFailureFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.TaskFailure
 
@@ -77,7 +78,7 @@ class TaskFailureFactory(factory.Factory):
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
 
 
-class ReportComputedTaskFactory(factory.Factory):
+class ReportComputedTaskFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.ReportComputedTask
 
@@ -94,14 +95,14 @@ class ReportComputedTaskFactory(factory.Factory):
     secret = factory.Faker('text')
 
 
-class AckReportComputedTaskFactory(factory.Factory):
+class AckReportComputedTaskFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.AckReportComputedTask
 
     report_computed_task = factory.SubFactory(ReportComputedTaskFactory)
 
 
-class RejectReportComputedTaskFactory(factory.Factory):
+class RejectReportComputedTaskFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.RejectReportComputedTask
 
@@ -121,7 +122,7 @@ class RejectReportComputedTaskFactory(factory.Factory):
     )
 
 
-class SubtaskResultsAcceptedFactory(factory.Factory):
+class SubtaskResultsAcceptedFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.SubtaskResultsAccepted
 
@@ -129,7 +130,7 @@ class SubtaskResultsAcceptedFactory(factory.Factory):
     payment_ts = factory.LazyFunction(lambda: int(time.time()))
 
 
-class SubtaskResultsRejectedFactory(factory.Factory):
+class SubtaskResultsRejectedFactory(helpers.MessageFactory):
     """
     Produces a regular `SubtaskResultsRejected` message, containing the earlier
     `ReportComputedTask` message

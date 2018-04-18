@@ -7,8 +7,7 @@ import factory.fuzzy
 import faker
 
 from golem_messages.message import concents
-
-from .helpers import clone_message
+from . import helpers
 from .tasks import (
     SubtaskResultsAcceptedFactory, SubtaskResultsRejectedFactory
 )
@@ -23,7 +22,7 @@ class FileInfoFactory(factory.DictFactory):
     size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
 
 
-class ForceReportComputedTaskFactory(factory.Factory):
+class ForceReportComputedTaskFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ForceReportComputedTask
 
@@ -32,7 +31,7 @@ class ForceReportComputedTaskFactory(factory.Factory):
         'golem_messages.factories.tasks.ReportComputedTaskFactory')
 
 
-class SubtaskResultsVerifyFactory(factory.Factory):
+class SubtaskResultsVerifyFactory(helpers.MessageFactory):
     class Meta:
         model = concents.SubtaskResultsVerify
 
@@ -40,13 +39,14 @@ class SubtaskResultsVerifyFactory(factory.Factory):
         'golem_messages.factories.tasks.SubtaskResultsRejectedFactory')
 
 
-class AckSubtaskResultsVerifyFactory(factory.Factory):
+class AckSubtaskResultsVerifyFactory(helpers.MessageFactory):
     class Meta:
         model = concents.AckSubtaskResultsVerify
 
     subtask_results_verify = factory.SubFactory(SubtaskResultsVerifyFactory)
 
-class SubtaskResultsSettledFactory(factory.Factory):
+
+class SubtaskResultsSettledFactory(helpers.MessageFactory):
     class Meta:
         model = concents.SubtaskResultsSettled
 
@@ -67,7 +67,7 @@ class SubtaskResultsSettledFactory(factory.Factory):
         return cls(*args, **kwargs)
 
 
-class ForceGetTaskResultFactory(factory.Factory):
+class ForceGetTaskResultFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ForceGetTaskResult
 
@@ -75,14 +75,14 @@ class ForceGetTaskResultFactory(factory.Factory):
         'golem_messages.factories.tasks.ReportComputedTaskFactory')
 
 
-class AckForceGetTaskResultFactory(factory.Factory):
+class AckForceGetTaskResultFactory(helpers.MessageFactory):
     class Meta:
         model = concents.AckForceGetTaskResult
 
     force_get_task_result = factory.SubFactory(ForceGetTaskResultFactory)
 
 
-class ForceGetTaskResultFailedFactory(factory.Factory):
+class ForceGetTaskResultFailedFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ForceGetTaskResultFailed
 
@@ -90,14 +90,14 @@ class ForceGetTaskResultFailedFactory(factory.Factory):
         'golem_messages.factories.tasks.TaskToComputeFactory')
 
 
-class ForceGetTaskResultRejectedFactory(factory.Factory):
+class ForceGetTaskResultRejectedFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ForceGetTaskResultRejected
 
     force_get_task_result = factory.SubFactory(ForceGetTaskResultFactory)
 
 
-class FileTransferTokenFactory(factory.Factory):
+class FileTransferTokenFactory(helpers.MessageFactory):
     class Meta:
         model = concents.FileTransferToken
 
@@ -131,7 +131,7 @@ class FileTransferTokenFactory(factory.Factory):
     # pylint: enable=no-self-argument
 
 
-class ForceGetTaskResultUploadFactory(factory.Factory):
+class ForceGetTaskResultUploadFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ForceGetTaskResultUpload
 
@@ -140,7 +140,7 @@ class ForceGetTaskResultUploadFactory(factory.Factory):
         FileTransferTokenFactory, upload=True)
 
 
-class ForceGetTaskResultDownloadFactory(factory.Factory):
+class ForceGetTaskResultDownloadFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ForceGetTaskResultDownload
 
@@ -149,7 +149,7 @@ class ForceGetTaskResultDownloadFactory(factory.Factory):
         FileTransferTokenFactory, download=True)
 
 
-class ForceSubtaskResultsResponseFactory(factory.Factory):
+class ForceSubtaskResultsResponseFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ForceSubtaskResultsResponse
 
@@ -196,7 +196,7 @@ class ForceSubtaskResultsResponseFactory(factory.Factory):
     # pylint: enable=no-self-argument
 
 
-class ForceSubtaskResultsFactory(factory.Factory):
+class ForceSubtaskResultsFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ForceSubtaskResults
 
@@ -204,7 +204,7 @@ class ForceSubtaskResultsFactory(factory.Factory):
         'golem_messages.factories.tasks.AckReportComputedTaskFactory')
 
 
-class ForceSubtaskResultsRejectedFactory(factory.Factory):
+class ForceSubtaskResultsRejectedFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ForceSubtaskResultsRejected
 
@@ -223,7 +223,7 @@ class ForceSubtaskResultsRejectedFactory(factory.Factory):
         return cls(*args, **kwargs)
 
 
-class ForcePaymentFactory(factory.Factory):
+class ForcePaymentFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ForcePayment
 
@@ -252,7 +252,7 @@ class ForcePaymentFactory(factory.Factory):
     # pylint: enable=no-self-argument
 
 
-class ForcePaymentCommittedFactory(factory.Factory):
+class ForcePaymentCommittedFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ForcePaymentCommitted
 
@@ -278,7 +278,7 @@ class ForcePaymentCommittedFactory(factory.Factory):
         return cls(*args, **kwargs)
 
 
-class ForcePaymentRejectedFactory(factory.Factory):
+class ForcePaymentRejectedFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ForcePaymentRejected
 
@@ -286,7 +286,7 @@ class ForcePaymentRejectedFactory(factory.Factory):
     reason = concents.ForcePaymentRejected.REASON.NoUnsettledTasksFound
 
 
-class ForceReportComputedTaskResponseFactory(factory.Factory):
+class ForceReportComputedTaskResponseFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ForceReportComputedTaskResponse
 
@@ -309,7 +309,7 @@ class ForceReportComputedTaskResponseFactory(factory.Factory):
     )
 
 
-class VerdictReportComputedTaskFactory(factory.Factory):
+class VerdictReportComputedTaskFactory(helpers.MessageFactory):
     class Meta:
         model = concents.VerdictReportComputedTask
 
@@ -323,7 +323,7 @@ class VerdictReportComputedTaskFactory(factory.Factory):
 
     @factory.post_generation
     def arct_report_computed_task(msg, _create, _extracted, **kwargs):
-        rct = clone_message(
+        rct = helpers.clone_message(
             msg.force_report_computed_task.report_computed_task
         )
 
@@ -335,14 +335,14 @@ class VerdictReportComputedTaskFactory(factory.Factory):
     # pylint: enable=no-self-argument
 
 
-class ClientAuthorizationFactory(factory.Factory):
+class ClientAuthorizationFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ClientAuthorization
 
     client_public_key = factory.Faker('binary', length=64)
 
 
-class ServiceRefusedFactory(factory.Factory):
+class ServiceRefusedFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ServiceRefused
 

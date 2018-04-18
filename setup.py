@@ -40,6 +40,7 @@ setup(
         'ethereum==1.6.1',
         'pyelliptic==1.5.10',
         'pytz',
+        'rlp==0.6.0',
         'semantic_version',
     ],
     tests_require=[
