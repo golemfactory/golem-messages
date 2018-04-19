@@ -17,7 +17,7 @@ class ServiceRefusedTest(mixins.RegisteredMessageTestMixin,
     MSG_CLASS = concents.ServiceRefused
 
 
-class FileTranferTokenTest(mixins.RegisteredMessageTestMixin,
+class FileTransferTokenTest(mixins.RegisteredMessageTestMixin,
                            unittest.TestCase):
     MSG_CLASS = concents.FileTransferToken
 
@@ -44,6 +44,12 @@ class FileTranferTokenTest(mixins.RegisteredMessageTestMixin,
             concents.FileTransferToken(slots=(
                 ('operation', 'other'),
             ))
+
+    def test_path(self):
+        ftt = factories.concents.FileTransferTokenFactory()
+        path = ftt.files[0].get('path')
+        self.assertGreater(len(path), 1)
+        self.assertNotEqual('/', path[:1])
 
 
 class SubtaskResultsVerifyTest(mixins.RegisteredMessageTestMixin,
