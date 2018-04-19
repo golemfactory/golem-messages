@@ -18,7 +18,7 @@ class ServiceRefusedTest(mixins.RegisteredMessageTestMixin,
 
 
 class FileTransferTokenTest(mixins.RegisteredMessageTestMixin,
-                           unittest.TestCase):
+                            unittest.TestCase):
     MSG_CLASS = concents.FileTransferToken
 
     def test_operation_upload(self):
@@ -47,7 +47,7 @@ class FileTransferTokenTest(mixins.RegisteredMessageTestMixin,
 
     def test_path(self):
         ftt = factories.concents.FileTransferTokenFactory()
-        path = ftt.files[0].get('path')
+        path = ftt.files[0].get('path')  # noqa pylint:disable=unsubscriptable-object
         self.assertGreater(len(path), 1)
         self.assertNotEqual('/', path[:1])
 
