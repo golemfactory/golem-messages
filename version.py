@@ -40,18 +40,27 @@ VERSION_FILE = "RELEASE-VERSION"
 
 
 def call_git_describe(prefix='', cwd='.'):
-    cmd = 'git describe --tags --match %s[0-9]*' % prefix
+    version_name_cmd = 'git describe --tags --match %s[0-9]*' % prefix
+    last_tag_cmd = 'git describe --tags --abbrev=0'
     try:
         version = subprocess.run(
-            cmd.split(),
+            version_name_cmd.split(),
             stdout=subprocess.PIPE,
             check=True,
         ).stdout.decode()
+
+        last_tag = subprocess.run(
+            last_tag_cmd.split(),
+            stdout=subprocess.PIPE,
+            check=True,
+        ).stdout.decode()
+
         version = version.strip()[len(prefix):]
-        if '-' in version:
-            version = '{}+dev{}.{}'.format(*version.split('-'))
+        last_tag = last_tag.strip()[len(prefix):]
+        if version != last_tag:
+            version = f"{last_tag}+dev{version[len(last_tag)+1:].replace('-','.')}"
         return version
-    except Exception:
+    except subprocess.CalledProcessError:
         return None
 
 
@@ -60,7 +69,7 @@ def get_version(prefix='', cwd='.'):
     try:
         with path.open("r") as f:
             release_version = f.read()
-    except Exception:
+    except FileNotFoundError:
         release_version = None
 
     version = call_git_describe(prefix, cwd)
