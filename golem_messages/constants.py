@@ -16,6 +16,15 @@ MTD = datetime.timedelta(minutes=0, seconds=10)
 # machine operation.
 MAT = datetime.timedelta(minutes=2, seconds=15)
 
+# Concent Messaging Time
+CMT = datetime.timedelta(hours=1)
+
+# Force Acceptance Time
+FAT = datetime.timedelta(hours=4)
+
+# Payment Due Time
+PDT = datetime.timedelta(hours=12)
+
 # the download timeout margin independent from the size of the result
 DOWNLOAD_LEADIN_TIME = datetime.timedelta(minutes=1)
 

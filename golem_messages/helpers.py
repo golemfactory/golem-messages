@@ -4,20 +4,20 @@ import math
 from golem_messages import constants
 
 
-def maximum_results_patience(report_computed_task) -> datetime.timedelta:
+def subtask_verification_time(report_computed_task) -> datetime.timedelta:
     """Returns time allowed for requestor to Ack/Reject results from provider.
     """
-    now = datetime.datetime.utcnow()
-    deadline = datetime.datetime.utcfromtimestamp(
+    mdt = maximum_download_time(
+        size=report_computed_task.size,
+    )
+    ttc_dt = datetime.datetime.utcfromtimestamp(
+        report_computed_task.task_to_compute.timestamp,
+    )
+    subtask_dt = datetime.datetime.utcfromtimestamp(
         report_computed_task.task_to_compute.compute_task_def['deadline'],
     )
-    deadline_delay = now - deadline
-    subtask_verification_time = 4 * constants.DEFAULT_MSG_LIFETIME
-    subtask_verification_time += 3 * maximum_download_time(
-        size=report_computed_task.size
-    )
-    final_delay = subtask_verification_time + deadline_delay
-    return final_delay
+    subtask_timeout = subtask_dt - ttc_dt
+    return (4 * constants.CMT) + (3 * mdt) + (0.5 * subtask_timeout)
 
 
 def maximum_download_time(
