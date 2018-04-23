@@ -2,8 +2,21 @@
 import typing
 import factory
 
+from golem_messages import datastructures
+
 if typing.TYPE_CHECKING:
     from golem_messages.message.base import Message  # noqa pylint:disable=unused-import
+
+
+def override_timestamp(
+        msg: 'Message',
+        timestamp: int) -> None:
+    new_hdr = datastructures.MessageHeader(
+        msg.TYPE,
+        timestamp,
+        msg.encrypted,
+    )
+    msg.header = new_hdr
 
 
 def clone_message(
