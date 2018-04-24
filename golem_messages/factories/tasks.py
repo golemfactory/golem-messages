@@ -65,7 +65,6 @@ class CannotComputeTaskFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.CannotComputeTask
 
-    subtask_id = factory.Faker('uuid4')
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
 
 
@@ -73,9 +72,8 @@ class TaskFailureFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.TaskFailure
 
-    subtask_id = factory.Faker('uuid4')
-    err = factory.Faker('sentence')
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    err = factory.Faker('sentence')
 
 
 class ReportComputedTaskFactory(helpers.MessageFactory):
@@ -83,7 +81,6 @@ class ReportComputedTaskFactory(helpers.MessageFactory):
         model = tasks.ReportComputedTask
 
     result_type = 0
-    computation_time = factory.Faker('pyfloat')
     node_name = factory.Faker('name')
     address = factory.Faker('ipv4')
     port = factory.Faker('pyint')
