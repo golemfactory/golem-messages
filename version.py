@@ -40,31 +40,38 @@ VERSION_FILE = "RELEASE-VERSION"
 
 
 def call_git_describe(prefix='', cwd='.'):
-    version_name_cmd = 'git describe --tags --match %s[0-9]*' % prefix
-    last_tag_cmd = 'git describe --tags --abbrev=0'
-    try:
-        version = subprocess.run(
-            version_name_cmd.split(),
-            stdout=subprocess.PIPE,
-            check=True,
-        ).stdout.decode()
+    version_cmd = 'git describe --tags --match %s[0-9]*' % prefix
+    last_tag_cmd = 'git describe --tags --match %s[0-9]* --abbrev=0' % prefix
+    version = subprocess.run(
+        version_cmd.split(),
+        stdout=subprocess.PIPE,
+        check=True,
+        shell=False,
+    ).stdout.decode()
 
-        last_tag = subprocess.run(
-            last_tag_cmd.split(),
-            stdout=subprocess.PIPE,
-            check=True,
-        ).stdout.decode()
+    last_tag = subprocess.run(
+        last_tag_cmd.split(),
+        stdout=subprocess.PIPE,
+        check=True,
+        shell=False,
+    ).stdout.decode()
 
-        version = version.strip()[len(prefix):]
-        last_tag = last_tag.strip()[len(prefix):]
-        if version != last_tag:
-            version = f"{last_tag}+dev{version[len(last_tag)+1:].replace('-','.')}"
-        return version
-    except subprocess.CalledProcessError:
-        return None
+    assert ' ' not in prefix
+    version = version.strip()[len(prefix):]
+    last_tag = last_tag.strip()[len(prefix):]
+    if version != last_tag:
+        """
+        Helper to generate version compatible with semver
+        Compares the last tag version name with the version name
+        where the repository is currently located
+        If it is not currently on tag adds '+dev' beetwen last tag name
+        and a number of commits behind it separated by hyphens with short commit hash
+        """
+        version = f"{last_tag}+dev{version[len(last_tag) + 1:].replace('-', '.')}"
+    return version
 
 
-def get_version(prefix='', cwd='.'):
+def get_version(prefix='', cwd='.', generate_version=True):
     path = pathlib.Path(cwd) / VERSION_FILE
     try:
         with path.open("r") as f:
@@ -72,7 +79,10 @@ def get_version(prefix='', cwd='.'):
     except FileNotFoundError:
         release_version = None
 
-    version = call_git_describe(prefix, cwd)
+    if generate_version:
+        version = call_git_describe(prefix, cwd)
+    else:
+        return release_version
 
     if version is None:
         version = release_version
