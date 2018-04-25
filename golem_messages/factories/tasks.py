@@ -104,19 +104,37 @@ class RejectReportComputedTaskFactory(helpers.MessageFactory):
         model = tasks.RejectReportComputedTask
 
     reason = factory.fuzzy.FuzzyChoice(tasks.RejectReportComputedTask.REASON)
-    task_to_compute = factory.SubFactory(TaskToComputeFactory)
-    task_failure = factory.SubFactory(
-        TaskFailureFactory,
-        task_to_compute=factory.SelfAttribute(
-            '..task_to_compute',
-        )
+    task_to_compute = helpers.optional_subfactory(
+        'task_to_compute', TaskToComputeFactory)
+    task_failure = helpers.optional_subfactory(
+        'task_failure', TaskFailureFactory)
+    cannot_compute_task = helpers.optional_subfactory(
+        'cannot_compute_task', CannotComputeTaskFactory
     )
-    cannot_compute_task = factory.SubFactory(
-        CannotComputeTaskFactory,
-        task_to_compute=factory.SelfAttribute(
-            '..task_to_compute',
-        )
-    )
+
+    @classmethod
+    def with_task_to_compute(cls, *args, **kwargs):
+        if 'reason' not in kwargs:
+            kwargs.update({
+                'reason': cls._meta.model.REASON.SubtaskTimeLimitExceeded
+            })
+        return cls(*args, **kwargs, task_to_compute___generate=True)
+
+    @classmethod
+    def with_task_failure(cls, *args, **kwargs):
+        if 'reason' not in kwargs:
+            kwargs.update({
+                'reason': cls._meta.model.REASON.GotMessageTaskFailure
+            })
+        return cls(*args, **kwargs, task_failure___generate=True)
+
+    @classmethod
+    def with_cannot_compute_task(cls, *args, **kwargs):
+        if 'reason' not in kwargs:
+            kwargs.update({
+                'reason': cls._meta.model.REASON.GotMessageCannotComputeTask
+            })
+        return cls(*args, **kwargs, cannot_compute_task___generate=True)
 
 
 class SubtaskResultsAcceptedFactory(helpers.MessageFactory):

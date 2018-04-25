@@ -6,6 +6,7 @@ from ethereum.utils import denoms
 import factory.fuzzy
 import faker
 
+from golem_messages.factories import tasks as tasks_factories
 from golem_messages.message import concents
 from . import helpers
 from .tasks import (
@@ -293,20 +294,35 @@ class ForceReportComputedTaskResponseFactory(helpers.MessageFactory):
     reason = factory.fuzzy.FuzzyChoice(
         concents.ForceReportComputedTaskResponse.REASON
     )
-    ack_report_computed_task = factory.SubFactory(
-        'golem_messages.factories.tasks.AckReportComputedTaskFactory')
-    reject_report_computed_task = factory.SubFactory(
-        'golem_messages.factories.tasks.RejectReportComputedTaskFactory',
-        task_to_compute__compute_task_def__subtask_id=factory.SelfAttribute(
-            '....ack_report_computed_task.'
-            'report_computed_task.task_to_compute.subtask_id'),
-        task_to_compute__compute_task_def__task_id=factory.SelfAttribute(
-            '....ack_report_computed_task.'
-            'report_computed_task.task_to_compute.task_id'),
-        task_to_compute__requestor_id=factory.SelfAttribute(
-            '...ack_report_computed_task.'
-            'report_computed_task.task_to_compute.requestor_id'),
+    ack_report_computed_task = helpers.optional_subfactory(
+        'ack_report_computed_task',
+        tasks_factories.AckReportComputedTaskFactory
     )
+    reject_report_computed_task = helpers.optional_subfactory(
+        'reject_report_computed_task',
+        tasks_factories.RejectReportComputedTaskFactory
+    )
+
+    @classmethod
+    def with_ack_report_computed_task(cls, *args, **kwargs):
+        if 'reason' not in kwargs:
+            kwargs.update({
+                'reason': cls._meta.model.REASON.AckFromRequestor
+            })
+        return cls(*args, **kwargs,
+                   ack_report_computed_task___generate=True)
+
+    @classmethod
+    def with_reject_report_computed_task(cls, *args, **kwargs):
+        if 'reason' in kwargs:
+            kwargs.update({
+                'reason': cls._meta.model.REASON.RejectFromRequestor
+            })
+        return cls(
+            *args, **kwargs,
+            reject_report_computed_task___generate=True,
+            reject_report_computed_task__task_to_compute___generate=True,
+        )
 
 
 class VerdictReportComputedTaskFactory(helpers.MessageFactory):

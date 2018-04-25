@@ -67,7 +67,7 @@ class TaskMessageMixin:
         """
         :return: the `task_id` related to this message chain
         """
-        return self._get_task_value('task_id', )
+        return self._get_task_value('task_id')
 
     @property
     def subtask_id(self):

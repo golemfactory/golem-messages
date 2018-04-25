@@ -165,4 +165,19 @@ class RejectReportComputedTaskTestCase(
         mixins.SerializationMixin,
         unittest.TestCase):
     MSG_CLASS = message.tasks.RejectReportComputedTask
-    FACTORY = factories.tasks.RejectReportComputedTaskFactory
+    FACTORY = factories.tasks.RejectReportComputedTaskFactory.\
+        with_task_to_compute
+
+
+class RejectRctCctTestCase(mixins.TaskIdCannotComputeTaskTestMixin,
+                           unittest.TestCase):
+    MSG_CLASS = message.tasks.RejectReportComputedTask
+    FACTORY = factories.tasks.RejectReportComputedTaskFactory.\
+        with_cannot_compute_task
+
+
+class RejectRctTfTestCase(mixins.TaskIdTaskFailureTestMixin,
+                          unittest.TestCase):
+    MSG_CLASS = message.tasks.RejectReportComputedTask
+    FACTORY = factories.tasks.RejectReportComputedTaskFactory.\
+        with_task_failure

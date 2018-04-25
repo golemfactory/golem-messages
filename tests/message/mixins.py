@@ -43,6 +43,22 @@ class TaskIdMixinBase():
         self.assertEqual(self.msg.subtask_id,
                          self.task_id_provider.subtask_id)
 
+    def test_ttc(self):
+        self.assertEqual(self.msg.ttc, self.task_id_provider.ttc)
+        self.assertIsInstance(self.msg.ttc, message.tasks.TaskToCompute)
+
+    def test_provider_id(self):
+        self.assertEqual(self.msg.provider_id,
+                         self.task_id_provider.provider_id)
+        self.assertEqual(self.msg.provider_id,
+                         self.msg.ttc.provider_id)
+
+    def test_requestor_id(self):
+        self.assertEqual(self.msg.requestor_id,
+                         self.task_id_provider.requestor_id)
+        self.assertEqual(self.msg.requestor_id,
+                         self.msg.ttc.requestor_id)
+
 
 class TaskIdTaskToComputeTestMixin(TaskIdMixinBase):
     TASK_ID_PROVIDER = 'task_to_compute'
@@ -58,3 +74,15 @@ class TaskIdForceGetTaskResultTestMixin(TaskIdMixinBase):
 
 class TaskIdAckReportComputedTaskTestMixin(TaskIdMixinBase):
     TASK_ID_PROVIDER = 'ack_report_computed_task'
+
+
+class TaskIdRejectReportComputedTaskTestMixin(TaskIdMixinBase):
+    TASK_ID_PROVIDER = 'reject_report_computed_task'
+
+
+class TaskIdCannotComputeTaskTestMixin(TaskIdMixinBase):
+    TASK_ID_PROVIDER = 'cannot_compute_task'
+
+
+class TaskIdTaskFailureTestMixin(TaskIdMixinBase):
+    TASK_ID_PROVIDER = 'task_failure'

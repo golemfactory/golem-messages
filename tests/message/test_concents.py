@@ -537,24 +537,17 @@ class ForceReportComputedTaskResponseTestCase(
     MSG_CLASS = concents.ForceReportComputedTaskResponse
     FACTORY = factories.concents.ForceReportComputedTaskResponseFactory
 
-    def setUp(self):
-        self.msg = self.FACTORY()
 
-    def test_task_id_ack(self):
-        self.assertEqual(self.msg.task_id,
-                         self.msg.ack_report_computed_task.task_id)
+class FrctAckTest(mixins.TaskIdAckReportComputedTaskTestMixin,
+                  unittest.TestCase):
+    FACTORY = factories.concents.ForceReportComputedTaskResponseFactory.\
+        with_ack_report_computed_task
 
-    def test_subtask_id_ack(self):
-        self.assertEqual(self.msg.subtask_id,
-                         self.msg.ack_report_computed_task.subtask_id)
 
-    def test_task_id_reject(self):
-        self.assertEqual(self.msg.task_id,
-                         self.msg.reject_report_computed_task.task_id)
-
-    def test_subtask_id_reject(self):
-        self.assertEqual(self.msg.subtask_id,
-                         self.msg.reject_report_computed_task.subtask_id)
+class FrctRejectTest(mixins.TaskIdRejectReportComputedTaskTestMixin,
+                     unittest.TestCase):
+    FACTORY = factories.concents.ForceReportComputedTaskResponseFactory.\
+        with_reject_report_computed_task
 
 
 class VerdictReportComputeTaskTestCase(
