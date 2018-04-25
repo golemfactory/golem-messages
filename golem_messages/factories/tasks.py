@@ -104,8 +104,8 @@ class RejectReportComputedTaskFactory(helpers.MessageFactory):
         model = tasks.RejectReportComputedTask
 
     reason = factory.fuzzy.FuzzyChoice(tasks.RejectReportComputedTask.REASON)
-    task_to_compute = helpers.optional_subfactory(
-        'task_to_compute', TaskToComputeFactory)
+    attached_task_to_compute = helpers.optional_subfactory(
+        'attached_task_to_compute', TaskToComputeFactory)
     task_failure = helpers.optional_subfactory(
         'task_failure', TaskFailureFactory)
     cannot_compute_task = helpers.optional_subfactory(
@@ -118,7 +118,7 @@ class RejectReportComputedTaskFactory(helpers.MessageFactory):
             kwargs.update({
                 'reason': cls._meta.model.REASON.SubtaskTimeLimitExceeded
             })
-        return cls(*args, **kwargs, task_to_compute___generate=True)
+        return cls(*args, **kwargs, attached_task_to_compute___generate=True)
 
     @classmethod
     def with_task_failure(cls, *args, **kwargs):

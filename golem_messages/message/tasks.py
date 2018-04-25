@@ -77,11 +77,11 @@ class TaskMessageMixin:
         return self._get_task_value('subtask_id')
 
     @property
-    def ttc(self):
+    def task_to_compute(self):
         """
         :return: the `TaskToCompute` related to this message chain
         """
-        return self._get_task_value('ttc')
+        return self._get_task_value('task_to_compute')
 
     @property
     def provider_id(self):
@@ -173,7 +173,7 @@ class TaskToCompute(TaskMessageMixin, base.Message):
         return None
 
     @property
-    def ttc(self):
+    def task_to_compute(self):
         return self
 
 
@@ -408,7 +408,7 @@ class AckReportComputedTask(TaskMessageMixin, base.Message):
 
 class RejectReportComputedTask(TaskMessageMixin, base.AbstractReasonMessage):
     TYPE = TASK_MSG_BASE + 30
-    TASK_ID_PROVIDERS = ('task_to_compute',
+    TASK_ID_PROVIDERS = ('attached_task_to_compute',
                          'task_failure',
                          'cannot_compute_task', )
 
@@ -434,12 +434,12 @@ class RejectReportComputedTask(TaskMessageMixin, base.AbstractReasonMessage):
         GotMessageTaskFailure = 'GOT_MESSAGE_TASK_FAILURE'
 
     __slots__ = [
-        'task_to_compute',
+        'attached_task_to_compute',
         'task_failure',
         'cannot_compute_task',
     ] + base.AbstractReasonMessage.__slots__
 
-    @base.verify_slot('task_to_compute', TaskToCompute)
+    @base.verify_slot('attached_task_to_compute_', TaskToCompute)
     @base.verify_slot('task_failure', TaskFailure)
     @base.verify_slot('cannot_compute_task', CannotComputeTask)
     def deserialize_slot(self, key, value):

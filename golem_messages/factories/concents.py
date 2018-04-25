@@ -321,7 +321,8 @@ class ForceReportComputedTaskResponseFactory(helpers.MessageFactory):
         return cls(
             *args, **kwargs,
             reject_report_computed_task___generate=True,
-            reject_report_computed_task__task_to_compute___generate=True,
+            reject_report_computed_task__attached_task_to_compute___generate=\
+                True,
         )
 
 
