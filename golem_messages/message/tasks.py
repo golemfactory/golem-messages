@@ -408,6 +408,13 @@ class AckReportComputedTask(TaskMessageMixin, base.Message):
 
 class RejectReportComputedTask(TaskMessageMixin, base.AbstractReasonMessage):
     TYPE = TASK_MSG_BASE + 30
+
+    #
+    # because other inner messages can also include `TaskToCompute`
+    # we need to differentiate between the universal `task_to_compute` accessor
+    # and the `TaskToCompute` attached directly into `RejectReportComputedTask`
+    # hence `attached_task_to_compute` which includes the directly attached TTC
+    #
     TASK_ID_PROVIDERS = ('attached_task_to_compute',
                          'task_failure',
                          'cannot_compute_task', )
