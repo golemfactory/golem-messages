@@ -65,7 +65,6 @@ class CannotComputeTaskFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.CannotComputeTask
 
-    subtask_id = factory.Faker('uuid4')
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
 
 
@@ -73,9 +72,8 @@ class TaskFailureFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.TaskFailure
 
-    subtask_id = factory.Faker('uuid4')
-    err = factory.Faker('sentence')
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    err = factory.Faker('sentence')
 
 
 class ReportComputedTaskFactory(helpers.MessageFactory):
@@ -83,7 +81,6 @@ class ReportComputedTaskFactory(helpers.MessageFactory):
         model = tasks.ReportComputedTask
 
     result_type = 0
-    computation_time = factory.Faker('pyfloat')
     node_name = factory.Faker('name')
     address = factory.Faker('ipv4')
     port = factory.Faker('pyint')
@@ -107,19 +104,37 @@ class RejectReportComputedTaskFactory(helpers.MessageFactory):
         model = tasks.RejectReportComputedTask
 
     reason = factory.fuzzy.FuzzyChoice(tasks.RejectReportComputedTask.REASON)
-    task_to_compute = factory.SubFactory(TaskToComputeFactory)
-    task_failure = factory.SubFactory(
-        TaskFailureFactory,
-        task_to_compute=factory.SelfAttribute(
-            '..task_to_compute',
-        )
+    attached_task_to_compute = helpers.optional_subfactory(
+        'attached_task_to_compute', TaskToComputeFactory)
+    task_failure = helpers.optional_subfactory(
+        'task_failure', TaskFailureFactory)
+    cannot_compute_task = helpers.optional_subfactory(
+        'cannot_compute_task', CannotComputeTaskFactory
     )
-    cannot_compute_task = factory.SubFactory(
-        CannotComputeTaskFactory,
-        task_to_compute=factory.SelfAttribute(
-            '..task_to_compute',
-        )
-    )
+
+    @classmethod
+    def with_task_to_compute(cls, *args, **kwargs):
+        if 'reason' not in kwargs:
+            kwargs.update({
+                'reason': cls._meta.model.REASON.SubtaskTimeLimitExceeded
+            })
+        return cls(*args, **kwargs, attached_task_to_compute___generate=True)
+
+    @classmethod
+    def with_task_failure(cls, *args, **kwargs):
+        if 'reason' not in kwargs:
+            kwargs.update({
+                'reason': cls._meta.model.REASON.GotMessageTaskFailure
+            })
+        return cls(*args, **kwargs, task_failure___generate=True)
+
+    @classmethod
+    def with_cannot_compute_task(cls, *args, **kwargs):
+        if 'reason' not in kwargs:
+            kwargs.update({
+                'reason': cls._meta.model.REASON.GotMessageCannotComputeTask
+            })
+        return cls(*args, **kwargs, cannot_compute_task___generate=True)
 
 
 class SubtaskResultsAcceptedFactory(helpers.MessageFactory):

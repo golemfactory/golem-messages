@@ -31,6 +31,35 @@ def clone_message(
     )
 
 
+def call_subfactory(object_factory: factory.Factory,
+                    create, extracted, **kwargs):
+    if not (create or extracted or kwargs):
+        return None
+
+    generate = kwargs.pop('_generate', None)
+    if kwargs or generate:
+        extracted = object_factory(**kwargs)
+
+    return extracted
+
+
+def optional_subfactory(field: str, object_factory: factory.Factory):
+    """
+    Defines an optionally-called sub-factory triggered using a `___generate`
+    suffix on the parent factory's appropriate keyword argument
+
+    :param field: the name of the field the subfactory assigns to
+    :param object_factory: the factory to be called
+    :return: the sub-factory
+    """
+    def _subfactory(obj, create, extracted, **kwargs):
+        setattr(
+            obj, field,
+            call_subfactory(object_factory, create, extracted, **kwargs)
+        )
+    return factory.post_generation(_subfactory)
+
+
 class MessageFactory(factory.Factory):
 
     # pylint: disable=no-self-argument

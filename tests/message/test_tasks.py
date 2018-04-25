@@ -32,10 +32,11 @@ class ComputeTaskDefTestCase(unittest.TestCase):
 
 class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
                                  mixins.SerializationMixin,
-                                 mixins.TaskIdTaskToComputeTestMixin,
+                                 mixins.TaskIdMixin,
                                  unittest.TestCase):
     FACTORY = factories.tasks.SubtaskResultsAcceptedFactory
     MSG_CLASS = message.tasks.SubtaskResultsAccepted
+    TASK_ID_PROVIDER = 'task_to_compute'
 
     def test_factory(self):
         self.assertIsInstance(self.msg, message.tasks.SubtaskResultsAccepted)
@@ -55,10 +56,11 @@ class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
 
 class SubtaskResultsRejectedTest(mixins.RegisteredMessageTestMixin,
                                  mixins.SerializationMixin,
-                                 mixins.TaskIdReportComputedTaskTestMixin,
+                                 mixins.TaskIdMixin,
                                  unittest.TestCase):
     FACTORY = factories.tasks.SubtaskResultsRejectedFactory
     MSG_CLASS = message.tasks.SubtaskResultsRejected
+    TASK_ID_PROVIDER = 'report_computed_task'
 
     def test_subtask_results_rejected_factory(self):
         msg = factories.tasks.SubtaskResultsRejectedFactory()
@@ -152,17 +154,34 @@ class ReportComputedTaskTest(mixins.RegisteredMessageTestMixin,
 
 class AckReportComputedTaskTestCase(
         mixins.RegisteredMessageTestMixin,
-        mixins.TaskIdReportComputedTaskTestMixin,
+        mixins.TaskIdMixin,
         mixins.SerializationMixin,
         unittest.TestCase):
     MSG_CLASS = message.tasks.AckReportComputedTask
     FACTORY = factories.tasks.AckReportComputedTaskFactory
+    TASK_ID_PROVIDER = 'report_computed_task'
 
 
 class RejectReportComputedTaskTestCase(
         mixins.RegisteredMessageTestMixin,
-        mixins.TaskIdTaskToComputeTestMixin,
+        mixins.TaskIdMixin,
         mixins.SerializationMixin,
         unittest.TestCase):
     MSG_CLASS = message.tasks.RejectReportComputedTask
-    FACTORY = factories.tasks.RejectReportComputedTaskFactory
+    FACTORY = factories.tasks.RejectReportComputedTaskFactory.\
+        with_task_to_compute
+    TASK_ID_PROVIDER = 'attached_task_to_compute'
+
+
+class RejectRctCctTestCase(mixins.TaskIdMixin, unittest.TestCase):
+    MSG_CLASS = message.tasks.RejectReportComputedTask
+    FACTORY = factories.tasks.RejectReportComputedTaskFactory.\
+        with_cannot_compute_task
+    TASK_ID_PROVIDER = 'cannot_compute_task'
+
+
+class RejectRctTfTestCase(mixins.TaskIdMixin, unittest.TestCase):
+    MSG_CLASS = message.tasks.RejectReportComputedTask
+    FACTORY = factories.tasks.RejectReportComputedTaskFactory.\
+        with_task_failure
+    TASK_ID_PROVIDER = 'task_failure'

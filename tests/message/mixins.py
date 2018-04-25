@@ -26,7 +26,7 @@ class SerializationMixin():
         self.assertEqual(msg, msg2)
 
 
-class TaskIdMixinBase():
+class TaskIdMixin:
     TASK_ID_PROVIDER = None
 
     @property
@@ -43,18 +43,20 @@ class TaskIdMixinBase():
         self.assertEqual(self.msg.subtask_id,
                          self.task_id_provider.subtask_id)
 
+    def test_ttc(self):
+        self.assertEqual(
+            self.msg.task_to_compute, self.task_id_provider.task_to_compute)
+        self.assertIsInstance(
+            self.msg.task_to_compute, message.tasks.TaskToCompute)
 
-class TaskIdTaskToComputeTestMixin(TaskIdMixinBase):
-    TASK_ID_PROVIDER = 'task_to_compute'
+    def test_provider_id(self):
+        self.assertEqual(self.msg.provider_id,
+                         self.task_id_provider.provider_id)
+        self.assertEqual(self.msg.provider_id,
+                         self.msg.task_to_compute.provider_id)
 
-
-class TaskIdReportComputedTaskTestMixin(TaskIdMixinBase):
-    TASK_ID_PROVIDER = 'report_computed_task'
-
-
-class TaskIdForceGetTaskResultTestMixin(TaskIdMixinBase):
-    TASK_ID_PROVIDER = 'force_get_task_result'
-
-
-class TaskIdAckReportComputedTaskTestMixin(TaskIdMixinBase):
-    TASK_ID_PROVIDER = 'ack_report_computed_task'
+    def test_requestor_id(self):
+        self.assertEqual(self.msg.requestor_id,
+                         self.task_id_provider.requestor_id)
+        self.assertEqual(self.msg.requestor_id,
+                         self.msg.task_to_compute.requestor_id)

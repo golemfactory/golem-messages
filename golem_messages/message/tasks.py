@@ -47,7 +47,7 @@ class ComputeTaskDef(datastructures.FrozenDict):
     )
 
 
-class TaskMessageMixin():
+class TaskMessageMixin:
     __slots__ = []
     TASK_ID_PROVIDERS = ()
 
@@ -57,17 +57,45 @@ class TaskMessageMixin():
                 if hasattr(self, slot)]
 
         for msg in msgs:
-            if hasattr(msg, attr_name):
-                return getattr(msg, attr_name)
+            val = getattr(msg, attr_name, None)
+            if val:
+                return val
         return None
 
     @property
     def task_id(self):
+        """
+        :return: the `task_id` related to this message chain
+        """
         return self._get_task_value('task_id')
 
     @property
     def subtask_id(self):
+        """
+        :return: the `subtask_id` related to this message chain
+        """
         return self._get_task_value('subtask_id')
+
+    @property
+    def task_to_compute(self):
+        """
+        :return: the `TaskToCompute` related to this message chain
+        """
+        return self._get_task_value('task_to_compute')
+
+    @property
+    def provider_id(self):
+        """
+        :return: the provider's `node_id` related to this message chain
+        """
+        return self._get_task_value('provider_id')
+
+    @property
+    def requestor_id(self):
+        """
+        :return: the requestor's `node_id` related to this message chain
+        """
+        return self._get_task_value('requestor_id')
 
 
 class WantToComputeTask(base.Message):
@@ -144,6 +172,10 @@ class TaskToCompute(TaskMessageMixin, base.Message):
             return self.compute_task_def.get('subtask_id')
         return None
 
+    @property
+    def task_to_compute(self):
+        return self
+
 
 class CannotAssignTask(base.AbstractReasonMessage):
     TYPE = TASK_MSG_BASE + 3
@@ -174,7 +206,6 @@ class ReportComputedTask(TaskMessageMixin, base.Message):
     __slots__ = [
         # TODO why do we need the type here?
         'result_type',
-        'computation_time',
         'node_name',
         'address',
         'node_info',
@@ -266,9 +297,8 @@ class TaskFailure(TaskMessageMixin, base.Message):
     TASK_ID_PROVIDERS = ('task_to_compute', )
 
     __slots__ = [
-        'subtask_id',
-        'err',
         'task_to_compute',
+        'err',
     ] + base.Message.__slots__
 
     @base.verify_slot('task_to_compute', TaskToCompute)
@@ -296,12 +326,11 @@ class WaitingForResults(base.Message):
     __slots__ = base.Message.__slots__
 
 
-class CannotComputeTask(base.AbstractReasonMessage):
+class CannotComputeTask(TaskMessageMixin, base.AbstractReasonMessage):
     TYPE = TASK_MSG_BASE + 26
     TASK_ID_PROVIDERS = ('task_to_compute', )
 
     __slots__ = [
-        'subtask_id',
         'task_to_compute',
     ] + base.AbstractReasonMessage.__slots__
 
@@ -379,7 +408,14 @@ class AckReportComputedTask(TaskMessageMixin, base.Message):
 
 class RejectReportComputedTask(TaskMessageMixin, base.AbstractReasonMessage):
     TYPE = TASK_MSG_BASE + 30
-    TASK_ID_PROVIDERS = ('task_to_compute',
+
+    #
+    # because other inner messages can also include `TaskToCompute`
+    # we need to differentiate between the universal `task_to_compute` accessor
+    # and the `TaskToCompute` attached directly into `RejectReportComputedTask`
+    # hence `attached_task_to_compute` which includes the directly attached TTC
+    #
+    TASK_ID_PROVIDERS = ('attached_task_to_compute',
                          'task_failure',
                          'cannot_compute_task', )
 
@@ -405,12 +441,12 @@ class RejectReportComputedTask(TaskMessageMixin, base.AbstractReasonMessage):
         GotMessageTaskFailure = 'GOT_MESSAGE_TASK_FAILURE'
 
     __slots__ = [
-        'task_to_compute',
+        'attached_task_to_compute',
         'task_failure',
         'cannot_compute_task',
     ] + base.AbstractReasonMessage.__slots__
 
-    @base.verify_slot('task_to_compute', TaskToCompute)
+    @base.verify_slot('attached_task_to_compute_', TaskToCompute)
     @base.verify_slot('task_failure', TaskFailure)
     @base.verify_slot('cannot_compute_task', CannotComputeTask)
     def deserialize_slot(self, key, value):

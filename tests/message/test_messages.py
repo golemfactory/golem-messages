@@ -6,9 +6,9 @@ import unittest.mock as mock
 import uuid
 
 from golem_messages import datastructures
+from golem_messages import factories
 from golem_messages import message
 from golem_messages import shortcuts
-
 
 class InitializationTestCase(unittest.TestCase):
     def test_default_slots(self):
@@ -253,22 +253,21 @@ class MessagesTestCase(unittest.TestCase):
         self.assertEqual(expected, msg.slots())
 
     def test_message_task_failure(self):
-        subtask_id = 'test-si-{}'.format(uuid.uuid4())
+        ttc = factories.tasks.TaskToComputeFactory()
         err = (
             'Przesąd ten istnieje po dziś dzień u Mordwy, lecz już tylko '
             'symbol tego pozostał, co niegdyś dziki Fin w istocie tworzył.'
         )
 
-        msg = message.TaskFailure(subtask_id=subtask_id, err=err)
+        msg = message.TaskFailure(task_to_compute=ttc, err=err)
         expected = sorted([
-            ['subtask_id', subtask_id],
+            ['task_to_compute', ttc],
             ['err', err],
-            ['task_to_compute', None],
         ])
         self.assertEqual(expected, sorted(msg.slots()))
 
     def test_message_cannot_compute_task(self):
-        subtask_id = 'test-si-{}'.format(uuid.uuid4())
+        ttc = factories.tasks.TaskToComputeFactory()
         reason = (
             "Opowiada Hieronim praski o osobliwszej czci, jaką w głębi Litwy"
             " cieszył się żelazny młot niezwykłej wielkości; „znaki zodiaka”"
@@ -281,11 +280,10 @@ class MessagesTestCase(unittest.TestCase):
             " jak wysoko chłop litewski cenił własności „kopalnego” młota"
             " (zeskrobany proszek z wodą przeciw chorobom służył itd.)."
         )
-        msg = message.CannotComputeTask(subtask_id=subtask_id, reason=reason)
+        msg = message.CannotComputeTask(task_to_compute=ttc, reason=reason)
         expected = sorted([
+            ['task_to_compute', ttc],
             ['reason', reason],
-            ['subtask_id', subtask_id],
-            ['task_to_compute', None],
         ])
         self.assertEqual(expected, sorted(msg.slots()))
 

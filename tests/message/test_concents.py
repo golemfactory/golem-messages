@@ -11,10 +11,11 @@ from tests.message import mixins
 
 class ServiceRefusedTest(mixins.RegisteredMessageTestMixin,
                          mixins.SerializationMixin,
-                         mixins.TaskIdTaskToComputeTestMixin,
+                         mixins.TaskIdMixin,
                          unittest.TestCase):
     FACTORY = factories.concents.ServiceRefusedFactory
     MSG_CLASS = concents.ServiceRefused
+    TASK_ID_PROVIDER = 'task_to_compute'
 
 
 class FileTransferTokenTest(mixins.RegisteredMessageTestMixin,
@@ -121,10 +122,11 @@ class AckSubtaskResultsVerifyTest(mixins.RegisteredMessageTestMixin,
 
 class SubtaskResultsSettledTest(mixins.RegisteredMessageTestMixin,
                                 mixins.SerializationMixin,
-                                mixins.TaskIdTaskToComputeTestMixin,
+                                mixins.TaskIdMixin,
                                 unittest.TestCase):
     FACTORY = factories.concents.SubtaskResultsSettledFactory
     MSG_CLASS = concents.SubtaskResultsSettled
+    TASK_ID_PROVIDER = 'task_to_compute'
 
     def test_subtask_result_settled_no_acceptance(self):
         ttc = factories.tasks.TaskToComputeFactory()
@@ -156,10 +158,11 @@ class SubtaskResultsSettledTest(mixins.RegisteredMessageTestMixin,
 
 class ForceGetTaskResultTest(mixins.RegisteredMessageTestMixin,
                              mixins.SerializationMixin,
-                             mixins.TaskIdReportComputedTaskTestMixin,
+                             mixins.TaskIdMixin,
                              unittest.TestCase):
     FACTORY = factories.concents.ForceGetTaskResultFactory
     MSG_CLASS = message.concents.ForceGetTaskResult
+    TASK_ID_PROVIDER = 'report_computed_task'
 
     def test_force_get_task_result(self):
         rct = factories.tasks.ReportComputedTaskFactory()
@@ -177,10 +180,11 @@ class ForceGetTaskResultTest(mixins.RegisteredMessageTestMixin,
 
 class AckForceGetTaskResultTest(mixins.RegisteredMessageTestMixin,
                                 mixins.SerializationMixin,
-                                mixins.TaskIdForceGetTaskResultTestMixin,
+                                mixins.TaskIdMixin,
                                 unittest.TestCase):
     FACTORY = factories.concents.AckForceGetTaskResultFactory
     MSG_CLASS = message.concents.AckForceGetTaskResult
+    TASK_ID_PROVIDER = 'force_get_task_result'
 
     def test_ack_force_get_task_result(self):
         fgtr = factories.concents.ForceGetTaskResultFactory()
@@ -198,10 +202,11 @@ class AckForceGetTaskResultTest(mixins.RegisteredMessageTestMixin,
 
 class ForceGetTaskResultFailedTest(mixins.RegisteredMessageTestMixin,
                                    mixins.SerializationMixin,
-                                   mixins.TaskIdTaskToComputeTestMixin,
+                                   mixins.TaskIdMixin,
                                    unittest.TestCase):
     FACTORY = factories.concents.ForceGetTaskResultFailedFactory
     MSG_CLASS = message.concents.ForceGetTaskResultFailed
+    TASK_ID_PROVIDER = 'task_to_compute'
 
     def test_force_get_task_result_failed(self):
         ttc = factories.tasks.TaskToComputeFactory()
@@ -218,10 +223,11 @@ class ForceGetTaskResultFailedTest(mixins.RegisteredMessageTestMixin,
 
 class ForceGetTaskResultRejectedTest(mixins.RegisteredMessageTestMixin,
                                      mixins.SerializationMixin,
-                                     mixins.TaskIdForceGetTaskResultTestMixin,
+                                     mixins.TaskIdMixin,
                                      unittest.TestCase):
     FACTORY = factories.concents.ForceGetTaskResultRejectedFactory
     MSG_CLASS = message.concents.ForceGetTaskResultRejected
+    TASK_ID_PROVIDER = 'force_get_task_result'
 
     def test_force_get_task_result_rejected(self):
         fgtr = factories.concents.ForceGetTaskResultFactory()
@@ -240,10 +246,11 @@ class ForceGetTaskResultRejectedTest(mixins.RegisteredMessageTestMixin,
 
 class ForceGetTaskResultUploadTest(mixins.RegisteredMessageTestMixin,
                                    mixins.SerializationMixin,
-                                   mixins.TaskIdForceGetTaskResultTestMixin,
+                                   mixins.TaskIdMixin,
                                    unittest.TestCase):
     FACTORY = factories.concents.ForceGetTaskResultUploadFactory
     MSG_CLASS = message.concents.ForceGetTaskResultUpload
+    TASK_ID_PROVIDER = 'force_get_task_result'
 
     def test_force_get_task_result_upload(self):
         fgtr = factories.concents.ForceGetTaskResultFactory()
@@ -266,10 +273,11 @@ class ForceGetTaskResultUploadTest(mixins.RegisteredMessageTestMixin,
 
 class ForceGetTaskResultDownloadTest(mixins.RegisteredMessageTestMixin,
                                      mixins.SerializationMixin,
-                                     mixins.TaskIdForceGetTaskResultTestMixin,
+                                     mixins.TaskIdMixin,
                                      unittest.TestCase):
     FACTORY = factories.concents.ForceGetTaskResultDownloadFactory
     MSG_CLASS = message.concents.ForceGetTaskResultDownload
+    TASK_ID_PROVIDER = 'force_get_task_result'
 
     def test_force_get_task_result_download(self):
         fgtr = factories.concents.ForceGetTaskResultFactory()
@@ -292,10 +300,11 @@ class ForceGetTaskResultDownloadTest(mixins.RegisteredMessageTestMixin,
 
 class ForceSubtaskResultsTest(mixins.RegisteredMessageTestMixin,
                               mixins.SerializationMixin,
-                              mixins.TaskIdAckReportComputedTaskTestMixin,
+                              mixins.TaskIdMixin,
                               unittest.TestCase):
     FACTORY = factories.concents.ForceSubtaskResultsFactory
     MSG_CLASS = concents.ForceSubtaskResults
+    TASK_ID_PROVIDER = 'ack_report_computed_task'
 
     def test_force_subtask_results(self):
         ack_rct = factories.tasks.AckReportComputedTaskFactory()
@@ -523,11 +532,12 @@ class ForcePaymentRejectedTest(mixins.RegisteredMessageTestMixin,
 
 class ForceReportComputedTaskTestCase(
         mixins.RegisteredMessageTestMixin,
-        mixins.TaskIdReportComputedTaskTestMixin,
+        mixins.TaskIdMixin,
         mixins.SerializationMixin,
         unittest.TestCase):
     MSG_CLASS = concents.ForceReportComputedTask
     FACTORY = factories.concents.ForceReportComputedTaskFactory
+    TASK_ID_PROVIDER = 'report_computed_task'
 
 
 class ForceReportComputedTaskResponseTestCase(
@@ -537,24 +547,18 @@ class ForceReportComputedTaskResponseTestCase(
     MSG_CLASS = concents.ForceReportComputedTaskResponse
     FACTORY = factories.concents.ForceReportComputedTaskResponseFactory
 
-    def setUp(self):
-        self.msg = self.FACTORY()
 
-    def test_task_id_ack(self):
-        self.assertEqual(self.msg.task_id,
-                         self.msg.ack_report_computed_task.task_id)
+class FrctAckTest(mixins.TaskIdMixin,
+                  unittest.TestCase):
+    FACTORY = factories.concents.ForceReportComputedTaskResponseFactory.\
+        with_ack_report_computed_task
+    TASK_ID_PROVIDER = 'ack_report_computed_task'
 
-    def test_subtask_id_ack(self):
-        self.assertEqual(self.msg.subtask_id,
-                         self.msg.ack_report_computed_task.subtask_id)
 
-    def test_task_id_reject(self):
-        self.assertEqual(self.msg.task_id,
-                         self.msg.reject_report_computed_task.task_id)
-
-    def test_subtask_id_reject(self):
-        self.assertEqual(self.msg.subtask_id,
-                         self.msg.reject_report_computed_task.subtask_id)
+class FrctRejectTest(mixins.TaskIdMixin, unittest.TestCase):
+    FACTORY = factories.concents.ForceReportComputedTaskResponseFactory.\
+        with_reject_report_computed_task
+    TASK_ID_PROVIDER = 'reject_report_computed_task'
 
 
 class VerdictReportComputeTaskTestCase(
