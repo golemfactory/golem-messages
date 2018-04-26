@@ -60,3 +60,11 @@ class SignatureAlreadyExists(SerializationError):
 
 class VersionMismatchError(MessageError):
     pass
+
+
+class OwnershipMismatch(MessageError):
+    pass
+
+
+class ValidationError(MessageError):
+    pass
