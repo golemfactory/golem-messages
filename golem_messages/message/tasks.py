@@ -4,6 +4,7 @@ import functools
 from ethereum.utils import sha3
 
 from golem_messages import datastructures
+from golem_messages import exceptions
 from golem_messages import validators
 
 from . import base
@@ -47,9 +48,17 @@ class ComputeTaskDef(datastructures.FrozenDict):
     )
 
 
-class TaskMessageMixin:
+class TaskMessage(base.Message):
     __slots__ = []
     TASK_ID_PROVIDERS = ()
+
+    @enum.unique
+    class OWNER_CHOICES(datastructures.StringEnum):
+        provider = enum.auto()
+        requestor = enum.auto()
+        concent = enum.auto()
+
+    EXPECTED_OWNERS = ()
 
     def _get_task_value(self, attr_name):
         msgs = [getattr(self, slot)
@@ -97,6 +106,102 @@ class TaskMessageMixin:
         """
         return self._get_task_value('requestor_id')
 
+    def validate_ownership(self, concent_public_key=None):
+        """
+        validates that the message is signed by one of the expected parties
+        """
+        owner_map = {
+            TaskMessage.OWNER_CHOICES.provider:
+                self.task_to_compute.provider_public_key,
+            TaskMessage.OWNER_CHOICES.requestor:
+                self.task_to_compute.requestor_public_key,
+            TaskMessage.OWNER_CHOICES.concent:
+                concent_public_key,
+        }
+
+        for owner in self.EXPECTED_OWNERS:
+            try:
+                if self.verify_signature(public_key=owner_map.get(owner)):
+                    return True
+            except exceptions.InvalidSignature:
+                pass
+
+        exc = exceptions.InvalidSignature('%s is not signed by %s' % (
+            self.__class__.__name__,
+            ' or '.join([
+                '%s: %s' % (o, owner_map.get(o)) for o in self.EXPECTED_OWNERS
+            ])
+        ))
+        exc.message = self
+        raise exc
+
+    def validate_ownership_chain(self, concent_public_key=None):
+        """
+        validates that the whole chain consists of messages that are signed by
+        their respective expected parties
+        """
+        self.validate_ownership(concent_public_key=concent_public_key)
+
+        for msg in [slot for slot in self.__slots__
+                    if isinstance(slot, TaskMessage)]:
+            msg.validate_ownership_chain(concent_public_key=concent_public_key)
+
+        return True
+
+    def verify_owners(self,
+                      provider_public_key=None,
+                      requestor_public_key=None,
+                      concent_public_key=None):
+        """
+        verifies both that the whole message chain is consistent with respect
+        to the expected message ownership and that the roles in the message
+        chain match the expected provider/requestor keys
+
+        if provided, `provider_public_key` / `requestor_public_key` will be
+        verified against the roles extracted from the included message chain.
+
+        :param provider_public_key:
+        :param requestor_public_key:
+        :param concent_public_key: should be provided if any of the child
+                                   messages is expected to be signed
+                                   by the Concent
+        :return:
+        """
+
+        def assert_role(role, expected, actual):
+            if expected != actual:
+                raise exceptions.OwnershipMismatch(
+                    "Task %s mismatch - expected: %s, actual: %s" % (
+                        role, expected, actual
+                    )
+                )
+
+        if provider_public_key:
+            assert_role('provider',
+                        provider_public_key,
+                        self.task_to_compute.provider_public_key)
+
+        if requestor_public_key:
+            assert_role('requestor',
+                        requestor_public_key,
+                        self.task_to_compute.requestor_public_key)
+
+        self.validate_ownership_chain(concent_public_key=concent_public_key)
+        return True
+
+    def is_valid(self):  # noqa pylint:disable=no-self-use
+        """
+        checks whether the message is valid with respect to the arbitrarily
+        defined validation rules.
+
+        Should raise `exceptions.ValidationError` in case
+        of a failed validation check.
+
+        :raises: `exceptions.ValidationError`
+        :return: bool
+        """
+        return True
+
 
 class WantToComputeTask(base.Message):
     TYPE = TASK_MSG_BASE + 1
@@ -112,7 +217,7 @@ class WantToComputeTask(base.Message):
     ] + base.Message.__slots__
 
 
-class TaskToCompute(TaskMessageMixin, base.Message):
+class TaskToCompute(TaskMessage):
     TYPE = TASK_MSG_BASE + 2
 
     __slots__ = [
@@ -189,7 +294,7 @@ class CannotAssignTask(base.AbstractReasonMessage):
         NoMoreSubtasks = 'no_more_subtasks'
 
 
-class ReportComputedTask(TaskMessageMixin, base.Message):
+class ReportComputedTask(TaskMessage):
     """
     Message sent from a Provider to a Requestor, announcing completion
     of the assigned subtask (attached as `task_to_compute`)
@@ -237,7 +342,7 @@ class GetResource(base.Message):
     ] + base.Message.__slots__
 
 
-class SubtaskResultsAccepted(TaskMessageMixin, base.Message):
+class SubtaskResultsAccepted(TaskMessage):
     """
     Sent from the Requestor to the Provider, accepting the provider's
     completed task results.
@@ -257,7 +362,7 @@ class SubtaskResultsAccepted(TaskMessageMixin, base.Message):
         return super().deserialize_slot(key, value)
 
 
-class SubtaskResultsRejected(TaskMessageMixin, base.AbstractReasonMessage):
+class SubtaskResultsRejected(TaskMessage, base.AbstractReasonMessage):
     """
     Sent from the Requestor to the Provider, rejecting the provider's
     completed task results
@@ -292,7 +397,7 @@ class SubtaskResultsRejected(TaskMessageMixin, base.AbstractReasonMessage):
         return super().deserialize_slot(key, value)
 
 
-class TaskFailure(TaskMessageMixin, base.Message):
+class TaskFailure(TaskMessage):
     TYPE = TASK_MSG_BASE + 15
     TASK_ID_PROVIDERS = ('task_to_compute', )
 
@@ -326,7 +431,7 @@ class WaitingForResults(base.Message):
     __slots__ = base.Message.__slots__
 
 
-class CannotComputeTask(TaskMessageMixin, base.AbstractReasonMessage):
+class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
     TYPE = TASK_MSG_BASE + 26
     TASK_ID_PROVIDERS = ('task_to_compute', )
 
@@ -383,7 +488,7 @@ class SubtaskPaymentRequest(base.Message):
     __slots__ = ['subtask_id'] + base.Message.__slots__
 
 
-class AckReportComputedTask(TaskMessageMixin, base.Message):
+class AckReportComputedTask(TaskMessage):
     """
     Sent from Requestor to the Provider, acknowledging reception of the
     `ReportComputedTask` message.
@@ -406,7 +511,7 @@ class AckReportComputedTask(TaskMessageMixin, base.Message):
         return super().deserialize_slot(key, value)
 
 
-class RejectReportComputedTask(TaskMessageMixin, base.AbstractReasonMessage):
+class RejectReportComputedTask(TaskMessage, base.AbstractReasonMessage):
     TYPE = TASK_MSG_BASE + 30
 
     #

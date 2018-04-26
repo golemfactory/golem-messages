@@ -9,7 +9,7 @@ from . import tasks
 CONCENT_MSG_BASE = 4000
 
 
-class ServiceRefused(tasks.TaskMessageMixin, base.AbstractReasonMessage):
+class ServiceRefused(tasks.TaskMessage, base.AbstractReasonMessage):
     """
     Sent (synchronously) as a response from the Concent to the calling party
     (either a Provider or a Requestor), informing them that the Concent refuses
@@ -41,7 +41,7 @@ class ServiceRefused(tasks.TaskMessageMixin, base.AbstractReasonMessage):
         return super().deserialize_slot(key, value)
 
 
-class ForceReportComputedTask(tasks.TaskMessageMixin, base.Message):
+class ForceReportComputedTask(tasks.TaskMessage):
     """
     Message sent from a Provider to the Concent, requesting an forced
     acknowledgment of the reception of the `ReportComputedTask` message
@@ -62,7 +62,7 @@ class ForceReportComputedTask(tasks.TaskMessageMixin, base.Message):
         return super().deserialize_slot(key, value)
 
 
-class VerdictReportComputedTask(tasks.TaskMessageMixin, base.Message):
+class VerdictReportComputedTask(tasks.TaskMessage):
     """
     Informational message sent from from the Concent to the affected
     Requestor, informing them that the `ReportComputedTask` has been implicitly
@@ -135,7 +135,7 @@ class FileTransferToken(base.Message):
         return self.operation == self.Operation.download
 
 
-class SubtaskResultsVerify(tasks.TaskMessageMixin, base.Message):
+class SubtaskResultsVerify(tasks.TaskMessage):
     """
     Message sent from a Provider to the Concent, requesting additional
     verification in case the result had been rejected by the Requestor
@@ -156,7 +156,7 @@ class SubtaskResultsVerify(tasks.TaskMessageMixin, base.Message):
         return super().deserialize_slot(key, value)
 
 
-class AckSubtaskResultsVerify(tasks.TaskMessageMixin, base.Message):
+class AckSubtaskResultsVerify(tasks.TaskMessage):
     """
     Message sent from the Concent to the Provider to acknowledge reception
     of the `SubtaskResultsVerify` message and more importantly, to pass the
@@ -177,7 +177,7 @@ class AckSubtaskResultsVerify(tasks.TaskMessageMixin, base.Message):
         return super().deserialize_slot(key, value)
 
 
-class SubtaskResultsSettled(tasks.TaskMessageMixin, base.Message):
+class SubtaskResultsSettled(tasks.TaskMessage):
     """
     Message sent from the Concent to both the Provider and the Requestor
     informing of positive acceptance of the results by the Concent and the
@@ -214,7 +214,7 @@ class SubtaskResultsSettled(tasks.TaskMessageMixin, base.Message):
         return super().deserialize_slot(key, value)
 
 
-class ForceGetTaskResult(tasks.TaskMessageMixin, base.Message):
+class ForceGetTaskResult(tasks.TaskMessage):
     TYPE = CONCENT_MSG_BASE + 9
     TASK_ID_PROVIDERS = ('report_computed_task', )
 
@@ -227,7 +227,7 @@ class ForceGetTaskResult(tasks.TaskMessageMixin, base.Message):
         return super().deserialize_slot(key, value)
 
 
-class AckForceGetTaskResult(tasks.TaskMessageMixin, base.Message):
+class AckForceGetTaskResult(tasks.TaskMessage):
     TYPE = CONCENT_MSG_BASE + 10
     TASK_ID_PROVIDERS = ('force_get_task_result', )
 
@@ -240,7 +240,7 @@ class AckForceGetTaskResult(tasks.TaskMessageMixin, base.Message):
         return super().deserialize_slot(key, value)
 
 
-class ForceGetTaskResultFailed(tasks.TaskMessageMixin, base.Message):
+class ForceGetTaskResultFailed(tasks.TaskMessage):
     """
     Sent from the Concent to the Requestor to announce a failure to retrieve
     the results from the Provider.
@@ -261,7 +261,7 @@ class ForceGetTaskResultFailed(tasks.TaskMessageMixin, base.Message):
         return super().deserialize_slot(key, value)
 
 
-class ForceGetTaskResultRejected(tasks.TaskMessageMixin,
+class ForceGetTaskResultRejected(tasks.TaskMessage,
                                  base.AbstractReasonMessage):
     TYPE = CONCENT_MSG_BASE + 12
     TASK_ID_PROVIDERS = ('force_get_task_result', )
@@ -278,7 +278,7 @@ class ForceGetTaskResultRejected(tasks.TaskMessageMixin,
         return super().deserialize_slot(key, value)
 
 
-class ForceGetTaskResultUpload(tasks.TaskMessageMixin, base.Message):
+class ForceGetTaskResultUpload(tasks.TaskMessage):
     TYPE = CONCENT_MSG_BASE + 13
     TASK_ID_PROVIDERS = ('force_get_task_result', )
 
@@ -293,7 +293,7 @@ class ForceGetTaskResultUpload(tasks.TaskMessageMixin, base.Message):
         return super().deserialize_slot(key, value)
 
 
-class ForceGetTaskResultDownload(tasks.TaskMessageMixin, base.Message):
+class ForceGetTaskResultDownload(tasks.TaskMessage):
     TYPE = CONCENT_MSG_BASE + 14
     TASK_ID_PROVIDERS = ('force_get_task_result', )
 
@@ -308,7 +308,7 @@ class ForceGetTaskResultDownload(tasks.TaskMessageMixin, base.Message):
         return super().deserialize_slot(key, value)
 
 
-class ForceSubtaskResults(tasks.TaskMessageMixin, base.Message):
+class ForceSubtaskResults(tasks.TaskMessage):
     """
     Sent from the Provider to the Concent, in an effort to force the
     `SubtaskResultsAccepted/Rejected` message from the Requestor
@@ -331,7 +331,7 @@ class ForceSubtaskResults(tasks.TaskMessageMixin, base.Message):
         return super().deserialize_slot(key, value)
 
 
-class ForceSubtaskResultsResponse(tasks.TaskMessageMixin, base.Message):
+class ForceSubtaskResultsResponse(tasks.TaskMessage):
     """
     Sent from the Concent to the Provider to communicate the final resolution
     of the forced results verdict.
@@ -453,7 +453,7 @@ class ForcePaymentRejected(base.AbstractReasonMessage):
         return super().deserialize_slot(key, value)
 
 
-class ForceReportComputedTaskResponse(tasks.TaskMessageMixin,
+class ForceReportComputedTaskResponse(tasks.TaskMessage,
                                       base.AbstractReasonMessage):
     """Sent from Concent to Provider as a response to ForceReportComputedTask.
     """

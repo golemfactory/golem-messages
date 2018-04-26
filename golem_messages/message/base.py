@@ -515,7 +515,6 @@ class Message():
         :param msg_hash: if provided, a call to `get_short_hash()`
                          will be skipped and the provided hash used instead
         :return: `True` if the signature is correct.
-        :raises: `exceptions.CoincurveError` if the signature is missing
         :raises: `exceptions.InvalidSignature` if the signature is corrupted
         """
         return cryptography.ecdsa_verify(
