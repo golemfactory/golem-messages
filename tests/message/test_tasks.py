@@ -4,6 +4,7 @@ import time
 import unittest
 import unittest.mock as mock
 
+from golem_messages import cryptography
 from golem_messages import exceptions
 from golem_messages import factories
 from golem_messages import message
@@ -185,3 +186,134 @@ class RejectRctTfTestCase(mixins.TaskIdMixin, unittest.TestCase):
     FACTORY = factories.tasks.RejectReportComputedTaskFactory.\
         with_task_failure
     TASK_ID_PROVIDER = 'task_failure'
+
+
+class TaskMessageVerificationTest(unittest.TestCase):
+    @staticmethod
+    def _fake_keys():
+        return cryptography.ECCx(None)
+
+    def setUp(self):
+        self.provider_keys = self._fake_keys()
+        self.requestor_keys = self._fake_keys()
+        self.other_keys = self._fake_keys()
+
+    def get_ttc(self, **kwargs):
+        return factories.tasks.TaskToComputeFactory(
+            provider_public_key=self.provider_keys.raw_pubkey,
+            requestor_public_key=self.requestor_keys.raw_pubkey,
+            **kwargs,
+        )
+
+    def get_rtc(self, **kwargs):
+        return factories.tasks.ReportComputedTaskFactory(
+            **kwargs,
+        )
+
+    def get_signed_rtc(self):
+        return self.get_rtc(
+            task_to_compute=self.get_ttc(
+                sign__privkey=self.requestor_keys.raw_privkey
+            ),
+            sign__privkey=self.provider_keys.raw_privkey
+        )
+
+    def test_validate_ownership(self):
+        ttc = self.get_ttc(
+            sign__privkey=self.requestor_keys.raw_privkey,
+        )
+        self.assertTrue(ttc.validate_ownership())
+
+    def test_validate_ownership_no_sig(self):
+        ttc = self.get_ttc()
+        with self.assertRaises(exceptions.InvalidSignature):
+            ttc.validate_ownership()
+
+    def test_validate_ownership_mismatch(self):
+        ttc = self.get_ttc(
+            sign__privkey=self.provider_keys.raw_privkey,
+        )
+        with self.assertRaises(exceptions.InvalidSignature):
+            ttc.validate_ownership()
+
+    def test_chain(self):
+        rtc = self.get_signed_rtc()
+        self.assertTrue(rtc.validate_ownership_chain())
+
+    def test_chain_parent_no_sig(self):
+        rtc = self.get_rtc(
+            task_to_compute=self.get_ttc(
+                sign__privkey=self.requestor_keys.raw_privkey
+            ),
+        )
+        with self.assertRaises(exceptions.InvalidSignature):
+            rtc.validate_ownership_chain()
+
+    def test_chain_child_no_sig(self):
+        rtc = self.get_rtc(
+            task_to_compute=self.get_ttc(),
+            sign__privkey=self.provider_keys.raw_privkey
+        )
+        with self.assertRaises(exceptions.InvalidSignature):
+            rtc.validate_ownership_chain()
+
+    def test_chain_parent_mismatch(self):
+        rtc = self.get_rtc(
+            task_to_compute=self.get_ttc(
+                sign__privkey=self.requestor_keys.raw_privkey
+            ),
+            sign__privkey=self.requestor_keys.raw_privkey
+        )
+        with self.assertRaises(exceptions.InvalidSignature):
+            rtc.validate_ownership_chain()
+
+    def test_chain_child_mismatch(self):
+        rtc = self.get_rtc(
+            task_to_compute=self.get_ttc(
+                sign__privkey=self.provider_keys.raw_privkey
+            ),
+            sign__privkey=self.provider_keys.raw_privkey
+        )
+        with self.assertRaises(exceptions.InvalidSignature):
+            rtc.validate_ownership_chain()
+
+    def test_verify_owners(self):
+        rtc = self.get_signed_rtc()
+        self.assertTrue(
+            rtc.verify_owners(
+                provider_public_key=self.provider_keys.raw_pubkey,
+                requestor_public_key=self.requestor_keys.raw_pubkey,
+            )
+        )
+
+    def test_verify_owners_provider_only(self):
+        rtc = self.get_signed_rtc()
+        self.assertTrue(
+            rtc.verify_owners(
+                provider_public_key=self.provider_keys.raw_pubkey))
+
+    def test_verify_owners_requestor_only(self):
+        rtc = self.get_signed_rtc()
+        self.assertTrue(
+            rtc.verify_owners(
+                requestor_public_key=self.requestor_keys.raw_pubkey))
+
+    def test_verify_owners_provider_mismatch(self):
+        rtc = self.get_signed_rtc()
+        with self.assertRaises(exceptions.OwnershipMismatch) as e:
+            rtc.verify_owners(
+                provider_public_key=self.other_keys.raw_pubkey,
+                requestor_public_key=self.requestor_keys.raw_pubkey,
+            )
+
+        self.assertIn('provider', str(e.exception))
+
+    def test_verify_owners_requestor_mismatch(self):
+        rtc = self.get_signed_rtc()
+        with self.assertRaises(exceptions.OwnershipMismatch) as e:
+            rtc.verify_owners(
+                provider_public_key=self.provider_keys.raw_pubkey,
+                requestor_public_key=self.other_keys.raw_pubkey,
+            )
+        self.assertIn('requestor', str(e.exception))
+

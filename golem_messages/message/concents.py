@@ -21,6 +21,7 @@ class ServiceRefused(tasks.TaskMessage, base.AbstractReasonMessage):
     """
     TYPE = CONCENT_MSG_BASE
     TASK_ID_PROVIDERS = ('task_to_compute', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
     @enum.unique
     class REASON(enum.Enum):
@@ -51,6 +52,8 @@ class ForceReportComputedTask(tasks.TaskMessage):
     """
     TYPE = CONCENT_MSG_BASE + 1
     TASK_ID_PROVIDERS = ('report_computed_task', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.provider,
+                       tasks.TaskMessage.OWNER_CHOICES.concent)
 
     __slots__ = [
         'report_computed_task',
@@ -75,6 +78,7 @@ class VerdictReportComputedTask(tasks.TaskMessage):
     TYPE = CONCENT_MSG_BASE + 4
     TASK_ID_PROVIDERS = ('force_report_computed_task',
                          'ack_report_computed_task', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
     __slots__ = [
         'force_report_computed_task',
@@ -146,6 +150,7 @@ class SubtaskResultsVerify(tasks.TaskMessage):
     """
     TYPE = CONCENT_MSG_BASE + 6
     TASK_ID_PROVIDERS = ('subtask_results_rejected', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.provider, )
 
     __slots__ = [
         'subtask_results_rejected',
@@ -165,6 +170,7 @@ class AckSubtaskResultsVerify(tasks.TaskMessage):
     """
     TYPE = CONCENT_MSG_BASE + 7
     TASK_ID_PROVIDERS = ('subtask_results_verify', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
     __slots__ = [
         'subtask_results_verify',
@@ -194,6 +200,7 @@ class SubtaskResultsSettled(tasks.TaskMessage):
 
     TYPE = CONCENT_MSG_BASE + 8
     TASK_ID_PROVIDERS = ('task_to_compute', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
     @enum.unique
     class Origin(enum.Enum):
@@ -215,8 +222,13 @@ class SubtaskResultsSettled(tasks.TaskMessage):
 
 
 class ForceGetTaskResult(tasks.TaskMessage):
+    """
+    Sent from the Requestor to the Concent, requesting assistance in
+    downloading the results from the Provider.
+    """
     TYPE = CONCENT_MSG_BASE + 9
     TASK_ID_PROVIDERS = ('report_computed_task', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.requestor, )
 
     __slots__ = [
         'report_computed_task',
@@ -228,8 +240,13 @@ class ForceGetTaskResult(tasks.TaskMessage):
 
 
 class AckForceGetTaskResult(tasks.TaskMessage):
+    """
+    Sent from the Concent to the Requestor to acknowledge reception of the
+    `ForceGetTaskResult` message
+    """
     TYPE = CONCENT_MSG_BASE + 10
     TASK_ID_PROVIDERS = ('force_get_task_result', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
     __slots__ = [
         'force_get_task_result',
@@ -251,6 +268,7 @@ class ForceGetTaskResultFailed(tasks.TaskMessage):
     """
     TYPE = CONCENT_MSG_BASE + 11
     TASK_ID_PROVIDERS = ('task_to_compute', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
     __slots__ = [
         'task_to_compute',
@@ -263,8 +281,13 @@ class ForceGetTaskResultFailed(tasks.TaskMessage):
 
 class ForceGetTaskResultRejected(tasks.TaskMessage,
                                  base.AbstractReasonMessage):
+    """
+    Sent from the Concent to the Requestor to notify them that the
+    `ForceGetTaskResult` message was not allowed at this time
+    """
     TYPE = CONCENT_MSG_BASE + 12
     TASK_ID_PROVIDERS = ('force_get_task_result', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
     __slots__ = [
         'force_get_task_result',
@@ -279,8 +302,13 @@ class ForceGetTaskResultRejected(tasks.TaskMessage,
 
 
 class ForceGetTaskResultUpload(tasks.TaskMessage):
+    """
+    Sent from the Concent to the Provider to notify them they can (and need to)
+    upload the results to them
+    """
     TYPE = CONCENT_MSG_BASE + 13
     TASK_ID_PROVIDERS = ('force_get_task_result', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
     __slots__ = [
         'force_get_task_result',
@@ -294,8 +322,13 @@ class ForceGetTaskResultUpload(tasks.TaskMessage):
 
 
 class ForceGetTaskResultDownload(tasks.TaskMessage):
+    """
+    Sent from the Concent to the Requestor to notify them that the results
+    are available for download.
+    """
     TYPE = CONCENT_MSG_BASE + 14
     TASK_ID_PROVIDERS = ('force_get_task_result', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
     __slots__ = [
         'force_get_task_result',
@@ -321,6 +354,7 @@ class ForceSubtaskResults(tasks.TaskMessage):
     """
     TYPE = CONCENT_MSG_BASE + 15
     TASK_ID_PROVIDERS = ('ack_report_computed_task', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.provider, )
 
     __slots__ = [
         'ack_report_computed_task',
@@ -344,6 +378,7 @@ class ForceSubtaskResultsResponse(tasks.TaskMessage):
     TYPE = CONCENT_MSG_BASE + 16
     TASK_ID_PROVIDERS = ('subtask_results_accepted',
                          'subtask_results_rejected', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
     __slots__ = [
         'subtask_results_accepted',
@@ -460,6 +495,7 @@ class ForceReportComputedTaskResponse(tasks.TaskMessage,
     TYPE = CONCENT_MSG_BASE + 21
     TASK_ID_PROVIDERS = ('ack_report_computed_task',
                          'reject_report_computed_task', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
     @enum.unique
     class REASON(enum.Enum):

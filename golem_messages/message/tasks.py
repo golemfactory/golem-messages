@@ -109,6 +109,9 @@ class TaskMessage(base.Message):
     def validate_ownership(self, concent_public_key=None):
         """
         validates that the message is signed by one of the expected parties
+
+        requires `concent_public_key` if the Concent is one of the possible
+        owners
         """
         owner_map = {
             TaskMessage.OWNER_CHOICES.provider:
@@ -126,10 +129,12 @@ class TaskMessage(base.Message):
             except exceptions.InvalidSignature:
                 pass
 
-        exc = exceptions.InvalidSignature('%s is not signed by %s' % (
+        exc = exceptions.InvalidSignature('%s is not signed by the %s' % (
             self.__class__.__name__,
             ' or '.join([
-                '%s: %s' % (o, owner_map.get(o)) for o in self.EXPECTED_OWNERS
+                '%s: %s' % (
+                    o.value, owner_map.get(o)
+                ) for o in self.EXPECTED_OWNERS
             ])
         ))
         exc.message = self
@@ -139,10 +144,14 @@ class TaskMessage(base.Message):
         """
         validates that the whole chain consists of messages that are signed by
         their respective expected parties
+
+        requires `concent_public_key` if the Concent is a possible owner of
+        any message within the chain
         """
         self.validate_ownership(concent_public_key=concent_public_key)
 
-        for msg in [slot for slot in self.__slots__
+        for msg in [slot for slot in
+                    [getattr(self, slot_name) for slot_name in self.__slots__]
                     if isinstance(slot, TaskMessage)]:
             msg.validate_ownership_chain(concent_public_key=concent_public_key)
 
@@ -162,7 +171,7 @@ class TaskMessage(base.Message):
 
         :param provider_public_key:
         :param requestor_public_key:
-        :param concent_public_key: should be provided if any of the child
+        :param concent_public_key: must be provided if any of the child
                                    messages is expected to be signed
                                    by the Concent
         :return:
@@ -219,6 +228,7 @@ class WantToComputeTask(base.Message):
 
 class TaskToCompute(TaskMessage):
     TYPE = TASK_MSG_BASE + 2
+    EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
 
     __slots__ = [
         'requestor_id',  # a.k.a. node id
@@ -307,6 +317,7 @@ class ReportComputedTask(TaskMessage):
     }
 
     TASK_ID_PROVIDERS = ('task_to_compute', )
+    EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.provider, )
 
     __slots__ = [
         # TODO why do we need the type here?
@@ -351,6 +362,7 @@ class SubtaskResultsAccepted(TaskMessage):
     """
     TYPE = TASK_MSG_BASE + 10
     TASK_ID_PROVIDERS = ('task_to_compute', )
+    EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
 
     __slots__ = [
         'payment_ts',
@@ -376,6 +388,8 @@ class SubtaskResultsRejected(TaskMessage, base.AbstractReasonMessage):
     """
     TYPE = TASK_MSG_BASE + 11
     TASK_ID_PROVIDERS = ('report_computed_task', )
+    EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor,
+                       TaskMessage.OWNER_CHOICES.concent)
 
     __slots__ = [
         'report_computed_task',
@@ -400,6 +414,7 @@ class SubtaskResultsRejected(TaskMessage, base.AbstractReasonMessage):
 class TaskFailure(TaskMessage):
     TYPE = TASK_MSG_BASE + 15
     TASK_ID_PROVIDERS = ('task_to_compute', )
+    EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.provider, )
 
     __slots__ = [
         'task_to_compute',
@@ -434,6 +449,7 @@ class WaitingForResults(base.Message):
 class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
     TYPE = TASK_MSG_BASE + 26
     TASK_ID_PROVIDERS = ('task_to_compute', )
+    EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.provider, )
 
     __slots__ = [
         'task_to_compute',
@@ -501,6 +517,7 @@ class AckReportComputedTask(TaskMessage):
 
     TYPE = TASK_MSG_BASE + 29
     TASK_ID_PROVIDERS = ('report_computed_task', )
+    EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
 
     __slots__ = [
         'report_computed_task',
@@ -523,6 +540,8 @@ class RejectReportComputedTask(TaskMessage, base.AbstractReasonMessage):
     TASK_ID_PROVIDERS = ('attached_task_to_compute',
                          'task_failure',
                          'cannot_compute_task', )
+    EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor,
+                       TaskMessage.OWNER_CHOICES.concent)
 
     @enum.unique
     class REASON(enum.Enum):
