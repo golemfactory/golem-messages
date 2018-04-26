@@ -316,4 +316,3 @@ class TaskMessageVerificationTest(unittest.TestCase):
                 requestor_public_key=self.other_keys.raw_pubkey,
             )
         self.assertIn('requestor', str(e.exception))
-
