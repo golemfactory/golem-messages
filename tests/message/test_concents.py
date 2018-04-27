@@ -587,6 +587,15 @@ class VerdictReportComputeTaskTestCase(
         self.assertEqual(self.msg.subtask_id,
                          self.msg.force_report_computed_task.subtask_id)
 
+    def test_is_valid(self):
+        self.assertTrue(self.msg.is_valid())
+
+    def test_not_is_valid(self):
+        self.msg.ack_report_computed_task.\
+            report_computed_task.task_to_compute = \
+            factories.tasks.TaskToComputeFactory()
+        with self.assertRaises(exceptions.ValidationError):
+            self.msg.is_valid()
 
 class ClientAuthorizationTestCase(
         mixins.RegisteredMessageTestMixin,

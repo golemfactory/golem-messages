@@ -1,6 +1,7 @@
 import enum
 
 from golem_messages import datastructures
+from golem_messages import exceptions
 
 from . import base
 from . import tasks
@@ -89,6 +90,20 @@ class VerdictReportComputedTask(tasks.TaskMessage):
     @base.verify_slot('ack_report_computed_task', tasks.AckReportComputedTask)
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
+
+    def is_valid(self):
+        ttcs_tuple = (
+            self.ack_report_computed_task.
+            report_computed_task.task_to_compute,
+            self.force_report_computed_task.
+            report_computed_task.task_to_compute,
+        )
+
+        if not ttcs_tuple.count(ttcs_tuple[0]) == len(ttcs_tuple):
+            raise exceptions.ValidationError(
+                'Multiple, differing TaskToCompute messages in %s' % self)
+
+        return True
 
 
 class FileTransferToken(base.Message):
