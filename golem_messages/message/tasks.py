@@ -200,8 +200,12 @@ class TaskMessage(base.Message):
 
     def is_valid(self):  # noqa pylint:disable=no-self-use
         """
-        checks whether the message is valid with respect to the arbitrarily
-        defined validation rules.
+        checks whether the message is semantically valid with respect to
+        golem logic requirements regarding the specific task-related messages
+
+        it should _not_ verify the cryptographic signatures and/or
+        ownership of the message or any messages contained within, as these
+        are performed by the `verify_owners` et al
 
         Should raise `exceptions.ValidationError` in case
         of a failed validation check.
