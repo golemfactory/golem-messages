@@ -548,25 +548,10 @@ class RejectReportComputedTask(TaskMessage, base.AbstractReasonMessage):
                        TaskMessage.OWNER_CHOICES.concent)
 
     @enum.unique
-    class REASON(enum.Enum):
-        """
-        since python 3.6 it's possible to do this:
-
-        class StringEnum(str, enum.Enum):
-            def _generate_next_value_(name: str, *_):
-                return name
-
-        @enum.unique
-        class REASON(StringEnum):
-            TASK_TIME_LIMIT_EXCEEDED = enum.auto()
-            SUBTASK_TIME_LIMIT_EXCEEDED = enum.auto()
-            GOT_MESSAGE_CANNOT_COMPUTE_TASK = enum.auto()
-            GOT_MESSAGE_TASK_FAILURE = enum.auto()
-        """
-        TaskTimeLimitExceeded = 'TASK_TIME_LIMIT_EXCEEDED'
-        SubtaskTimeLimitExceeded = 'SUBTASK_TIME_LIMIT_EXCEEDED'
-        GotMessageCannotComputeTask = 'GOT_MESSAGE_CANNOT_COMPUTE_TASK'
-        GotMessageTaskFailure = 'GOT_MESSAGE_TASK_FAILURE'
+    class REASON(datastructures.StringEnum):
+        SubtaskTimeLimitExceeded = enum.auto()
+        GotMessageCannotComputeTask = enum.auto()
+        GotMessageTaskFailure = enum.auto()
 
     __slots__ = [
         'attached_task_to_compute',
