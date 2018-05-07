@@ -181,7 +181,7 @@ class TaskMessage(base.Message):
             if expected != actual:
                 raise exceptions.OwnershipMismatch(
                     "%s: Task %s mismatch - expected: %s, actual: %s" % (
-                        self, role, expected, actual
+                        self.__class__.__name__, role, expected, actual
                     )
                 )
 
