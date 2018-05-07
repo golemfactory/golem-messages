@@ -521,7 +521,8 @@ class AckReportComputedTask(TaskMessage):
 
     TYPE = TASK_MSG_BASE + 29
     TASK_ID_PROVIDERS = ('report_computed_task', )
-    EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
+    EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor,
+                       TaskMessage.OWNER_CHOICES.concent)
 
     __slots__ = [
         'report_computed_task',
