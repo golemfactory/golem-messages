@@ -162,6 +162,22 @@ class AckReportComputedTaskTestCase(
     FACTORY = factories.tasks.AckReportComputedTaskFactory
     TASK_ID_PROVIDER = 'report_computed_task'
 
+    def test_validate_owner_requestor(self):
+        requestor_keys = cryptography.ECCx(None)
+        arct = self.FACTORY(
+            report_computed_task__task_to_compute__requestor_public_key=requestor_keys.raw_pubkey,  # noqa pylint:disable=line-too-long
+            sign__privkey=requestor_keys.raw_privkey,
+        )
+        self.assertTrue(arct.validate_ownership())
+
+    def test_validate_owner_concent(self):
+        concent_keys = cryptography.ECCx(None)
+        arct = self.FACTORY(
+            sign__privkey=concent_keys.raw_privkey,
+        )
+        self.assertTrue(
+            arct.validate_ownership(
+                concent_public_key=concent_keys.raw_pubkey))
 
 class RejectReportComputedTaskTestCase(
         mixins.RegisteredMessageTestMixin,
