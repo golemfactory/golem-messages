@@ -180,8 +180,8 @@ class TaskMessage(base.Message):
         def assert_role(role, expected, actual):
             if expected != actual:
                 raise exceptions.OwnershipMismatch(
-                    "Task %s mismatch - expected: %s, actual: %s" % (
-                        role, expected, actual
+                    "%s: Task %s mismatch - expected: %s, actual: %s" % (
+                        self, role, expected, actual
                     )
                 )
 
