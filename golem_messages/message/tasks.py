@@ -459,13 +459,14 @@ class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
         'task_to_compute',
     ] + base.AbstractReasonMessage.__slots__
 
-    class REASON(enum.Enum):
-        WrongCTD = 'wrong_ctd'
-        WrongKey = 'wrong_key'
-        WrongAddress = 'wrong_address'
-        WrongEnvironment = 'wrong_environment'
-        NoSourceCode = 'no_source_code'
-        WrongDockerImages = 'wrong_docker_images'
+    class REASON(datastructures.StringEnum):
+        WrongCTD = enum.auto()
+        WrongKey = enum.auto()
+        WrongAddress = enum.auto()
+        WrongEnvironment = enum.auto()
+        NoSourceCode = enum.auto()
+        WrongDockerImages = enum.auto()
+        ConcentRequired = enum.auto()
 
     @base.verify_slot('task_to_compute', TaskToCompute)
     def deserialize_slot(self, key, value):
