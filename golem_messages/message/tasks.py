@@ -467,6 +467,7 @@ class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
         NoSourceCode = enum.auto()
         WrongDockerImages = enum.auto()
         ConcentRequired = enum.auto()
+        ConcentDisabled = enum.auto()
 
     @base.verify_slot('task_to_compute', TaskToCompute)
     def deserialize_slot(self, key, value):
