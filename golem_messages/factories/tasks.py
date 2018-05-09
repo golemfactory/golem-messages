@@ -66,6 +66,7 @@ class CannotComputeTaskFactory(helpers.MessageFactory):
         model = tasks.CannotComputeTask
 
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    reason = factory.fuzzy.FuzzyChoice(tasks.CannotComputeTask.REASON)
 
 
 class TaskFailureFactory(helpers.MessageFactory):
