@@ -204,6 +204,46 @@ class RejectRctTfTestCase(mixins.TaskIdMixin, unittest.TestCase):
     TASK_ID_PROVIDER = 'task_failure'
 
 
+class RejectReportComputedTaskSlotValidationTest(unittest.TestCase):
+    FACTORY = factories.tasks.RejectReportComputedTaskFactory
+
+    @staticmethod
+    def dump_and_load(msg):
+        return message.base.Message.deserialize(msg.serialize(), lambda m: m)
+
+    def test_validate_task_to_compute(self):
+        msg = self.FACTORY.with_task_to_compute()
+        msg2 = self.dump_and_load(msg)
+        self.assertEqual(msg, msg2)
+
+    def test_fail_task_to_compute(self):
+        msg = self.FACTORY(attached_task_to_compute='blah')
+        with self.assertRaises(exceptions.FieldError):
+            self.dump_and_load(msg)
+
+    def test_validate_cannot_compute_task(self):
+        msg = self.FACTORY.with_cannot_compute_task()
+        msg2 = self.dump_and_load(msg)
+        self.assertEqual(msg, msg2)
+
+    def test_fail_cannot_compute_task(self):
+        msg = self.FACTORY(
+            cannot_compute_task=factories.tasks.TaskToComputeFactory())
+        with self.assertRaises(exceptions.FieldError):
+            self.dump_and_load(msg)
+
+    def test_validate_task_failure(self):
+        msg = self.FACTORY.with_task_failure()
+        msg2 = self.dump_and_load(msg)
+        self.assertEqual(msg, msg2)
+
+    def test_fail_task_failure(self):
+        msg = self.FACTORY(
+            task_failure=factories.tasks.TaskToComputeFactory())
+        with self.assertRaises(exceptions.FieldError):
+            self.dump_and_load(msg)
+
+
 class TaskMessageVerificationTest(unittest.TestCase):
     @staticmethod
     def _fake_keys():
@@ -332,3 +372,27 @@ class TaskMessageVerificationTest(unittest.TestCase):
                 requestor_public_key=self.other_keys.raw_pubkey,
             )
         self.assertIn('requestor', str(e.exception))
+
+
+class CannotComputeTaskTest(
+        mixins.RegisteredMessageTestMixin,
+        mixins.TaskIdMixin,
+        mixins.SerializationMixin,
+        unittest.TestCase):
+    MSG_CLASS = message.tasks.CannotComputeTask
+    FACTORY = factories.tasks.CannotComputeTaskFactory
+    TASK_ID_PROVIDER = 'task_to_compute'
+
+    def test_factory_default_reason(self):
+        msg = self.FACTORY()
+        self.assertIsNotNone(msg.reason)
+
+
+class TaskFailureTest(
+        mixins.RegisteredMessageTestMixin,
+        mixins.TaskIdMixin,
+        mixins.SerializationMixin,
+        unittest.TestCase):
+    MSG_CLASS = message.tasks.TaskFailure
+    FACTORY = factories.tasks.TaskFailureFactory
+    TASK_ID_PROVIDER = 'task_to_compute'

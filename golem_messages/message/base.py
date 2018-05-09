@@ -90,7 +90,7 @@ def _validate_slot(key, value, verify_class):
         _verify_slot_type(value, verify_class)
     except TypeError as e:
         raise exceptions.FieldError(
-            "Should an instance of {should_be} not {is_now}".format(
+            "Should be an instance of {should_be} not {is_now}".format(
                 should_be=verify_class,
                 is_now=type(value),
             ),
