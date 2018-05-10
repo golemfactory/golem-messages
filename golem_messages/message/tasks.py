@@ -305,9 +305,10 @@ class CannotAssignTask(base.AbstractReasonMessage):
         'task_id'
     ] + base.AbstractReasonMessage.__slots__
 
-    class REASON(enum.Enum):
-        NotMyTask = 'not_my_task'
-        NoMoreSubtasks = 'no_more_subtasks'
+    class REASON(datastructures.StringEnum):
+        NotMyTask = enum.auto()
+        NoMoreSubtasks = enum.auto()
+        ConcentDisabled = enum.auto()
 
 
 class ReportComputedTask(TaskMessage):
