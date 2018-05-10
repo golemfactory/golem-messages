@@ -226,7 +226,9 @@ class WantToComputeTask(base.Message):
         'max_resource_size',
         'max_memory_size',
         'num_cores',
-        'price'
+        'price',
+        'concent_enabled',  # Provider notifies requestor
+                            # about his concent status
     ] + base.Message.__slots__
 
 
@@ -244,7 +246,7 @@ class TaskToCompute(TaskMessage):
         'compute_task_def',
         'package_hash',
         'concent_enabled',
-        'price', # total subtask price computed as `price * subtask_timeout`
+        'price',  # total subtask price computed as `price * subtask_timeout`
     ] + base.Message.__slots__
 
     def __init__(self, header: datastructures.MessageHeader = None,
