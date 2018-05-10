@@ -190,6 +190,7 @@ class Message():
 
     TYPE = None
     ENCRYPT = True
+    SIGN = True
     ENUM_SLOTS = {}
 
     def __init__(self,
@@ -315,7 +316,7 @@ class Message():
         # When nesting one message inside another it's important
         # not to overwrite original signature.
         if self.sig is None:
-            if sign_as:
+            if sign_as and self.SIGN:
                 self.sign_message(
                     private_key=sign_as,
                     msg_hash=self.get_short_hash(payload)
@@ -463,7 +464,7 @@ class Message():
             **kwargs,
         )
 
-        if sender_public_key:
+        if sender_public_key and cls.SIGN:
             instance.verify_signature(
                 sender_public_key, msg_hash=instance.get_short_hash(payload))
         return instance

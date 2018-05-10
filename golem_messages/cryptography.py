@@ -72,10 +72,9 @@ def verify_pubkey(key):
 
 
 def privtopub(raw_privkey):
-    raw_pubkey = bitcoin.encode_pubkey(
-        bitcoin.privtopub(raw_privkey),
-        'bin_electrum'
-    )
+    raw_pubkey = coincurve.PrivateKey(raw_privkey)\
+        .public_key\
+        .format(compressed=False)[1:]
     verify_pubkey(raw_pubkey)
     return raw_pubkey
 
@@ -152,9 +151,7 @@ class ECCx(pyelliptic.ECC):
     Modified to work with raw_pubkey format used in RLPx
     and binding default curve and cipher
     """
-    ecies_ciphername = 'aes-128-ctr'
     curve = 'secp256k1'
-    ecies_encrypt_overhead_length = 113
 
     def __init__(self, raw_privkey):
         if raw_privkey is not None:
@@ -211,117 +208,6 @@ class ECCx(pyelliptic.ECC):
             return False
         return True
 
-    @classmethod
-    def ecies_encrypt(cls, data, raw_pubkey, shared_mac_data=''):
-        """
-        ECIES Encrypt, where P = recipient public key is:
-        1) generate r = random value
-        2) generate shared-secret = kdf( ecdhAgree(r, P) )
-        3) generate R = rG [same op as generating a public key]
-        4) send 0x04 || R || AsymmetricEncrypt(shared-secret, plaintext) || tag
-
-
-        currently used by go:
-        ECIES_AES128_SHA256 = &ECIESParams{
-            Hash: sha256.New,
-            hashAlgo: crypto.SHA256,
-            Cipher: aes.NewCipher,
-            BlockSize: aes.BlockSize,
-            KeyLen: 16,
-            }
-
-        """
-        # 1) generate r = random value
-        ephem = cls(None)
-
-        # 2) generate shared-secret = kdf( ecdhAgree(r, P) )
-        key_material = ephem.raw_get_ecdh_key(
-            pubkey_x=raw_pubkey[:32], pubkey_y=raw_pubkey[32:]
-        )
-        assert len(key_material) == 32
-        key = eciesKDF(key_material, 32)
-        assert len(key) == 32
-        key_enc, key_mac = key[:16], key[16:]
-
-        key_mac = hashlib.sha256(key_mac).digest()  # !!!
-        assert len(key_mac) == 32
-        # 3) generate R = rG [same op as generating a public key]
-        # ephem.raw_pubkey
-
-        # encrypt
-        iv = pyelliptic.Cipher.gen_IV(cls.ecies_ciphername)
-        assert len(iv) == 16
-        ctx = pyelliptic.Cipher(key_enc, iv, 1, cls.ecies_ciphername)
-        ciphertext = ctx.ciphering(data)
-        assert len(ciphertext) == len(data)
-
-        # 4) send 0x04 || R || AsymmetricEncrypt(shared-secret, plaintext)
-        #    || tag
-        msg = rlp_utils.ascii_chr(0x04) + ephem.raw_pubkey + iv + ciphertext
-
-        # the MAC of a message (called the tag) as per SEC 1, 3.5.
-        tag = pyelliptic.hmac_sha256(
-            key_mac, msg[1 + 64:] + rlp_utils.str_to_bytes(shared_mac_data)
-        )
-        assert len(tag) == 32
-        msg += tag
-
-        assert len(msg) == 1 + 64 + 16 + 32 + len(data) == 113 + len(data)
-        assert len(msg) - cls.ecies_encrypt_overhead_length == len(data)
-        return msg
-
-    def ecies_decrypt(self, data, shared_mac_data=b''):
-        """
-        Decrypt data with ECIES method using the local private key
-
-        ECIES Decrypt (performed by recipient):
-        1) generate shared-secret = kdf( ecdhAgree(myPrivKey, msg[1:65]) )
-        2) verify tag
-        3) decrypt
-
-        ecdhAgree(r, recipientPublic) == ecdhAgree(recipientPrivate, R)
-        [where R = r*G, and recipientPublic = recipientPrivate*G]
-
-        """
-        if data[:1] != b'\x04':
-            raise exceptions.DecryptionError("wrong ecies header")
-
-        #  1) generate shared-secret = kdf( ecdhAgree(myPrivKey, msg[1:65]) )
-        _shared = data[1:1 + 64]
-        # FIXME, check that _shared_pub is a valid one (on curve)
-
-        key_material = self.raw_get_ecdh_key(
-            pubkey_x=_shared[:32], pubkey_y=_shared[32:]
-        )
-        assert len(key_material) == 32
-        key = eciesKDF(key_material, 32)
-        assert len(key) == 32
-        key_enc, key_mac = key[:16], key[16:]
-
-        key_mac = hashlib.sha256(key_mac).digest()
-        assert len(key_mac) == 32
-
-        tag = data[-32:]
-        assert len(tag) == 32
-
-        # 2) verify tag
-        hmaced_data = pyelliptic.hmac_sha256(
-            key_mac, data[1 + 64:- 32] + shared_mac_data
-        )
-        if not pyelliptic.equals(hmaced_data, tag):
-            raise exceptions.DecryptionError("Fail to verify data")
-
-        # 3) decrypt
-        blocksize = pyelliptic.OpenSSL.get_cipher(self.ecies_ciphername).get_blocksize()  # noqa
-        iv = data[1 + 64:1 + 64 + blocksize]
-        assert len(iv) == 16
-        ciphertext = data[1 + 64 + blocksize:- 32]
-        assert 1 + len(_shared) + len(iv) + len(ciphertext) + len(tag) == len(data)  # noqa
-        ctx = pyelliptic.Cipher(key_enc, iv, 0, self.ecies_ciphername)
-        return ctx.ciphering(ciphertext)
-    encrypt = ecies_encrypt
-    decrypt = ecies_decrypt
-
     def sign(self, inputb):
         signature = ecdsa_sign(self.raw_privkey, inputb)
         assert len(signature) == 65
@@ -331,3 +217,130 @@ class ECCx(pyelliptic.ECC):
         if len(sig) != 65:
             raise exceptions.InvalidSignature('Invalid length')
         return ecdsa_verify(self.raw_pubkey, sig, inputb)
+
+
+ecies_ciphername = 'aes-128-ctr'
+ecies_encrypt_overhead_length = 1 + 64 + 16 + 32
+enc_cache = {}
+
+
+def ecies_encrypt(data, raw_pubkey, shared_mac_data=b''):
+    """
+    ECIES Encrypt, where P = recipient public key is:
+    1) generate r = random value
+    2) generate shared-secret = kdf( ecdhAgree(r, P) )
+    3) generate R = rG [same op as generating a public key]
+    4) send 0x04 || R || AsymmetricEncrypt(shared-secret, plaintext) || tag
+
+
+    currently used by go:
+    ECIES_AES128_SHA256 = &ECIESParams{
+        Hash: sha256.New,
+        hashAlgo: crypto.SHA256,
+        Cipher: aes.NewCipher,
+        BlockSize: aes.BlockSize,
+        KeyLen: 16,
+        }
+
+    """
+
+    if raw_pubkey not in enc_cache:
+        # 1) generate r = random value
+        ephem = coincurve.PrivateKey()
+
+        # 2) generate shared-secret = kdf( ecdhAgree(r, P) )
+        pubkey = coincurve.PublicKey(b'\x04' + raw_pubkey)
+        key_material = ephem.ecdh(pubkey.format())
+        assert len(key_material) == 32
+        key = eciesKDF(key_material, 32)
+        assert len(key) == 32
+        key_enc, key_mac = key[:16], key[16:]
+
+        key_mac = hashlib.sha256(key_mac).digest()  # !!!
+        assert len(key_mac) == 32
+
+        # 3) generate R = rG [same op as generating a public key]
+        ephem_pubkey = ephem.public_key.format(compressed=False)
+
+        enc_cache[raw_pubkey] = key_enc, key_mac, ephem_pubkey
+
+    else:
+        key_enc, key_mac, ephem_pubkey = enc_cache[raw_pubkey]
+
+    # encrypt
+    iv = pyelliptic.Cipher.gen_IV(ecies_ciphername)
+    assert len(iv) == 16
+    ctx = pyelliptic.Cipher(key_enc, iv, 1, ecies_ciphername)
+    ciphertext = ctx.ciphering(data)
+    assert len(ciphertext) == len(data)
+
+    # 4) send 0x04 || R || AsymmetricEncrypt(shared-secret, plaintext)
+    #    || tag
+    msg = ephem_pubkey + iv + ciphertext
+
+    # the MAC of a message (called the tag) as per SEC 1, 3.5.
+    tag = pyelliptic.hmac_sha256(
+        key_mac, msg[1 + 64:] + shared_mac_data
+    )
+    assert len(tag) == 32
+    msg += tag
+
+    assert len(msg) == ecies_encrypt_overhead_length + len(data)
+    return msg
+
+
+dec_cache = {}
+
+
+def ecies_decrypt(data, raw_privkey, shared_mac_data=b''):
+    """
+    Decrypt data with ECIES method using the local private key
+
+    ECIES Decrypt (performed by recipient):
+    1) generate shared-secret = kdf( ecdhAgree(myPrivKey, msg[1:65]) )
+    2) verify tag
+    3) decrypt
+
+    ecdhAgree(r, recipientPublic) == ecdhAgree(recipientPrivate, R)
+    [where R = r*G, and recipientPublic = recipientPrivate*G]
+
+    """
+    if data[:1] != b'\x04':
+        raise exceptions.DecryptionError("wrong ecies header")
+
+    ephem_pubkey = data[:1 + 64]
+
+    if ephem_pubkey not in dec_cache:
+        #  1) generate shared-secret = kdf( ecdhAgree(myPrivKey, msg[1:65]) )
+        key_material = coincurve.PrivateKey(raw_privkey).ecdh(ephem_pubkey)
+        assert len(key_material) == 32
+        key = eciesKDF(key_material, 32)
+        assert len(key) == 32
+        key_enc, key_mac = key[:16], key[16:]
+
+        key_mac = hashlib.sha256(key_mac).digest()
+        assert len(key_mac) == 32
+
+        dec_cache[ephem_pubkey] = key_enc, key_mac
+
+    else:
+        key_enc, key_mac = dec_cache[ephem_pubkey]
+
+    tag = data[-32:]
+    assert len(tag) == 32
+
+    # 2) verify tag
+    hmaced_data = pyelliptic.hmac_sha256(
+        key_mac, data[1 + 64:- 32] + shared_mac_data
+    )
+    if not pyelliptic.equals(hmaced_data, tag):
+        raise exceptions.DecryptionError("Fail to verify data")
+
+    # 3) decrypt
+    blocksize = pyelliptic.OpenSSL.get_cipher(ecies_ciphername).get_blocksize()  # noqa
+    iv = data[1 + 64:1 + 64 + blocksize]
+    assert len(iv) == 16
+    ciphertext = data[1 + 64 + blocksize:- 32]
+    assert len(ephem_pubkey) + len(iv) + len(ciphertext) + len(tag) == len(data)  # noqa
+    ctx = pyelliptic.Cipher(key_enc, iv, 0, ecies_ciphername)
+    return ctx.ciphering(ciphertext)
