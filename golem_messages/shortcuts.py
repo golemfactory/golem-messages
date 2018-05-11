@@ -29,13 +29,14 @@ class Profiler:
 
 
 profiler = Profiler()
+ecies = cryptography.ECIES()
 
 
 @profiler.profile
 def dump(msg, privkey, pubkey):
     if pubkey:
         encrypt = functools.partial(
-            cryptography.ecies_encrypt,
+            ecies.ecies_encrypt,
             raw_pubkey=pubkey
         )
     else:
@@ -48,7 +49,7 @@ def load(data, privkey, pubkey, check_time=True):
     def decrypt(payload):
         if not privkey:
             return payload
-        return cryptography.ecies_decrypt(payload, privkey)
+        return ecies.ecies_decrypt(payload, privkey)
 
     msg = base.Message.deserialize(
         data, decrypt, check_time, sender_public_key=pubkey)
