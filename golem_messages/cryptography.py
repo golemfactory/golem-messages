@@ -6,7 +6,7 @@ import time
 from typing import Dict, Tuple
 
 import bitcoin
-import coincurve
+from coincurve import PrivateKey, PublicKey
 
 from rlp import utils as rlp_utils
 from _pysha3 import sha3_256 as _sha3_256  # pylint: disable=no-name-in-module
@@ -74,7 +74,7 @@ def verify_pubkey(key):
 
 
 def privtopub(raw_privkey):
-    raw_pubkey = coincurve.PrivateKey(raw_privkey)\
+    raw_pubkey = PrivateKey(raw_privkey)\
         .public_key\
         .format(compressed=False)[1:]
     verify_pubkey(raw_pubkey)
@@ -104,7 +104,7 @@ def mk_privkey(seed):
 
 
 def ecdsa_sign(privkey, msghash):
-    pk = coincurve.PrivateKey(privkey)
+    pk = PrivateKey(privkey)
     msghash = sha3(msghash)
     return pk.sign_recoverable(msghash, hasher=None)
 
@@ -113,7 +113,7 @@ def ecdsa_verify(pubkey, signature, message):
     verify_pubkey(pubkey)
     message = sha3(message)
     try:
-        pk = coincurve.PublicKey.from_signature_and_message(
+        pk = PublicKey.from_signature_and_message(
             signature, message, hasher=None
         )
     except Exception as e:
@@ -202,6 +202,7 @@ class ECIESKeyManager:
     def __init__(self, timeout: int = 3600) -> None:
         self.ephem_keys_cache: Dict[bytes, dict] = {}
         self.derived_keys_cache: Dict[bytes, Tuple[bytes, bytes]] = {}
+        self.ecdh_cache: Dict[bytes, bytes] = {}
         self.timeout: int = timeout
 
     @staticmethod
@@ -225,6 +226,15 @@ class ECIESKeyManager:
             ctx.update(s1)
             key += ctx.digest()
         return key[:key_len]
+
+    def ecdh(self, private_key: PrivateKey, public_key: bytes):
+        shared_secret = self.ecdh_cache.get(private_key.secret)
+        if shared_secret:
+            return shared_secret
+
+        shared_secret = private_key.ecdh(public_key)
+        self.ecdh_cache[private_key.secret] = shared_secret
+        return shared_secret
 
     def get_derived_keys(self, key_material: bytes) -> Tuple[bytes, bytes]:
         """
@@ -259,10 +269,10 @@ class ECIESKeyManager:
         if cached and (time.time() - cached['timestamp'] < self.timeout):
             return cached['enc_key'], cached['mac_key'], cached['pub_key']
 
-        ephem = coincurve.PrivateKey()
+        ephem = PrivateKey()
         ephem_raw_pubkey = ephem.public_key.format(compressed=False)
-        pubkey = coincurve.PublicKey(b'\x04' + raw_pubkey)
-        key_material = ephem.ecdh(pubkey.format())
+        pubkey = PublicKey(b'\x04' + raw_pubkey)
+        key_material = self.ecdh(ephem, pubkey.format())
         assert len(key_material) == 32
 
         enc_key, mac_key = self.get_derived_keys(key_material)
@@ -331,7 +341,8 @@ class ECIES:
 
         # 1) generate shared-secret
         ephem_pubkey = data[:1 + 64]
-        key_material = coincurve.PrivateKey(raw_privkey).ecdh(ephem_pubkey)
+        priv_key = PrivateKey(raw_privkey)
+        key_material = self.key_manager.ecdh(priv_key, ephem_pubkey)
         assert len(key_material) == 32
 
         enc_key, mac_key = self.key_manager.get_derived_keys(key_material)

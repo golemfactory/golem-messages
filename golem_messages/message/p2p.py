@@ -41,6 +41,7 @@ class Peers(base.Message):
 
 class GetTasks(base.Message):
     TYPE = P2P_MESSAGE_BASE + 5
+    SIGN = False
 
     __slots__ = base.Message.__slots__
 
