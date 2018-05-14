@@ -1,38 +1,22 @@
+from cProfile import Profile
 import functools
-import time
-from collections import defaultdict
 
 from golem_messages.message import base
 from . import cryptography
 
 
-class Profiler:
-
-    def __init__(self):
-        self.ncalls = defaultdict(lambda: 0)
-        self.calltime = defaultdict(lambda: 0)
-
-    def profile(self, func):
-        @functools.wraps(func)
-        def wrapped(*args, **kwargs):
-            start = time.perf_counter()
-            result = func(*args, **kwargs)
-            stop = time.perf_counter()
-            self.ncalls[func.__qualname__] += 1
-            self.calltime[func.__qualname__] += (stop - start)
-            return result
-        return wrapped
-
-    def print_stats(self, *_, **__):
-        for k in self.ncalls:
-            print('%s : %0.6f s' % (k, self.calltime[k] / self.ncalls[k]))
+profiler = Profile()
 
 
-profiler = Profiler()
+def profile(func):
+    def wrapped(*args, **kwargs):
+        return profiler.runcall(func, *args, **kwargs)
+    return wrapped
+
+
 ecies = cryptography.ECIES()
 
-
-@profiler.profile
+@profile
 def dump(msg, privkey, pubkey):
     if pubkey:
         encrypt = functools.partial(
@@ -44,7 +28,7 @@ def dump(msg, privkey, pubkey):
     return msg.serialize(sign_as=privkey, encrypt_func=encrypt)
 
 
-@profiler.profile
+@profile
 def load(data, privkey, pubkey, check_time=True):
     def decrypt(payload):
         if not privkey:
