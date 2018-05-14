@@ -45,6 +45,7 @@ def requestor_deposit_amount(total_task_price: int) -> (int, int):
     """Returns required_amount, suggested_amount"""
     return total_task_price*2, total_task_price*4
 
+
 def provider_deposit_amount(subtask_price: int) -> (int, int):
     """Returns required_amount, suggested_amount"""
     return subtask_price, 4*subtask_price
