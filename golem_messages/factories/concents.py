@@ -19,7 +19,7 @@ class FileInfoFactory(factory.DictFactory):
         model = concents.FileTransferToken.FileInfo
 
     path = factory.LazyFunction(lambda: faker.Faker().file_path()[1:])
-    checksum = factory.Faker('sha1')
+    checksum = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
     size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
 
 
