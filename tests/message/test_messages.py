@@ -50,6 +50,7 @@ class MessagesTestCase(unittest.TestCase):
         max_resource_size = random.randint(1, 2**10)
         max_memory_size = random.randint(1, 2**10)
         num_cores = random.randint(1, 2**5)
+        concent_enabled = random.random() > 0.5
         msg = message.WantToComputeTask(
             node_name=node_id,
             task_id=task_id,
@@ -57,7 +58,8 @@ class MessagesTestCase(unittest.TestCase):
             price=price,
             max_resource_size=max_resource_size,
             max_memory_size=max_memory_size,
-            num_cores=num_cores)
+            num_cores=num_cores,
+            concent_enabled=concent_enabled)
         expected = [
             ['node_name', node_id],
             ['task_id', task_id],
@@ -66,6 +68,7 @@ class MessagesTestCase(unittest.TestCase):
             ['max_memory_size', max_memory_size],
             ['num_cores', num_cores],
             ['price', price],
+            ['concent_enabled', concent_enabled],
         ]
         self.assertEqual(expected, msg.slots())
 
