@@ -9,7 +9,7 @@ ecies = cryptography.ECIES()
 def dump(msg, privkey, pubkey):
     if pubkey:
         encrypt = functools.partial(
-            ecies.ecies_encrypt,
+            ecies.encrypt,
             raw_pubkey=pubkey
         )
     else:
@@ -21,7 +21,7 @@ def load(data, privkey, pubkey, check_time=True):
     def decrypt(payload):
         if not privkey:
             return payload
-        return ecies.ecies_decrypt(payload, privkey)
+        return ecies.decrypt(payload, privkey)
 
     msg = base.Message.deserialize(
         data, decrypt, check_time, sender_public_key=pubkey)

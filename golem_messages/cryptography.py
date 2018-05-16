@@ -3,6 +3,7 @@ import os
 import struct
 import sys
 import time
+from functools import lru_cache
 from typing import Dict, Tuple
 
 import bitcoin
@@ -197,13 +198,16 @@ class ECCx(pyelliptic.ECC):
         return ecdsa_verify(self.raw_pubkey, sig, inputb)
 
 
+class HashablePrivateKey(PrivateKey):
+    def __hash__(self):
+        return hash(self.secret)
+
+
 class ECIESKeyManager:
 
     def __init__(self, timeout: int = 3600) -> None:
-        self.ephem_keys_cache: Dict[bytes, dict] = {}
-        self.derived_keys_cache: Dict[bytes, Tuple[bytes, bytes]] = {}
-        self.ecdh_cache: Dict[bytes, bytes] = {}
         self.timeout: int = timeout
+        self.last_cleanup_time: int = time.time()
 
     @staticmethod
     def _ckdf(key_material: bytes, key_len: int) -> bytes:
@@ -227,34 +231,26 @@ class ECIESKeyManager:
             key += ctx.digest()
         return key[:key_len]
 
-    def ecdh(self, private_key: PrivateKey, public_key: bytes):
-        shared_secret = self.ecdh_cache.get(private_key.secret)
-        if shared_secret:
-            return shared_secret
+    @lru_cache(maxsize=1024)
+    def ecdh(self, private_key: HashablePrivateKey, public_key: bytes):
+        return private_key.ecdh(public_key)
 
-        shared_secret = private_key.ecdh(public_key)
-        self.ecdh_cache[private_key.secret] = shared_secret
-        return shared_secret
-
+    @lru_cache(maxsize=1024)
     def get_derived_keys(self, key_material: bytes) -> Tuple[bytes, bytes]:
         """
         Load from cache or derive keys
         :param key_material: shared secret (32 bytes)
         :return: encoding key (16 bytes), mac_key (32 bytes)
         """
-        cached = self.derived_keys_cache.get(key_material)
-        if cached:
-            return cached
-
         key = self._ckdf(key_material, 32)
         assert len(key) == 32
         enc_key, mac_key = key[:16], key[16:]
         mac_key = hashlib.sha256(mac_key).digest()
         assert len(mac_key) == 32
 
-        self.derived_keys_cache[key_material] = enc_key, mac_key
         return enc_key, mac_key
 
+    @lru_cache(maxsize=1024)
     def get_ephem_key(self, raw_pubkey: bytes) -> Tuple[bytes, bytes, bytes]:
         """
         Get ephemeral elliptic curve key and derived keys for encryption and
@@ -265,11 +261,11 @@ class ECIESKeyManager:
             - mac key (32 bytes)
             - public key with leading '\x04' byte (65 bytes)
         """
-        cached = self.ephem_keys_cache.get(raw_pubkey)
-        if cached and (time.time() - cached['timestamp'] < self.timeout):
-            return cached['enc_key'], cached['mac_key'], cached['pub_key']
+        if self.last_cleanup_time < time.time() - self.timeout:
+            ECIESKeyManager.get_ephem_key.cache_clear()
+            self.last_cleanup_time = time.time()
 
-        ephem = PrivateKey()
+        ephem = HashablePrivateKey()
         ephem_raw_pubkey = ephem.public_key.format(compressed=False)
         pubkey = PublicKey(b'\x04' + raw_pubkey)
         key_material = self.ecdh(ephem, pubkey.format())
@@ -277,12 +273,6 @@ class ECIESKeyManager:
 
         enc_key, mac_key = self.get_derived_keys(key_material)
 
-        self.ephem_keys_cache[raw_pubkey] = {
-            'enc_key': enc_key,
-            'mac_key': mac_key,
-            'pub_key': ephem_raw_pubkey,
-            'timestamp': time.time()
-        }
         return enc_key, mac_key, ephem_raw_pubkey
 
 
@@ -294,8 +284,8 @@ class ECIES:
     def __init__(self, key_manager: ECIESKeyManager = None) -> None:
         self.key_manager = key_manager or ECIESKeyManager()
 
-    def ecies_encrypt(self, data: bytes, raw_pubkey: bytes,
-                      shared_mac_data: bytes = b'') -> bytes:
+    def encrypt(self, data: bytes, raw_pubkey: bytes,
+                shared_mac_data: bytes = b'') -> bytes:
         """
         ECIES Encrypt, where P = recipient public key is:
         1) generate r = random value
@@ -323,7 +313,7 @@ class ECIES:
 
         return msg
 
-    def ecies_decrypt(self, data, raw_privkey, shared_mac_data=b''):
+    def decrypt(self, data, raw_privkey, shared_mac_data=b''):
         """
         Decrypt data with ECIES method using the local private key
 
@@ -341,7 +331,7 @@ class ECIES:
 
         # 1) generate shared-secret
         ephem_pubkey = data[:1 + 64]
-        priv_key = PrivateKey(raw_privkey)
+        priv_key = HashablePrivateKey(raw_privkey)
         key_material = self.key_manager.ecdh(priv_key, ephem_pubkey)
         assert len(key_material) == 32
 
