@@ -30,6 +30,15 @@ class ComputeTaskDefTestCase(unittest.TestCase):
             value=ctd['subtask_id'],
         )
 
+    def test_type(self):
+        ctd = message.ComputeTaskDef()
+        ctd['src_code'] = "custom code"
+        msg = factories.tasks.TaskToComputeFactory(compute_task_def=ctd)
+        s = msg.serialize()
+        msg2 = message.Message.deserialize(s, None)
+        self.assertEqual(ctd, msg2.compute_task_def)
+        self.assertIsInstance(msg2.compute_task_def, message.ComputeTaskDef)
+
 
 class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
                                  mixins.SerializationMixin,
@@ -134,6 +143,41 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         now = calendar.timegm(time.gmtime())
         ttc = factories.tasks.TaskToComputeFactory.past_deadline()
         self.assertGreater(now, ttc.compute_task_def.get('deadline'))
+
+    @staticmethod
+    def _dump_and_load(msg):
+        msg_d = shortcuts.dump(msg, None, None)
+        return shortcuts.load(msg_d, None, None)
+
+    def test_size(self):
+        size = 1234567
+        ttc = self._dump_and_load(
+            factories.tasks.TaskToComputeFactory(size=size))
+        self.assertEqual(ttc.size, size)
+
+    def test_size_notint(self):
+        ttc = factories.tasks.TaskToComputeFactory(size=None)
+        with self.assertRaises(exceptions.FieldError):
+            self._dump_and_load(ttc)
+
+
+class PriceTaskToComputeTestCase(unittest.TestCase):
+    def setUp(self):
+        self.msg = factories.tasks.TaskToComputeFactory()
+
+    def test_valid_price_value(self):
+        price = 1994
+        self.msg.price = price
+        s = self.msg.serialize()
+        msg2 = message.Message.deserialize(s, None)
+        self.assertEqual(msg2.price, price)
+
+    def test_invalid_price_value(self):
+        price = '1994'
+        self.msg.price = price
+        s = self.msg.serialize()
+        with self.assertRaises(exceptions.FieldError):
+            message.Message.deserialize(s, None)
 
 
 class ReportComputedTaskTest(mixins.RegisteredMessageTestMixin,

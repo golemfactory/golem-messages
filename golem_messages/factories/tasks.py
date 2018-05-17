@@ -50,6 +50,7 @@ class TaskToComputeFactory(helpers.MessageFactory):
 
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
     package_hash = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
+    size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
     price = factory.Faker('random_int', min=1 << 20, max=10 << 20)
 
     @classmethod

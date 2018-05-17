@@ -238,7 +238,8 @@ class TaskToCompute(TaskMessage):
         'provider_public_key',  # key used for msg signing and encryption
         'provider_ethereum_public_key',  # used for transactions on blockchain
         'compute_task_def',
-        'package_hash',
+        'package_hash',  # the hash of the package (resources) zip file
+        'size',  # the size of the resources zip file
         'concent_enabled',
         'price',  # total subtask price computed as `price * subtask_timeout`
     ] + base.Message.__slots__
@@ -268,9 +269,9 @@ class TaskToCompute(TaskMessage):
         value = super().deserialize_slot(key, value)
         if key == 'compute_task_def':
             value = ComputeTaskDef(value)
-        if key == 'price':
+        if key in ('price', 'size'):
             validators.validate_integer(
-                field_name='price',
+                field_name=key,
                 value=value,
             )
         return value
