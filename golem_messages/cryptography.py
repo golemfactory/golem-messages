@@ -4,7 +4,7 @@ import struct
 import sys
 import time
 from functools import lru_cache
-from typing import Dict, Tuple
+from typing import Tuple, Optional
 
 import bitcoin
 from coincurve import PrivateKey, PublicKey
@@ -207,17 +207,16 @@ class ECIESKeyManager:
 
     def __init__(self, timeout: int = 3600) -> None:
         self.timeout: int = timeout
-        self.last_cleanup_time: int = time.time()
+        self.last_cleanup_time: float = time.time()
 
     @staticmethod
-    def _ckdf(key_material: bytes, key_len: int) -> bytes:
+    def _ckdf(key_material: bytes, key_len: int, s1: bytes = b"") -> bytes:
         """
         NIST SP 800-56a Concatenation Key Derivation Function
 
         for sha3, blocksize is 136 bytes
         for sha256, blocksize is 64 bytes
         """
-        s1 = b""
         key = b""
         hash_blocksize = 64
         reps = ((key_len + 7) * 8) / (hash_blocksize * 8)
@@ -231,8 +230,9 @@ class ECIESKeyManager:
             key += ctx.digest()
         return key[:key_len]
 
+    @staticmethod
     @lru_cache(maxsize=1024)
-    def ecdh(self, private_key: HashablePrivateKey, public_key: bytes):
+    def ecdh(private_key: HashablePrivateKey, public_key: bytes):
         return private_key.ecdh(public_key)
 
     @lru_cache(maxsize=1024)
@@ -279,9 +279,10 @@ class ECIESKeyManager:
 class ECIES:
 
     CIPHERNAME: str = 'aes-128-ctr'
+    BLOCK_SIZE: int = pyelliptic.OpenSSL.get_cipher(CIPHERNAME).get_blocksize()
     OVERHEAD: int = 1 + 64 + 16 + 32  # '\x04' byte + pubkey + iv + tag
 
-    def __init__(self, key_manager: ECIESKeyManager = None) -> None:
+    def __init__(self, key_manager: Optional[ECIESKeyManager] = None) -> None:
         self.key_manager = key_manager or ECIESKeyManager()
 
     def encrypt(self, data: bytes, raw_pubkey: bytes,
@@ -331,8 +332,8 @@ class ECIES:
 
         # 1) generate shared-secret
         ephem_pubkey = data[:1 + 64]
-        priv_key = HashablePrivateKey(raw_privkey)
-        key_material = self.key_manager.ecdh(priv_key, ephem_pubkey)
+        key_material = self.key_manager.ecdh(
+            HashablePrivateKey(raw_privkey), ephem_pubkey)
         assert len(key_material) == 32
 
         enc_key, mac_key = self.key_manager.get_derived_keys(key_material)
@@ -347,12 +348,10 @@ class ECIES:
             raise exceptions.DecryptionError("Tag verification failed")
 
         # 3) decrypt
-        block_size = pyelliptic.OpenSSL.get_cipher(self.CIPHERNAME)\
-            .get_blocksize()
-        iv = data[1 + 64:1 + 64 + block_size]
+        iv = data[1 + 64:1 + 64 + self.BLOCK_SIZE]
         assert len(iv) == 16
 
-        ciphertext = data[1 + 64 + block_size:- 32]
+        ciphertext = data[1 + 64 + self.BLOCK_SIZE:- 32]
         assert len(ephem_pubkey) + len(iv) + len(ciphertext) + len(tag) \
             == len(data)
 

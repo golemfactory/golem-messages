@@ -1,4 +1,3 @@
-import collections
 import collections.abc
 import functools
 import logging
