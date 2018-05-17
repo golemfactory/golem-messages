@@ -18,9 +18,11 @@ class ServiceRefusedTest(mixins.RegisteredMessageTestMixin,
     TASK_ID_PROVIDER = 'task_to_compute'
 
 
-class FileTransferTokenTest(mixins.RegisteredMessageTestMixin,
+class FileTransferTokenTest(mixins.SerializationMixin,
+                            mixins.RegisteredMessageTestMixin,
                             unittest.TestCase):
     MSG_CLASS = concents.FileTransferToken
+    FACTORY = factories.concents.FileTransferTokenFactory
 
     def test_operation_upload(self):
         ftt = concents.FileTransferToken(slots=(
@@ -51,6 +53,20 @@ class FileTransferTokenTest(mixins.RegisteredMessageTestMixin,
         path = ftt.files[0].get('path')  # noqa pylint:disable=unsubscriptable-object
         self.assertGreater(len(path), 1)
         self.assertNotEqual('/', path[:1])
+
+    def test_file_info_category_default(self):
+        fi = concents.FileTransferToken.FileInfo()
+        self.assertIsNotNone(fi.get('category'))
+
+    def test_file_info_category_wrong(self):
+        with self.assertRaises(exceptions.FieldError):
+            concents.FileTransferToken.FileInfo({'category': 'other'})
+
+    def test_file_info_category_given(self):
+        cat = concents.FileTransferToken.FileInfo.Category.resources
+        fi = concents.FileTransferToken.FileInfo(
+            {'category': cat})
+        self.assertEqual(fi.get('category'), cat)
 
 
 class SubtaskResultsVerifyTest(mixins.RegisteredMessageTestMixin,

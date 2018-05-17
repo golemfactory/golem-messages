@@ -132,18 +132,40 @@ class FileTransferToken(base.Message):
     ] + base.Message.__slots__
 
     def deserialize_slot(self, key, value):
+        def deserialize_fileinfo(f):
+            cat = f.get('category')
+            if cat in [c.value for c in FileTransferToken.FileInfo.Category]:
+                f['category'] = FileTransferToken.FileInfo.Category(cat)
+            return FileTransferToken.FileInfo(f)
+
         value = super().deserialize_slot(key, value)
         if key == 'files':
-            value = [FileTransferToken.FileInfo(f) for f in value]
+            value = [deserialize_fileinfo(f) for f in value]
         return value
 
-    class FileInfo(datastructures.FrozenDict):
-        """Represents SUBTASK metadata."""
+    class FileInfo(datastructures.ValidatingDict, datastructures.FrozenDict):
+        """Represents the subtask file metadata."""
+
+        @enum.unique
+        class Category(datastructures.StringEnum):
+            results = enum.auto()  # the results package of a computed task
+            resources = enum.auto()   # the task's resources from the requestor
+
         ITEMS = {
             'path': '',
             'checksum': '',
             'size': 0,
+            'category': Category.results  # for now (backwards-compatibility)
         }
+
+        def validate_category(self, value):
+            if value not in self.Category:
+                raise exceptions.FieldError(
+                    "`category` must be one of %s, got: " % [
+                        c for c in self.Category],
+                    field='category',
+                    value=value,
+                )
 
     @property
     def is_upload(self):
@@ -152,6 +174,10 @@ class FileTransferToken(base.Message):
     @property
     def is_download(self):
         return self.operation == self.Operation.download
+
+    def get_file_info(self, category: FileInfo.Category):
+        fi = [fi for fi in self.files if fi.get('category', None) == category]
+        return fi.pop() if fi else None
 
 
 class SubtaskResultsVerify(tasks.TaskMessage):
