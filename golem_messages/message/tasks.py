@@ -12,7 +12,7 @@ from . import base
 TASK_MSG_BASE = 2000
 
 
-class ComputeTaskDef(datastructures.FrozenDict):
+class ComputeTaskDef(datastructures.ValidatingDict, datastructures.FrozenDict):
     """Represents SUBTASK metadata."""
     ITEMS = {
         'task_id': '',
@@ -28,12 +28,6 @@ class ComputeTaskDef(datastructures.FrozenDict):
         'performance': 0,
         'docker_images': None,
     }
-
-    def __setitem__(self, key, value):
-        validator = getattr(self, 'validate_{}'.format(key), None)
-        if validator is not None:
-            validator(value=value)  # pylint: disable=not-callable
-        super().__setitem__(key, value)
 
     validate_task_id = functools.partial(
         validators.validate_varchar,
