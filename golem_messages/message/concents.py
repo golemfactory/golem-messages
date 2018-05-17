@@ -132,18 +132,43 @@ class FileTransferToken(base.Message):
     ] + base.Message.__slots__
 
     def deserialize_slot(self, key, value):
+        def deserialize_fileinfo(f):
+            try:
+                f['category'] = FileTransferToken.FileInfo.Category(
+                    f.get('category')
+                )
+            except ValueError:
+                pass
+            return FileTransferToken.FileInfo(f)
+
         value = super().deserialize_slot(key, value)
         if key == 'files':
-            value = [FileTransferToken.FileInfo(f) for f in value]
+            value = [deserialize_fileinfo(f) for f in value]
         return value
 
-    class FileInfo(datastructures.FrozenDict):
-        """Represents SUBTASK metadata."""
+    class FileInfo(datastructures.ValidatingDict, datastructures.FrozenDict):
+        """Represents the subtask file metadata."""
+
+        @enum.unique
+        class Category(datastructures.StringEnum):
+            results = enum.auto()  # the results package of a computed task
+            resources = enum.auto()   # the task's resources from the requestor
+
         ITEMS = {
             'path': '',
             'checksum': '',
             'size': 0,
+            'category': Category.results  # for now (backwards-compatibility)
         }
+
+        def validate_category(self, value):
+            if value not in self.Category:
+                raise exceptions.FieldError(
+                    "`category` must be one of %s, got: " % [
+                        c for c in self.Category],
+                    field='category',
+                    value=value,
+                )
 
     @property
     def is_upload(self):
@@ -152,6 +177,21 @@ class FileTransferToken(base.Message):
     @property
     def is_download(self):
         return self.operation == self.Operation.download
+
+    def get_file_info(self, category: FileInfo.Category):
+        """
+        retrieves the `FileInfo` object of the given category from the
+        token's `files` list
+
+        as, it doesn't make sense for the `files` list to contain multiple
+        files of the same category, we're just returning the first found file
+        """
+
+        for fi in self.files:
+            if fi.get('category') == category:
+                return fi
+
+        return None
 
 
 class SubtaskResultsVerify(tasks.TaskMessage):
@@ -406,7 +446,8 @@ class ForceSubtaskResultsResponse(tasks.TaskMessage):
         return super().deserialize_slot(key, value)
 
 
-class ForceSubtaskResultsRejected(base.AbstractReasonMessage):
+class ForceSubtaskResultsRejected(tasks.TaskMessage,
+                                  base.AbstractReasonMessage):
     """
     Possible response from the Concent to the Provider to the
     `ForceSubtaskResults` request, when the request is not valid at the time
@@ -414,13 +455,20 @@ class ForceSubtaskResultsRejected(base.AbstractReasonMessage):
     """
 
     TYPE = CONCENT_MSG_BASE + 17
+    TASK_ID_PROVIDERS = ('force_subtask_results', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
-    __slots__ = base.AbstractReasonMessage.__slots__
+    __slots__ = [
+        'force_subtask_results'
+    ] + base.AbstractReasonMessage.__slots__
 
     class REASON(enum.Enum):
         RequestPremature = 'premature: still within the verification timeout'
         RequestTooLate = 'too late: past the forced communication timeout'
 
+    @base.verify_slot('force_subtask_results', ForceSubtaskResults)
+    def deserialize_slot(self, key, value):
+        return super().deserialize_slot(key, value)
 
 class ForcePayment(base.Message):
     """

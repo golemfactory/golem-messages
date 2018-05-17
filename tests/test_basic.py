@@ -477,9 +477,9 @@ class NestedMessageTestCase(unittest.TestCase):
             if 'task_to_compute' not in class_.__slots__:
                 continue
             msg = class_()
-            msg.task_to_compute = message.TaskToCompute(sig=TEST_SIG)
+            msg.task_to_compute = \
+                factories.tasks.TaskToComputeFactory(sig=TEST_SIG)
             msg.task_to_compute.compute_task_def = message.ComputeTaskDef()
-            msg.task_to_compute.price = 1994
             s = msg.serialize()
             msg2 = message.Message.deserialize(s, decrypt_func=None)
             self.assertEqual(msg2.task_to_compute.sig, TEST_SIG)
@@ -503,8 +503,8 @@ class NestedMessageTestCase(unittest.TestCase):
         msg.cannot_compute_task = message.CannotComputeTask()
         msg.cannot_compute_task.reason =\
             message.CannotComputeTask.REASON.WrongCTD
-        msg.cannot_compute_task.task_to_compute = message.TaskToCompute()
-        msg.cannot_compute_task.task_to_compute.price = 1994
+        msg.cannot_compute_task.task_to_compute = \
+            factories.tasks.TaskToComputeFactory()
         invalid_deadline = ("You call it madness, "
                             "but I call it Love -- Nat King Cole")
         msg.cannot_compute_task.task_to_compute.compute_task_def =\
@@ -515,18 +515,6 @@ class NestedMessageTestCase(unittest.TestCase):
             msg2.cannot_compute_task.task_to_compute.compute_task_def['deadline'],  # noqa
             invalid_deadline
         )
-
-
-class ComputeTaskDefTestCase(unittest.TestCase):
-    def test_type(self):
-        ctd = message.ComputeTaskDef()
-        ctd['src_code'] = "custom code"
-        msg = message.TaskToCompute(compute_task_def=ctd)
-        msg.price = 1994
-        s = msg.serialize()
-        msg2 = message.Message.deserialize(s, None)
-        self.assertEqual(ctd, msg2.compute_task_def)
-        self.assertIsInstance(msg2.compute_task_def, message.ComputeTaskDef)
 
 
 gm_version = semantic_version.Version(golem_messages.__version__)
@@ -584,23 +572,3 @@ class VerifyVersionTestCase(unittest.TestCase):
                      'Myślcie sobie, jak tam chcecie.'),
                 ),
     # pylint: enable=expression-not-assigned
-
-
-class PriceTaskToComputeTestCase(unittest.TestCase):
-    def setUp(self):
-        self.msg = message.TaskToCompute()
-        self.msg.compute_task_def = message.ComputeTaskDef()
-
-    def test_valid_price_value(self):
-        price = 1994
-        self.msg.price = price
-        s = self.msg.serialize()
-        msg2 = message.Message.deserialize(s, None)
-        self.assertEqual(msg2.price, price)
-
-    def test_invalid_price_value(self):
-        price = '1994'
-        self.msg.price = price
-        s = self.msg.serialize()
-        with self.assertRaises(exceptions.FieldError):
-            message.Message.deserialize(s, None)
