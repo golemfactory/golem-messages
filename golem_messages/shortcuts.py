@@ -3,12 +3,14 @@ import functools
 from golem_messages.message import base
 from . import cryptography
 
+ecies = cryptography.ECIES()
+
 
 def dump(msg, privkey, pubkey):
     if pubkey:
         encrypt = functools.partial(
-            cryptography.ECCx.encrypt,
-            raw_pubkey=pubkey,
+            ecies.encrypt,
+            raw_pubkey=pubkey
         )
     else:
         encrypt = None
@@ -19,8 +21,7 @@ def load(data, privkey, pubkey, check_time=True):
     def decrypt(payload):
         if not privkey:
             return payload
-        ecc = cryptography.ECCx(privkey)
-        return ecc.decrypt(payload)
+        return ecies.decrypt(payload, privkey)
 
     msg = base.Message.deserialize(
         data, decrypt, check_time, sender_public_key=pubkey)
