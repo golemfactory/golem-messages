@@ -68,6 +68,29 @@ class FileTransferTokenTest(mixins.SerializationMixin,
             {'category': cat})
         self.assertEqual(fi.get('category'), cat)
 
+    def test_get_file_info(self):
+        fi = concents.FileTransferToken.FileInfo(
+            {'category':
+                 concents.FileTransferToken.FileInfo.Category.resources})
+
+        ftt = concents.FileTransferToken(files=[fi])
+        self.assertEqual(
+            ftt.get_file_info(
+                concents.FileTransferToken.FileInfo.Category.resources),
+            fi,
+        )
+
+    def test_get_file_info_negative(self):
+        fi = concents.FileTransferToken.FileInfo(
+            {'category':
+                 concents.FileTransferToken.FileInfo.Category.resources})
+        ftt = concents.FileTransferToken(files=[fi])
+        self.assertIsNone(
+            ftt.get_file_info(
+                concents.FileTransferToken.FileInfo.Category.results
+            )
+        )
+
 
 class SubtaskResultsVerifyTest(mixins.RegisteredMessageTestMixin,
                                mixins.SerializationMixin,
