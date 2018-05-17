@@ -471,8 +471,12 @@ class ForceSubtaskResultsResponseTest(mixins.RegisteredMessageTestMixin,
 
 
 class ForceSubtaskResultsRejectedTest(mixins.RegisteredMessageTestMixin,
+                                      mixins.SerializationMixin,
+                                      mixins.TaskIdMixin,
                                       unittest.TestCase):
+    FACTORY = factories.concents.ForceSubtaskResultsRejectedFactory
     MSG_CLASS = concents.ForceSubtaskResultsRejected
+    TASK_ID_PROVIDER = 'force_subtask_results'
 
     def test_force_subtask_results_premature(self):
         msg = factories.concents.ForceSubtaskResultsRejectedFactory.premature()

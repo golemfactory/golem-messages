@@ -446,7 +446,8 @@ class ForceSubtaskResultsResponse(tasks.TaskMessage):
         return super().deserialize_slot(key, value)
 
 
-class ForceSubtaskResultsRejected(base.AbstractReasonMessage):
+class ForceSubtaskResultsRejected(tasks.TaskMessage,
+                                  base.AbstractReasonMessage):
     """
     Possible response from the Concent to the Provider to the
     `ForceSubtaskResults` request, when the request is not valid at the time
@@ -454,13 +455,20 @@ class ForceSubtaskResultsRejected(base.AbstractReasonMessage):
     """
 
     TYPE = CONCENT_MSG_BASE + 17
+    TASK_ID_PROVIDERS = ('force_subtask_results', )
+    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
-    __slots__ = base.AbstractReasonMessage.__slots__
+    __slots__ = [
+        'force_subtask_results'
+    ] + base.AbstractReasonMessage.__slots__
 
     class REASON(enum.Enum):
         RequestPremature = 'premature: still within the verification timeout'
         RequestTooLate = 'too late: past the forced communication timeout'
 
+    @base.verify_slot('force_subtask_results', ForceSubtaskResults)
+    def deserialize_slot(self, key, value):
+        return super().deserialize_slot(key, value)
 
 class ForcePayment(base.Message):
     """

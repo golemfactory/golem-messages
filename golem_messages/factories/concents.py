@@ -209,6 +209,7 @@ class ForceSubtaskResultsRejectedFactory(helpers.MessageFactory):
     class Meta:
         model = concents.ForceSubtaskResultsRejected
 
+    force_subtask_results = factory.SubFactory(ForceSubtaskResultsFactory)
     reason = concents.ForceSubtaskResultsRejected.REASON.RequestPremature
 
     @classmethod
