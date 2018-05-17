@@ -133,9 +133,12 @@ class FileTransferToken(base.Message):
 
     def deserialize_slot(self, key, value):
         def deserialize_fileinfo(f):
-            cat = f.get('category')
-            if cat in [c.value for c in FileTransferToken.FileInfo.Category]:
-                f['category'] = FileTransferToken.FileInfo.Category(cat)
+            try:
+                f['category'] = FileTransferToken.FileInfo.Category(
+                    f.get('category')
+                )
+            except ValueError:
+                pass
             return FileTransferToken.FileInfo(f)
 
         value = super().deserialize_slot(key, value)
@@ -176,8 +179,19 @@ class FileTransferToken(base.Message):
         return self.operation == self.Operation.download
 
     def get_file_info(self, category: FileInfo.Category):
-        fi = [fi for fi in self.files if fi.get('category', None) == category]
-        return fi.pop() if fi else None
+        """
+        retrieves the `FileInfo` object of the given category from the
+        token's `files` list
+
+        as, it doesn't make sense for the `files` list to contain multiple
+        files of the same category, we're just returning the first found file
+        """
+
+        for fi in self.files:
+            if fi.get('category') == category:
+                return fi
+
+        return None
 
 
 class SubtaskResultsVerify(tasks.TaskMessage):
