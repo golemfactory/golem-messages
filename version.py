@@ -36,6 +36,7 @@ __all__ = ("get_version")
 
 import pathlib
 import subprocess
+import sys
 VERSION_FILE = "RELEASE-VERSION"
 
 
@@ -57,21 +58,24 @@ def call_git_describe(prefix='', cwd='.'):
     ).stdout.decode()
 
     assert ' ' not in prefix
+    assert version.strip().startswith(prefix)
+    assert last_tag.strip().startswith(prefix)
+
     version = version.strip()[len(prefix):]
     last_tag = last_tag.strip()[len(prefix):]
+
+    assert version.startswith(last_tag)
     if version != last_tag:
-        """
-        Helper to generate version compatible with semver
-        Compares the last tag version name with the version name
-        where the repository is currently located
-        If it is not currently on tag adds '+dev' beetwen last tag name
-        and a number of commits behind it separated by hyphens with short commit hash
-        """
+        # `version` does not match the last tag so we must be on an untagged commit.
+        # In that case `version` is that tag with a suffix consisting of the number of commits and a commit ID.
+        # To make this very clear, we want to insert `+dev` between the tag and the suffix. Also, replace the
+        # hyphen in the suffix with a dot but without mangling any hyphens that might be in the tag.
+        # In effect something like 0.5.3-rc5-post1-5-78df3e12 becomes 0.5.3-rc5-post1+dev5.78df3e12.
         version = f"{last_tag}+dev{version[len(last_tag) + 1:].replace('-', '.')}"
     return version
 
 
-def get_version(prefix='', cwd='.', generate_version=True):
+def get_version(prefix='', cwd='.', update_version_file=True):
     path = pathlib.Path(cwd) / VERSION_FILE
     try:
         with path.open("r") as f:
@@ -79,13 +83,14 @@ def get_version(prefix='', cwd='.', generate_version=True):
     except FileNotFoundError:
         release_version = None
 
-    if generate_version:
-        version = call_git_describe(prefix, cwd)
-    else:
-        return release_version
+    if not update_version_file:
+        if not release_version:
+            raise ValueError("Cannot find the version number!")
+        else:
+            return release_version
 
-    if version is None:
-        version = release_version
+    version = call_git_describe(prefix, cwd)
+
     if version is None:
         raise ValueError("Cannot find the version number!")
 
@@ -97,4 +102,8 @@ def get_version(prefix='', cwd='.', generate_version=True):
 
 
 if __name__ == "__main__":
-    print(get_version(prefix='v'))
+    if '--no-update-version-file' in sys.argv:
+        update_version_file = False
+    else:
+        update_version_file = True
+    print(get_version(prefix='v', update_version_file=update_version_file))
