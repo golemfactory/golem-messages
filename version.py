@@ -83,13 +83,10 @@ def get_version(prefix='', cwd='.', update_version_file=True):
     except FileNotFoundError:
         release_version = None
 
-    if not update_version_file:
-        if not release_version:
-            raise ValueError("Cannot find the version number!")
-        else:
-            return release_version
-
     version = call_git_describe(prefix, cwd)
+
+    if not update_version_file:
+        return version
 
     if version is None:
         raise ValueError("Cannot find the version number!")
@@ -105,5 +102,5 @@ if __name__ == "__main__":
     if '--no-update-version-file' in sys.argv:
         update_version_file = False
     else:
-        update_version_file = True
+        raise ValueError('Cannot get appropriate parameter')
     print(get_version(prefix='v', update_version_file=update_version_file))
