@@ -4,6 +4,7 @@ disable=invalid-name,                   # Pylint is overzealous here
         access-member-before-definition,
         fixme,
         no-member,
+        useless-import-alias,           # 2018-05-21 Bug in pylint triggers this on lines with "import unittest.mock as mock"
 
 [TYPECHECK]
 
