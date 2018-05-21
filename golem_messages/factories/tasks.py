@@ -4,8 +4,9 @@ import datetime
 import os
 import time
 
-import factory.fuzzy
 from eth_utils import encode_hex
+import factory.fuzzy
+import faker
 
 from golem_messages import cryptography
 from golem_messages.message import tasks
@@ -56,7 +57,8 @@ class TaskToComputeFactory(helpers.MessageFactory):
         'requestor_public_key')
 
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
-
+    package_hash = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
+    size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
     price = factory.Faker('random_int', min=1 << 20, max=10 << 20)
 
     @classmethod
@@ -96,6 +98,7 @@ class ReportComputedTaskFactory(helpers.MessageFactory):
     eth_account = factory.LazyFunction(lambda: encode_hex(os.urandom(20)))
     key_id = factory.Faker('binary', length=64)
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    package_hash = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
     size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
     multihash = factory.Faker('text')
     secret = factory.Faker('text')

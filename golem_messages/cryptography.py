@@ -2,9 +2,12 @@ import hashlib
 import os
 import struct
 import sys
+import time
+from functools import lru_cache
+from typing import Tuple, Optional
 
 import bitcoin
-import coincurve
+from coincurve import PrivateKey, PublicKey
 
 from rlp import utils as rlp_utils
 from _pysha3 import sha3_256 as _sha3_256  # pylint: disable=no-name-in-module
@@ -72,36 +75,11 @@ def verify_pubkey(key):
 
 
 def privtopub(raw_privkey):
-    raw_pubkey = bitcoin.encode_pubkey(
-        bitcoin.privtopub(raw_privkey),
-        'bin_electrum'
-    )
+    raw_pubkey = PrivateKey(raw_privkey)\
+        .public_key\
+        .format(compressed=False)[1:]
     verify_pubkey(raw_pubkey)
     return raw_pubkey
-
-
-def eciesKDF(key_material, key_len):
-    """
-    interop w/go ecies implementation
-
-    for sha3, blocksize is 136 bytes
-    for sha256, blocksize is 64 bytes
-
-    NIST SP 800-56a Concatenation Key Derivation Function (see section 5.8.1).
-    """
-    s1 = b""
-    key = b""
-    hash_blocksize = 64
-    reps = ((key_len + 7) * 8) / (hash_blocksize * 8)
-    counter = 0
-    while counter <= reps:
-        counter += 1
-        ctx = hashlib.sha256()
-        ctx.update(struct.pack('>I', counter))
-        ctx.update(key_material)
-        ctx.update(s1)
-        key += ctx.digest()
-    return key[:key_len]
 
 
 def sha3(seed):
@@ -127,7 +105,7 @@ def mk_privkey(seed):
 
 
 def ecdsa_sign(privkey, msghash):
-    pk = coincurve.PrivateKey(privkey)
+    pk = PrivateKey(privkey)
     msghash = sha3(msghash)
     return pk.sign_recoverable(msghash, hasher=None)
 
@@ -136,7 +114,7 @@ def ecdsa_verify(pubkey, signature, message):
     verify_pubkey(pubkey)
     message = sha3(message)
     try:
-        pk = coincurve.PublicKey.from_signature_and_message(
+        pk = PublicKey.from_signature_and_message(
             signature, message, hasher=None
         )
     except Exception as e:
@@ -152,9 +130,7 @@ class ECCx(pyelliptic.ECC):
     Modified to work with raw_pubkey format used in RLPx
     and binding default curve and cipher
     """
-    ecies_ciphername = 'aes-128-ctr'
     curve = 'secp256k1'
-    ecies_encrypt_overhead_length = 113
 
     def __init__(self, raw_privkey):
         if raw_privkey is not None:
@@ -211,66 +187,134 @@ class ECCx(pyelliptic.ECC):
             return False
         return True
 
-    @classmethod
-    def ecies_encrypt(cls, data, raw_pubkey, shared_mac_data=''):
+    def sign(self, inputb):
+        signature = ecdsa_sign(self.raw_privkey, inputb)
+        assert len(signature) == 65
+        return signature
+
+    def verify(self, sig, inputb):
+        if len(sig) != 65:
+            raise exceptions.InvalidSignature('Invalid length')
+        return ecdsa_verify(self.raw_pubkey, sig, inputb)
+
+
+class HashablePrivateKey(PrivateKey):
+    def __hash__(self):
+        return hash(self.secret)
+
+
+class ECIESKeyManager:
+
+    def __init__(self, timeout: int = 3600) -> None:
+        self.timeout: int = timeout
+        self.last_cleanup_time: float = time.time()
+
+    @staticmethod
+    def _ckdf(key_material: bytes, key_len: int, s1: bytes = b"") -> bytes:
+        """
+        NIST SP 800-56a Concatenation Key Derivation Function
+
+        for sha3, blocksize is 136 bytes
+        for sha256, blocksize is 64 bytes
+        """
+        key = b""
+        hash_blocksize = 64
+        reps = ((key_len + 7) * 8) / (hash_blocksize * 8)
+        counter = 0
+        while counter <= reps:
+            counter += 1
+            ctx = hashlib.sha256()
+            ctx.update(struct.pack('>I', counter))
+            ctx.update(key_material)
+            ctx.update(s1)
+            key += ctx.digest()
+        return key[:key_len]
+
+    @staticmethod
+    @lru_cache(maxsize=1024)
+    def ecdh(private_key: HashablePrivateKey, public_key: bytes):
+        return private_key.ecdh(public_key)
+
+    @lru_cache(maxsize=1024)
+    def get_derived_keys(self, key_material: bytes) -> Tuple[bytes, bytes]:
+        """
+        Load from cache or derive keys
+        :param key_material: shared secret (32 bytes)
+        :return: encoding key (16 bytes), mac_key (32 bytes)
+        """
+        key = self._ckdf(key_material, 32)
+        assert len(key) == 32
+        enc_key, mac_key = key[:16], key[16:]
+        mac_key = hashlib.sha256(mac_key).digest()
+        assert len(mac_key) == 32
+
+        return enc_key, mac_key
+
+    @lru_cache(maxsize=1024)
+    def get_ephem_key(self, raw_pubkey: bytes) -> Tuple[bytes, bytes, bytes]:
+        """
+        Get ephemeral elliptic curve key and derived keys for encryption and
+        MAC tagging. Key
+        :param raw_pubkey: Recipient's raw public key (64 bytes)
+        :return: Tuple with the following values:
+            - encoding key (16 bytes)
+            - mac key (32 bytes)
+            - public key with leading '\x04' byte (65 bytes)
+        """
+        if self.last_cleanup_time < time.time() - self.timeout:
+            ECIESKeyManager.get_ephem_key.cache_clear()
+            self.last_cleanup_time = time.time()
+
+        ephem = HashablePrivateKey()
+        ephem_raw_pubkey = ephem.public_key.format(compressed=False)
+        pubkey = PublicKey(b'\x04' + raw_pubkey)
+        key_material = self.ecdh(ephem, pubkey.format())
+        assert len(key_material) == 32
+
+        enc_key, mac_key = self.get_derived_keys(key_material)
+
+        return enc_key, mac_key, ephem_raw_pubkey
+
+
+class ECIES:
+
+    CIPHERNAME: str = 'aes-128-ctr'
+    BLOCK_SIZE: int = pyelliptic.OpenSSL.get_cipher(CIPHERNAME).get_blocksize()
+    OVERHEAD: int = 1 + 64 + 16 + 32  # '\x04' byte + pubkey + iv + tag
+
+    def __init__(self, key_manager: Optional[ECIESKeyManager] = None) -> None:
+        self.key_manager = key_manager or ECIESKeyManager()
+
+    def encrypt(self, data: bytes, raw_pubkey: bytes,
+                shared_mac_data: bytes = b'') -> bytes:
         """
         ECIES Encrypt, where P = recipient public key is:
         1) generate r = random value
         2) generate shared-secret = kdf( ecdhAgree(r, P) )
         3) generate R = rG [same op as generating a public key]
-        4) send 0x04 || R || AsymmetricEncrypt(shared-secret, plaintext) || tag
-
-
-        currently used by go:
-        ECIES_AES128_SHA256 = &ECIESParams{
-            Hash: sha256.New,
-            hashAlgo: crypto.SHA256,
-            Cipher: aes.NewCipher,
-            BlockSize: aes.BlockSize,
-            KeyLen: 16,
-            }
-
+        4) send 0x04 || R || AES(shared-secret, plaintext) || tag
         """
-        # 1) generate r = random value
-        ephem = cls(None)
+        enc_key, mac_key, ephem_pubkey = \
+            self.key_manager.get_ephem_key(raw_pubkey)
 
-        # 2) generate shared-secret = kdf( ecdhAgree(r, P) )
-        key_material = ephem.raw_get_ecdh_key(
-            pubkey_x=raw_pubkey[:32], pubkey_y=raw_pubkey[32:]
-        )
-        assert len(key_material) == 32
-        key = eciesKDF(key_material, 32)
-        assert len(key) == 32
-        key_enc, key_mac = key[:16], key[16:]
-
-        key_mac = hashlib.sha256(key_mac).digest()  # !!!
-        assert len(key_mac) == 32
-        # 3) generate R = rG [same op as generating a public key]
-        # ephem.raw_pubkey
-
-        # encrypt
-        iv = pyelliptic.Cipher.gen_IV(cls.ecies_ciphername)
+        iv = pyelliptic.Cipher.gen_IV(self.CIPHERNAME)
         assert len(iv) == 16
-        ctx = pyelliptic.Cipher(key_enc, iv, 1, cls.ecies_ciphername)
-        ciphertext = ctx.ciphering(data)
+
+        cipher = pyelliptic.Cipher(enc_key, iv, 1, self.CIPHERNAME)
+        ciphertext = cipher.ciphering(data)
         assert len(ciphertext) == len(data)
 
-        # 4) send 0x04 || R || AsymmetricEncrypt(shared-secret, plaintext)
-        #    || tag
-        msg = rlp_utils.ascii_chr(0x04) + ephem.raw_pubkey + iv + ciphertext
+        msg = ephem_pubkey + iv + ciphertext
 
-        # the MAC of a message (called the tag) as per SEC 1, 3.5.
-        tag = pyelliptic.hmac_sha256(
-            key_mac, msg[1 + 64:] + rlp_utils.str_to_bytes(shared_mac_data)
-        )
+        tag = pyelliptic.hmac_sha256(mac_key, msg[1 + 64:] + shared_mac_data)
         assert len(tag) == 32
-        msg += tag
 
-        assert len(msg) == 1 + 64 + 16 + 32 + len(data) == 113 + len(data)
-        assert len(msg) - cls.ecies_encrypt_overhead_length == len(data)
+        msg += tag
+        assert len(msg) == self.OVERHEAD + len(data)
+
         return msg
 
-    def ecies_decrypt(self, data, shared_mac_data=b''):
+    def decrypt(self, data, raw_privkey, shared_mac_data=b''):
         """
         Decrypt data with ECIES method using the local private key
 
@@ -284,50 +328,34 @@ class ECCx(pyelliptic.ECC):
 
         """
         if data[:1] != b'\x04':
-            raise exceptions.DecryptionError("wrong ecies header")
+            raise exceptions.DecryptionError("Wrong ECIES header")
 
-        #  1) generate shared-secret = kdf( ecdhAgree(myPrivKey, msg[1:65]) )
-        _shared = data[1:1 + 64]
-        # FIXME, check that _shared_pub is a valid one (on curve)
-
-        key_material = self.raw_get_ecdh_key(
-            pubkey_x=_shared[:32], pubkey_y=_shared[32:]
-        )
+        # 1) generate shared-secret
+        ephem_pubkey = data[:1 + 64]
+        key_material = self.key_manager.ecdh(
+            HashablePrivateKey(raw_privkey), ephem_pubkey)
         assert len(key_material) == 32
-        key = eciesKDF(key_material, 32)
-        assert len(key) == 32
-        key_enc, key_mac = key[:16], key[16:]
 
-        key_mac = hashlib.sha256(key_mac).digest()
-        assert len(key_mac) == 32
+        enc_key, mac_key = self.key_manager.get_derived_keys(key_material)
 
         tag = data[-32:]
         assert len(tag) == 32
 
         # 2) verify tag
         hmaced_data = pyelliptic.hmac_sha256(
-            key_mac, data[1 + 64:- 32] + shared_mac_data
-        )
+            mac_key, data[1 + 64:- 32] + shared_mac_data)
         if not pyelliptic.equals(hmaced_data, tag):
-            raise exceptions.DecryptionError("Fail to verify data")
+            raise exceptions.DecryptionError("Tag verification failed")
 
         # 3) decrypt
-        blocksize = pyelliptic.OpenSSL.get_cipher(self.ecies_ciphername).get_blocksize()  # noqa
-        iv = data[1 + 64:1 + 64 + blocksize]
+        iv = data[1 + 64:1 + 64 + self.BLOCK_SIZE]
         assert len(iv) == 16
-        ciphertext = data[1 + 64 + blocksize:- 32]
-        assert 1 + len(_shared) + len(iv) + len(ciphertext) + len(tag) == len(data)  # noqa
-        ctx = pyelliptic.Cipher(key_enc, iv, 0, self.ecies_ciphername)
-        return ctx.ciphering(ciphertext)
-    encrypt = ecies_encrypt
-    decrypt = ecies_decrypt
 
-    def sign(self, inputb):
-        signature = ecdsa_sign(self.raw_privkey, inputb)
-        assert len(signature) == 65
-        return signature
+        ciphertext = data[1 + 64 + self.BLOCK_SIZE:- 32]
+        assert len(ephem_pubkey) + len(iv) + len(ciphertext) + len(tag) \
+            == len(data)
 
-    def verify(self, sig, inputb):
-        if len(sig) != 65:
-            raise exceptions.InvalidSignature('Invalid length')
-        return ecdsa_verify(self.raw_pubkey, sig, inputb)
+        cipher = pyelliptic.Cipher(enc_key, iv, 0, self.CIPHERNAME)
+        msg = cipher.ciphering(ciphertext)
+        assert len(msg) == len(ciphertext)
+        return msg

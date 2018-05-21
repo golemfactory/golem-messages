@@ -8,15 +8,12 @@ MessageHeader = collections.namedtuple(
 )
 
 
-class FrozenDict(dict):
-    """FrozenDict allows only keys provided in ITEMS attribute. It also acts
-       as DefaultDict with values from ITEMS.
-       """
-
-    ITEMS = {}
+class SetItemDict(dict):
+    """
+    Mimics dict initialization but always uses __setitem__
+    """
 
     def __init__(self, *args, **kwargs):
-        "Mimic dict __init__ but always use __setitem__"
         super().__init__()
         if args:
             if isinstance(args[0], dict):
@@ -28,8 +25,24 @@ class FrozenDict(dict):
         for key in kwargs:
             self[key] = kwargs[key]
 
-    def __missing__(self, key):
-        return copy.deepcopy(self.ITEMS[key])
+
+class FrozenDict(SetItemDict):
+    """
+    FrozenDict allows only keys provided in ITEMS attribute.
+
+    It also populates any missing keys with defaults from ITEMS.
+    """
+
+    ITEMS = {}
+
+    def _set_defaults(self):
+        for k, v in self.ITEMS.items():
+            if k not in self:
+                self[k] = copy.deepcopy(v)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._set_defaults()
 
     def __setitem__(self, key, value):
         if key not in self.ITEMS:
@@ -38,6 +51,28 @@ class FrozenDict(dict):
 
     def __setattr__(self, key, value):
         raise AttributeError("Read only. Use mapping interface")
+
+
+class ValidatingDict(SetItemDict):
+    """
+    Adds optional validation to the dict interface.
+
+    To add validation to a dictionary key,
+    add a `validate_<key>` method, accepting a value
+    the return value is ignored and the method
+    should raise `exceptions.FieldError`
+    if the value doesn't pass the validation.
+    """
+
+    def __setitem__(self, key, value):
+        validator = getattr(
+            self, 'validate_{}'.format(key), None
+        )
+
+        if callable(validator):
+            validator(value=value)  # noqa pylint:disable=not-callable
+
+        super().__setitem__(key, value)
 
 
 class StringEnum(str, enum.Enum):
