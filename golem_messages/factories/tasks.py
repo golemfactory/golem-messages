@@ -19,6 +19,14 @@ class TaskOwnerFactory(factory.DictFactory):
     node_name = factory.Faker('name')
 
 
+class WantToComputeTaskFactory(helpers.MessageFactory):
+    class Meta:
+        model = tasks.WantToComputeTask
+
+    node_name = factory.Faker('name')
+    task_id = factory.Faker('uuid4')
+
+
 class ComputeTaskDefFactory(factory.DictFactory):
     class Meta:
         model = tasks.ComputeTaskDef
