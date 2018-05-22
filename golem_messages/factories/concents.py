@@ -8,10 +8,13 @@ import faker
 
 from golem_messages.factories import tasks as tasks_factories
 from golem_messages.message import concents
+from golem_messages.message.concents import FileTransferToken
 from . import helpers
 from .tasks import (
     SubtaskResultsAcceptedFactory, SubtaskResultsRejectedFactory
 )
+
+FileInfoCategory = FileTransferToken.FileInfo.Category
 
 
 class FileInfoFactory(factory.DictFactory):
@@ -21,6 +24,40 @@ class FileInfoFactory(factory.DictFactory):
     path = factory.LazyFunction(lambda: faker.Faker().file_path()[1:])
     checksum = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
     size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
+
+
+class FileTransferTokenFactory(helpers.MessageFactory):
+    class Meta:
+        model = concents.FileTransferToken
+
+    subtask_id = factory.Faker('uuid4')
+    token_expiration_deadline = 1800
+    storage_cluster_address = factory.Faker('url')
+    authorized_client_public_key = factory.Faker('binary', length=64)
+    operation = concents.FileTransferToken.Operation.upload
+    files = factory.List([
+        factory.SubFactory(FileInfoFactory)
+    ])
+
+    # pylint: disable=no-self-argument
+
+    @factory.post_generation
+    def upload(obj, create, extracted, **_):
+        if not create:
+            return
+
+        if extracted:
+            obj.operation = concents.FileTransferToken.Operation.upload
+
+    @factory.post_generation
+    def download(obj, create, extracted, **_):
+        if not create:
+            return
+
+        if extracted:
+            obj.operation = concents.FileTransferToken.Operation.download
+
+    # pylint: enable=no-self-argument
 
 
 class ForceReportComputedTaskFactory(helpers.MessageFactory):
@@ -45,6 +82,15 @@ class AckSubtaskResultsVerifyFactory(helpers.MessageFactory):
         model = concents.AckSubtaskResultsVerify
 
     subtask_results_verify = factory.SubFactory(SubtaskResultsVerifyFactory)
+    file_transfer_token = factory.SubFactory(
+        FileTransferTokenFactory,
+        files=factory.List([
+            factory.SubFactory(FileInfoFactory,
+                               category=FileInfoCategory.resources),
+            factory.SubFactory(FileInfoFactory,
+                               category=FileInfoCategory.results),
+        ])
+    )
 
 
 class SubtaskResultsSettledFactory(helpers.MessageFactory):
@@ -96,40 +142,6 @@ class ForceGetTaskResultRejectedFactory(helpers.MessageFactory):
         model = concents.ForceGetTaskResultRejected
 
     force_get_task_result = factory.SubFactory(ForceGetTaskResultFactory)
-
-
-class FileTransferTokenFactory(helpers.MessageFactory):
-    class Meta:
-        model = concents.FileTransferToken
-
-    subtask_id = factory.Faker('uuid4')
-    token_expiration_deadline = 1800
-    storage_cluster_address = factory.Faker('url')
-    authorized_client_public_key = factory.Faker('binary', length=64)
-    operation = concents.FileTransferToken.Operation.upload
-    files = factory.List([
-        factory.SubFactory(FileInfoFactory)
-    ])
-
-    # pylint: disable=no-self-argument
-
-    @factory.post_generation
-    def upload(obj, create, extracted, **_):
-        if not create:
-            return
-
-        if extracted:
-            obj.operation = concents.FileTransferToken.Operation.upload
-
-    @factory.post_generation
-    def download(obj, create, extracted, **_):
-        if not create:
-            return
-
-        if extracted:
-            obj.operation = concents.FileTransferToken.Operation.download
-
-    # pylint: enable=no-self-argument
 
 
 class ForceGetTaskResultUploadFactory(helpers.MessageFactory):
