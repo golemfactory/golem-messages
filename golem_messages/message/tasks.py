@@ -210,7 +210,15 @@ class TaskMessage(base.Message):
         return True
 
 
-class WantToComputeTask(base.Message):
+class ConcentEnabled:  # noqa pylint:disable=too-few-public-methods
+    __slots__ = []
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.concent_enabled = bool(self.concent_enabled)  # noqa pylint:disable=assigning-non-slot
+
+
+class WantToComputeTask(ConcentEnabled, base.Message):
     TYPE = TASK_MSG_BASE + 1
 
     __slots__ = [
@@ -226,7 +234,7 @@ class WantToComputeTask(base.Message):
     ] + base.Message.__slots__
 
 
-class TaskToCompute(TaskMessage):
+class TaskToCompute(ConcentEnabled, TaskMessage):
     TYPE = TASK_MSG_BASE + 2
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
 
@@ -243,15 +251,6 @@ class TaskToCompute(TaskMessage):
         'concent_enabled',
         'price',  # total subtask price computed as `price * subtask_timeout`
     ] + base.Message.__slots__
-
-    def __init__(self, header: datastructures.MessageHeader = None,
-                 sig=None, slots=None, deserialized=False, **kwargs):
-        super().__init__(header=header, sig=sig, slots=slots,
-                         deserialized=deserialized, **kwargs)
-
-        # defaults to `True` if not specified explicitly as `False`
-        if self.concent_enabled is None:
-            self.concent_enabled = True
 
     @property
     def requestor_ethereum_address(self):
