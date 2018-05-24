@@ -99,8 +99,10 @@ def get_version(prefix='', cwd='.', update_version_file=True):
 
 
 if __name__ == "__main__":
-    if '--no-update-version-file' in sys.argv:
+    if '--no-update-version-file' in sys.argv and len(sys.argv) == 2:
         update_version_file = False
+    elif len(sys.argv) == 1:
+        update_version_file = True
     else:
         raise ValueError('Cannot get appropriate parameter')
     print(get_version(prefix='v', update_version_file=update_version_file))
