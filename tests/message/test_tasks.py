@@ -13,6 +13,21 @@ from golem_messages import shortcuts
 from tests.message import mixins
 
 
+class WantToComputeTaskTest(unittest.TestCase):
+    def test_concent_enabled_default_false(self):
+        wtct = message.tasks.WantToComputeTask()
+        self.assertFalse(wtct.concent_enabled)
+
+    def test_concent_enabled_none_false(self):
+        wtct = message.tasks.WantToComputeTask(concent_enabled=None)
+        self.assertFalse(wtct.concent_enabled)
+        self.assertIsInstance(wtct.concent_enabled, bool)
+
+    def test_concent_enabled_true(self):
+        wtct = message.tasks.WantToComputeTask(concent_enabled=True)
+        self.assertTrue(wtct.concent_enabled)
+
+
 class ComputeTaskDefTestCase(unittest.TestCase):
     @mock.patch('golem_messages.message.tasks.ComputeTaskDef.validate_task_id')
     def test_task_id_validator(self, v_mock):
@@ -113,12 +128,16 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         ttc = factories.tasks.TaskToComputeFactory(concent_enabled=True)
         self.assertTrue(ttc.concent_enabled)
 
-    def test_concent_enabled_default_true(self):
+    def test_concent_enabled_default_false(self):
         ttc = message.tasks.TaskToCompute()
-        self.assertTrue(ttc.concent_enabled)
+        self.assertFalse(ttc.concent_enabled)
 
     def test_concent_enabled_false(self):
         ttc = message.tasks.TaskToCompute(concent_enabled=False)
+        self.assertFalse(ttc.concent_enabled)
+
+    def test_concent_enabled_none_false(self):
+        ttc = message.tasks.TaskToCompute(concent_enabled=None)
         self.assertFalse(ttc.concent_enabled)
 
     def test_ethereum_address(self):
