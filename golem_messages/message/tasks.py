@@ -210,12 +210,12 @@ class TaskMessage(base.Message):
         return True
 
 
-class ConcentEnabled(base.Message):  # noqa pylint:disable=too-few-public-methods
-    __slots__ = ['concent_enabled']
+class ConcentEnabled:  # noqa pylint:disable=too-few-public-methods
+    __slots__ = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.concent_enabled = bool(self.concent_enabled)
+        self.concent_enabled = bool(self.concent_enabled)  # noqa pylint:disable=assigning-non-slot
 
 
 class WantToComputeTask(ConcentEnabled, base.Message):
