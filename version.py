@@ -104,5 +104,5 @@ if __name__ == "__main__":
     elif len(sys.argv) == 1:
         update_version_file = True
     else:
-        raise ValueError('Cannot get appropriate parameter')
+        raise ValueError('Invalid arguments')
     print(get_version(prefix='v', update_version_file=update_version_file))
