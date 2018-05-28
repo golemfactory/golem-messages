@@ -9,6 +9,7 @@ from golem_messages import exceptions
 from golem_messages import factories
 from golem_messages import message
 from golem_messages import shortcuts
+from golem_messages.utils import encode_hex
 
 from tests.message import mixins
 
@@ -228,7 +229,7 @@ class AckReportComputedTaskTestCase(
     def test_validate_owner_requestor(self):
         requestor_keys = cryptography.ECCx(None)
         arct = self.FACTORY(
-            report_computed_task__task_to_compute__requestor_public_key=requestor_keys.raw_pubkey,  # noqa pylint:disable=line-too-long
+            report_computed_task__task_to_compute__requestor_public_key=encode_hex(requestor_keys.raw_pubkey),  # noqa pylint:disable=line-too-long
             sign__privkey=requestor_keys.raw_privkey,
         )
         self.assertTrue(arct.validate_ownership())
@@ -319,8 +320,8 @@ class TaskMessageVerificationTest(unittest.TestCase):
 
     def get_ttc(self, **kwargs):
         return factories.tasks.TaskToComputeFactory(
-            provider_public_key=self.provider_keys.raw_pubkey,
-            requestor_public_key=self.requestor_keys.raw_pubkey,
+            provider_public_key=encode_hex(self.provider_keys.raw_pubkey),
+            requestor_public_key=encode_hex(self.requestor_keys.raw_pubkey),
             **kwargs,
         )
 

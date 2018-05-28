@@ -9,6 +9,7 @@ import factory.fuzzy
 import faker
 
 from golem_messages import cryptography
+from golem_messages.utils import encode_hex as encode_key_id
 from golem_messages.message import tasks
 
 from . import helpers
@@ -43,16 +44,19 @@ class TaskToComputeFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.TaskToCompute
 
-    requestor_id = factory.Faker('binary', length=64)
-    provider_id = factory.Faker('binary', length=64)
+    requestor_id = factory.SelfAttribute(
+        'requestor_public_key')
+    provider_id = factory.SelfAttribute(
+        'provider_public_key'
+    )
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
     provider_public_key = factory.LazyFunction(
-        lambda: cryptography.ECCx(None).raw_pubkey)
+        lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey))
     provider_ethereum_public_key = factory.SelfAttribute(
         'provider_public_key'
     )
     requestor_public_key = factory.LazyFunction(
-        lambda: cryptography.ECCx(None).raw_pubkey)
+        lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey))
     requestor_ethereum_public_key = factory.SelfAttribute(
         'requestor_public_key')
 
