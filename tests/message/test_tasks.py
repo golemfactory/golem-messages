@@ -13,6 +13,21 @@ from golem_messages import shortcuts
 from tests.message import mixins
 
 
+class WantToComputeTaskTest(unittest.TestCase):
+    def test_concent_enabled_default_false(self):
+        wtct = message.tasks.WantToComputeTask()
+        self.assertFalse(wtct.concent_enabled)
+
+    def test_concent_enabled_none_false(self):
+        wtct = message.tasks.WantToComputeTask(concent_enabled=None)
+        self.assertFalse(wtct.concent_enabled)
+        self.assertIsInstance(wtct.concent_enabled, bool)
+
+    def test_concent_enabled_true(self):
+        wtct = message.tasks.WantToComputeTask(concent_enabled=True)
+        self.assertTrue(wtct.concent_enabled)
+
+
 class ComputeTaskDefTestCase(unittest.TestCase):
     @mock.patch('golem_messages.message.tasks.ComputeTaskDef.validate_task_id')
     def test_task_id_validator(self, v_mock):
@@ -29,6 +44,15 @@ class ComputeTaskDefTestCase(unittest.TestCase):
         v_mock.assert_called_once_with(
             value=ctd['subtask_id'],
         )
+
+    def test_type(self):
+        ctd = message.ComputeTaskDef()
+        ctd['src_code'] = "custom code"
+        msg = factories.tasks.TaskToComputeFactory(compute_task_def=ctd)
+        s = msg.serialize()
+        msg2 = message.Message.deserialize(s, None)
+        self.assertEqual(ctd, msg2.compute_task_def)
+        self.assertIsInstance(msg2.compute_task_def, message.ComputeTaskDef)
 
 
 class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
@@ -104,12 +128,16 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         ttc = factories.tasks.TaskToComputeFactory(concent_enabled=True)
         self.assertTrue(ttc.concent_enabled)
 
-    def test_concent_enabled_default_true(self):
+    def test_concent_enabled_default_false(self):
         ttc = message.tasks.TaskToCompute()
-        self.assertTrue(ttc.concent_enabled)
+        self.assertFalse(ttc.concent_enabled)
 
     def test_concent_enabled_false(self):
         ttc = message.tasks.TaskToCompute(concent_enabled=False)
+        self.assertFalse(ttc.concent_enabled)
+
+    def test_concent_enabled_none_false(self):
+        ttc = message.tasks.TaskToCompute(concent_enabled=None)
         self.assertFalse(ttc.concent_enabled)
 
     def test_ethereum_address(self):
@@ -134,6 +162,41 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         now = calendar.timegm(time.gmtime())
         ttc = factories.tasks.TaskToComputeFactory.past_deadline()
         self.assertGreater(now, ttc.compute_task_def.get('deadline'))
+
+    @staticmethod
+    def _dump_and_load(msg):
+        msg_d = shortcuts.dump(msg, None, None)
+        return shortcuts.load(msg_d, None, None)
+
+    def test_size(self):
+        size = 1234567
+        ttc = self._dump_and_load(
+            factories.tasks.TaskToComputeFactory(size=size))
+        self.assertEqual(ttc.size, size)
+
+    def test_size_notint(self):
+        ttc = factories.tasks.TaskToComputeFactory(size=None)
+        with self.assertRaises(exceptions.FieldError):
+            self._dump_and_load(ttc)
+
+
+class PriceTaskToComputeTestCase(unittest.TestCase):
+    def setUp(self):
+        self.msg = factories.tasks.TaskToComputeFactory()
+
+    def test_valid_price_value(self):
+        price = 1994
+        self.msg.price = price
+        s = self.msg.serialize()
+        msg2 = message.Message.deserialize(s, None)
+        self.assertEqual(msg2.price, price)
+
+    def test_invalid_price_value(self):
+        price = '1994'
+        self.msg.price = price
+        s = self.msg.serialize()
+        with self.assertRaises(exceptions.FieldError):
+            message.Message.deserialize(s, None)
 
 
 class ReportComputedTaskTest(mixins.RegisteredMessageTestMixin,
@@ -162,6 +225,22 @@ class AckReportComputedTaskTestCase(
     FACTORY = factories.tasks.AckReportComputedTaskFactory
     TASK_ID_PROVIDER = 'report_computed_task'
 
+    def test_validate_owner_requestor(self):
+        requestor_keys = cryptography.ECCx(None)
+        arct = self.FACTORY(
+            report_computed_task__task_to_compute__requestor_public_key=requestor_keys.raw_pubkey,  # noqa pylint:disable=line-too-long
+            sign__privkey=requestor_keys.raw_privkey,
+        )
+        self.assertTrue(arct.validate_ownership())
+
+    def test_validate_owner_concent(self):
+        concent_keys = cryptography.ECCx(None)
+        arct = self.FACTORY(
+            sign__privkey=concent_keys.raw_privkey,
+        )
+        self.assertTrue(
+            arct.validate_ownership(
+                concent_public_key=concent_keys.raw_pubkey))
 
 class RejectReportComputedTaskTestCase(
         mixins.RegisteredMessageTestMixin,
@@ -186,6 +265,46 @@ class RejectRctTfTestCase(mixins.TaskIdMixin, unittest.TestCase):
     FACTORY = factories.tasks.RejectReportComputedTaskFactory.\
         with_task_failure
     TASK_ID_PROVIDER = 'task_failure'
+
+
+class RejectReportComputedTaskSlotValidationTest(unittest.TestCase):
+    FACTORY = factories.tasks.RejectReportComputedTaskFactory
+
+    @staticmethod
+    def dump_and_load(msg):
+        return message.base.Message.deserialize(msg.serialize(), lambda m: m)
+
+    def test_validate_task_to_compute(self):
+        msg = self.FACTORY.with_task_to_compute()
+        msg2 = self.dump_and_load(msg)
+        self.assertEqual(msg, msg2)
+
+    def test_fail_task_to_compute(self):
+        msg = self.FACTORY(attached_task_to_compute='blah')
+        with self.assertRaises(exceptions.FieldError):
+            self.dump_and_load(msg)
+
+    def test_validate_cannot_compute_task(self):
+        msg = self.FACTORY.with_cannot_compute_task()
+        msg2 = self.dump_and_load(msg)
+        self.assertEqual(msg, msg2)
+
+    def test_fail_cannot_compute_task(self):
+        msg = self.FACTORY(
+            cannot_compute_task=factories.tasks.TaskToComputeFactory())
+        with self.assertRaises(exceptions.FieldError):
+            self.dump_and_load(msg)
+
+    def test_validate_task_failure(self):
+        msg = self.FACTORY.with_task_failure()
+        msg2 = self.dump_and_load(msg)
+        self.assertEqual(msg, msg2)
+
+    def test_fail_task_failure(self):
+        msg = self.FACTORY(
+            task_failure=factories.tasks.TaskToComputeFactory())
+        with self.assertRaises(exceptions.FieldError):
+            self.dump_and_load(msg)
 
 
 class TaskMessageVerificationTest(unittest.TestCase):
@@ -316,3 +435,27 @@ class TaskMessageVerificationTest(unittest.TestCase):
                 requestor_public_key=self.other_keys.raw_pubkey,
             )
         self.assertIn('requestor', str(e.exception))
+
+
+class CannotComputeTaskTest(
+        mixins.RegisteredMessageTestMixin,
+        mixins.TaskIdMixin,
+        mixins.SerializationMixin,
+        unittest.TestCase):
+    MSG_CLASS = message.tasks.CannotComputeTask
+    FACTORY = factories.tasks.CannotComputeTaskFactory
+    TASK_ID_PROVIDER = 'task_to_compute'
+
+    def test_factory_default_reason(self):
+        msg = self.FACTORY()
+        self.assertIsNotNone(msg.reason)
+
+
+class TaskFailureTest(
+        mixins.RegisteredMessageTestMixin,
+        mixins.TaskIdMixin,
+        mixins.SerializationMixin,
+        unittest.TestCase):
+    MSG_CLASS = message.tasks.TaskFailure
+    FACTORY = factories.tasks.TaskFailureFactory
+    TASK_ID_PROVIDER = 'task_to_compute'

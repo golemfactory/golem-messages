@@ -4,8 +4,9 @@ import datetime
 import os
 import time
 
-import factory.fuzzy
 from eth_utils import encode_hex
+import factory.fuzzy
+import faker
 
 from golem_messages import cryptography
 from golem_messages.message import tasks
@@ -16,6 +17,14 @@ from . import helpers
 class TaskOwnerFactory(factory.DictFactory):
     key = factory.Faker('binary', length=64)
     node_name = factory.Faker('name')
+
+
+class WantToComputeTaskFactory(helpers.MessageFactory):
+    class Meta:
+        model = tasks.WantToComputeTask
+
+    node_name = factory.Faker('name')
+    task_id = factory.Faker('uuid4')
 
 
 class ComputeTaskDefFactory(factory.DictFactory):
@@ -48,7 +57,8 @@ class TaskToComputeFactory(helpers.MessageFactory):
         'requestor_public_key')
 
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
-
+    package_hash = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
+    size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
     price = factory.Faker('random_int', min=1 << 20, max=10 << 20)
 
     @classmethod
@@ -66,6 +76,7 @@ class CannotComputeTaskFactory(helpers.MessageFactory):
         model = tasks.CannotComputeTask
 
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    reason = factory.fuzzy.FuzzyChoice(tasks.CannotComputeTask.REASON)
 
 
 class TaskFailureFactory(helpers.MessageFactory):
@@ -87,6 +98,7 @@ class ReportComputedTaskFactory(helpers.MessageFactory):
     eth_account = factory.LazyFunction(lambda: encode_hex(os.urandom(20)))
     key_id = factory.Faker('binary', length=64)
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    package_hash = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
     size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
     multihash = factory.Faker('text')
     secret = factory.Faker('text')

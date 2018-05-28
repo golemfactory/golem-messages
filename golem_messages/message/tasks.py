@@ -12,7 +12,7 @@ from . import base
 TASK_MSG_BASE = 2000
 
 
-class ComputeTaskDef(datastructures.FrozenDict):
+class ComputeTaskDef(datastructures.ValidatingDict, datastructures.FrozenDict):
     """Represents SUBTASK metadata."""
     ITEMS = {
         'task_id': '',
@@ -28,12 +28,6 @@ class ComputeTaskDef(datastructures.FrozenDict):
         'performance': 0,
         'docker_images': None,
     }
-
-    def __setitem__(self, key, value):
-        validator = getattr(self, 'validate_{}'.format(key), None)
-        if validator is not None:
-            validator(value=value)  # pylint: disable=not-callable
-        super().__setitem__(key, value)
 
     validate_task_id = functools.partial(
         validators.validate_varchar,
@@ -180,8 +174,8 @@ class TaskMessage(base.Message):
         def assert_role(role, expected, actual):
             if expected != actual:
                 raise exceptions.OwnershipMismatch(
-                    "Task %s mismatch - expected: %s, actual: %s" % (
-                        role, expected, actual
+                    "%s: Task %s mismatch - expected: %s, actual: %s" % (
+                        self.__class__.__name__, role, expected, actual
                     )
                 )
 
@@ -216,7 +210,15 @@ class TaskMessage(base.Message):
         return True
 
 
-class WantToComputeTask(base.Message):
+class ConcentEnabled:  # noqa pylint:disable=too-few-public-methods
+    __slots__ = []
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.concent_enabled = bool(self.concent_enabled)  # noqa pylint:disable=assigning-non-slot
+
+
+class WantToComputeTask(ConcentEnabled, base.Message):
     TYPE = TASK_MSG_BASE + 1
 
     __slots__ = [
@@ -226,11 +228,13 @@ class WantToComputeTask(base.Message):
         'max_resource_size',
         'max_memory_size',
         'num_cores',
-        'price'
+        'price',
+        'concent_enabled',  # Provider notifies requestor
+                            # about his concent status
     ] + base.Message.__slots__
 
 
-class TaskToCompute(TaskMessage):
+class TaskToCompute(ConcentEnabled, TaskMessage):
     TYPE = TASK_MSG_BASE + 2
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
 
@@ -242,19 +246,11 @@ class TaskToCompute(TaskMessage):
         'provider_public_key',  # key used for msg signing and encryption
         'provider_ethereum_public_key',  # used for transactions on blockchain
         'compute_task_def',
-        'package_hash',
+        'package_hash',  # the hash of the package (resources) zip file
+        'size',  # the size of the resources zip file
         'concent_enabled',
-        'price', # total subtask price computed as `price * subtask_timeout`
+        'price',  # total subtask price computed as `price * subtask_timeout`
     ] + base.Message.__slots__
-
-    def __init__(self, header: datastructures.MessageHeader = None,
-                 sig=None, slots=None, deserialized=False, **kwargs):
-        super().__init__(header=header, sig=sig, slots=slots,
-                         deserialized=deserialized, **kwargs)
-
-        # defaults to `True` if not specified explicitly as `False`
-        if self.concent_enabled is None:
-            self.concent_enabled = True
 
     @property
     def requestor_ethereum_address(self):
@@ -272,9 +268,9 @@ class TaskToCompute(TaskMessage):
         value = super().deserialize_slot(key, value)
         if key == 'compute_task_def':
             value = ComputeTaskDef(value)
-        if key == 'price':
+        if key in ('price', 'size'):
             validators.validate_integer(
-                field_name='price',
+                field_name=key,
                 value=value,
             )
         return value
@@ -303,9 +299,10 @@ class CannotAssignTask(base.AbstractReasonMessage):
         'task_id'
     ] + base.AbstractReasonMessage.__slots__
 
-    class REASON(enum.Enum):
-        NotMyTask = 'not_my_task'
-        NoMoreSubtasks = 'no_more_subtasks'
+    class REASON(datastructures.StringEnum):
+        NotMyTask = enum.auto()
+        NoMoreSubtasks = enum.auto()
+        ConcentDisabled = enum.auto()
 
 
 class ReportComputedTask(TaskMessage):
@@ -459,13 +456,15 @@ class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
         'task_to_compute',
     ] + base.AbstractReasonMessage.__slots__
 
-    class REASON(enum.Enum):
-        WrongCTD = 'wrong_ctd'
-        WrongKey = 'wrong_key'
-        WrongAddress = 'wrong_address'
-        WrongEnvironment = 'wrong_environment'
-        NoSourceCode = 'no_source_code'
-        WrongDockerImages = 'wrong_docker_images'
+    class REASON(datastructures.StringEnum):
+        WrongCTD = enum.auto()
+        WrongKey = enum.auto()
+        WrongAddress = enum.auto()
+        WrongEnvironment = enum.auto()
+        NoSourceCode = enum.auto()
+        WrongDockerImages = enum.auto()
+        ConcentRequired = enum.auto()
+        ConcentDisabled = enum.auto()
 
     @base.verify_slot('task_to_compute', TaskToCompute)
     def deserialize_slot(self, key, value):
@@ -521,7 +520,8 @@ class AckReportComputedTask(TaskMessage):
 
     TYPE = TASK_MSG_BASE + 29
     TASK_ID_PROVIDERS = ('report_computed_task', )
-    EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
+    EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor,
+                       TaskMessage.OWNER_CHOICES.concent)
 
     __slots__ = [
         'report_computed_task',
@@ -548,25 +548,10 @@ class RejectReportComputedTask(TaskMessage, base.AbstractReasonMessage):
                        TaskMessage.OWNER_CHOICES.concent)
 
     @enum.unique
-    class REASON(enum.Enum):
-        """
-        since python 3.6 it's possible to do this:
-
-        class StringEnum(str, enum.Enum):
-            def _generate_next_value_(name: str, *_):
-                return name
-
-        @enum.unique
-        class REASON(StringEnum):
-            TASK_TIME_LIMIT_EXCEEDED = enum.auto()
-            SUBTASK_TIME_LIMIT_EXCEEDED = enum.auto()
-            GOT_MESSAGE_CANNOT_COMPUTE_TASK = enum.auto()
-            GOT_MESSAGE_TASK_FAILURE = enum.auto()
-        """
-        TaskTimeLimitExceeded = 'TASK_TIME_LIMIT_EXCEEDED'
-        SubtaskTimeLimitExceeded = 'SUBTASK_TIME_LIMIT_EXCEEDED'
-        GotMessageCannotComputeTask = 'GOT_MESSAGE_CANNOT_COMPUTE_TASK'
-        GotMessageTaskFailure = 'GOT_MESSAGE_TASK_FAILURE'
+    class REASON(datastructures.StringEnum):
+        SubtaskTimeLimitExceeded = enum.auto()
+        GotMessageCannotComputeTask = enum.auto()
+        GotMessageTaskFailure = enum.auto()
 
     __slots__ = [
         'attached_task_to_compute',
@@ -574,7 +559,7 @@ class RejectReportComputedTask(TaskMessage, base.AbstractReasonMessage):
         'cannot_compute_task',
     ] + base.AbstractReasonMessage.__slots__
 
-    @base.verify_slot('attached_task_to_compute_', TaskToCompute)
+    @base.verify_slot('attached_task_to_compute', TaskToCompute)
     @base.verify_slot('task_failure', TaskFailure)
     @base.verify_slot('cannot_compute_task', CannotComputeTask)
     def deserialize_slot(self, key, value):

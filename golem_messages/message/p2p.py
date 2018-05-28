@@ -9,24 +9,28 @@ P2P_MESSAGE_BASE = 1000
 
 class Ping(base.Message):
     TYPE = P2P_MESSAGE_BASE + 1
+    SIGN = False
 
     __slots__ = base.Message.__slots__
 
 
 class Pong(base.Message):
     TYPE = P2P_MESSAGE_BASE + 2
+    SIGN = False
 
     __slots__ = base.Message.__slots__
 
 
 class GetPeers(base.Message):
     TYPE = P2P_MESSAGE_BASE + 3
+    SIGN = False
 
     __slots__ = base.Message.__slots__
 
 
 class Peers(base.Message):
     TYPE = P2P_MESSAGE_BASE + 4
+    SIGN = False
 
     __slots__ = ['peers'] + base.Message.__slots__
 
@@ -37,6 +41,7 @@ class Peers(base.Message):
 
 class GetTasks(base.Message):
     TYPE = P2P_MESSAGE_BASE + 5
+    SIGN = False
 
     __slots__ = base.Message.__slots__
 
@@ -69,12 +74,14 @@ class RemoveTask(base.Message):
 class GetResourcePeers(base.Message):
     """Request for resource peers"""
     TYPE = P2P_MESSAGE_BASE + 8
+    SIGN = False
 
     __slots__ = base.Message.__slots__
 
 
 class ResourcePeers(base.Message):
     TYPE = P2P_MESSAGE_BASE + 9
+    SIGN = False
 
     __slots__ = ['resource_peers'] + base.Message.__slots__
 
@@ -89,12 +96,14 @@ class ResourcePeers(base.Message):
 
 class Degree(base.Message):
     TYPE = P2P_MESSAGE_BASE + 10
+    SIGN = False
 
     __slots__ = ['degree'] + base.Message.__slots__
 
 
 class Gossip(base.Message):
     TYPE = P2P_MESSAGE_BASE + 11
+    SIGN = False
 
     __slots__ = ['gossip'] + base.Message.__slots__
 
@@ -110,18 +119,21 @@ class Gossip(base.Message):
 class StopGossip(base.Message):
     """Create stop gossip message"""
     TYPE = P2P_MESSAGE_BASE + 12
+    SIGN = False
 
     __slots__ = base.Message.__slots__
 
 
 class LocRank(base.Message):
     TYPE = P2P_MESSAGE_BASE + 13
+    SIGN = False
 
     __slots__ = ['node_id', 'loc_rank'] + base.Message.__slots__
 
 
 class FindNode(base.Message):
     TYPE = P2P_MESSAGE_BASE + 14
+    SIGN = False
 
     __slots__ = ['node_key_id'] + base.Message.__slots__
 
