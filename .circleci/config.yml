@@ -7,7 +7,7 @@ jobs:
        - checkout
        - restore_cache:
            key: deps1-{{ .Branch }}-{{ checksum "setup.py" }}
-       - run: sudo apt-get install -y libgmp3-dev
+       - run: sudo apt-get install -y libgmp3-dev libsecp256k1-0 libsecp256k1-dev
        - run: sudo pip install coverage codecov
        - run:
            command: |
