@@ -409,7 +409,10 @@ class ForceSubtaskResults(tasks.TaskMessage):
     """
     TYPE = CONCENT_MSG_BASE + 15
     TASK_ID_PROVIDERS = ('ack_report_computed_task', )
-    EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.provider, )
+    EXPECTED_OWNERS = (
+        tasks.TaskMessage.OWNER_CHOICES.provider,
+        tasks.TaskMessage.OWNER_CHOICES.concent,
+    )
 
     __slots__ = [
         'ack_report_computed_task',
