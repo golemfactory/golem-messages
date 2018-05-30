@@ -6,6 +6,7 @@ from ethereum.utils import sha3
 from golem_messages import datastructures
 from golem_messages import exceptions
 from golem_messages import validators
+from golem_messages.utils import decode_hex
 
 from . import base
 
@@ -109,9 +110,9 @@ class TaskMessage(base.Message):
         """
         owner_map = {
             TaskMessage.OWNER_CHOICES.provider:
-                self.task_to_compute.provider_public_key,
+                decode_hex(self.task_to_compute.provider_public_key),
             TaskMessage.OWNER_CHOICES.requestor:
-                self.task_to_compute.requestor_public_key,
+                decode_hex(self.task_to_compute.requestor_public_key),
             TaskMessage.OWNER_CHOICES.concent:
                 concent_public_key,
         }
@@ -182,12 +183,12 @@ class TaskMessage(base.Message):
         if provider_public_key:
             assert_role('provider',
                         provider_public_key,
-                        self.task_to_compute.provider_public_key)
+                        decode_hex(self.task_to_compute.provider_public_key))
 
         if requestor_public_key:
             assert_role('requestor',
                         requestor_public_key,
-                        self.task_to_compute.requestor_public_key)
+                        decode_hex(self.task_to_compute.requestor_public_key))
 
         self.validate_ownership_chain(concent_public_key=concent_public_key)
         return True
