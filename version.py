@@ -34,9 +34,9 @@
 
 __all__ = ("get_version")
 
+import argparse
 import pathlib
 import subprocess
-import sys
 VERSION_FILE = "RELEASE-VERSION"
 
 
@@ -75,7 +75,7 @@ def call_git_describe(prefix='', cwd='.'):
     return version
 
 
-def get_version(prefix='', cwd='.', update_version_file=True):
+def get_version(prefix='', cwd='.', no_update_version_file=False):
     path = pathlib.Path(cwd) / VERSION_FILE
     try:
         with path.open("r") as f:
@@ -85,7 +85,7 @@ def get_version(prefix='', cwd='.', update_version_file=True):
 
     version = call_git_describe(prefix, cwd)
 
-    if not update_version_file:
+    if no_update_version_file:
         return version
 
     if version is None:
@@ -99,10 +99,7 @@ def get_version(prefix='', cwd='.', update_version_file=True):
 
 
 if __name__ == "__main__":
-    if '--no-update-version-file' in sys.argv and len(sys.argv) == 2:
-        update_version_file = False
-    elif len(sys.argv) == 1:
-        update_version_file = True
-    else:
-        raise ValueError('Invalid arguments')
-    print(get_version(prefix='v', update_version_file=update_version_file))
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--no-update-version-file', action='store_true', default=False)
+    args = parser.parse_args()
+    print(get_version(prefix='v', no_update_version_file=args.no_update_version_file))
