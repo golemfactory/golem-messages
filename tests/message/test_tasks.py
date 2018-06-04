@@ -4,12 +4,14 @@ import time
 import unittest
 import unittest.mock as mock
 
+from ethereum.utils import sha3
+
 from golem_messages import cryptography
 from golem_messages import exceptions
 from golem_messages import factories
 from golem_messages import message
 from golem_messages import shortcuts
-from golem_messages.utils import encode_hex
+from golem_messages.utils import encode_hex, decode_hex
 
 from tests.message import mixins
 
@@ -150,6 +152,20 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
                 'provider_ethereum_address'):
             address = getattr(msg_l, addr_slot)
             self.assertEqual(len(address), 2 + (20*2))
+
+    def test_ethereum_address_provider(self):
+        msg = factories.tasks.TaskToComputeFactory()
+        provider_public_key = decode_hex(msg.provider_ethereum_public_key)
+
+        self.assertEqual(msg.provider_ethereum_address,
+                         '0x' + sha3(provider_public_key)[12:].hex())
+
+    def test_ethereum_address_requestor(self):
+        msg = factories.tasks.TaskToComputeFactory()
+        requestor_public_key = decode_hex(msg.requestor_ethereum_public_key)
+
+        self.assertEqual(msg.requestor_ethereum_address,
+                         '0x' + sha3(requestor_public_key)[12:].hex())
 
     def test_task_id(self):
         self.assertEqual(self.msg.task_id,

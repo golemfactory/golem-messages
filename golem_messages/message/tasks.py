@@ -256,13 +256,13 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
     @property
     def requestor_ethereum_address(self):
         return '0x{}'.format(
-            sha3(self.requestor_ethereum_public_key)[12:].hex(),
+            sha3(decode_hex(self.requestor_ethereum_public_key))[12:].hex(),
         )
 
     @property
     def provider_ethereum_address(self):
         return '0x{}'.format(
-            sha3(self.provider_ethereum_public_key)[12:].hex(),
+            sha3(decode_hex(self.provider_ethereum_public_key))[12:].hex(),
         )
 
     def deserialize_slot(self, key, value):
