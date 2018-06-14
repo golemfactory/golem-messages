@@ -261,6 +261,7 @@ class SubtaskResultsSettled(tasks.TaskMessage):
     class Origin(enum.Enum):
         ResultsAcceptedTimeout = 'results_accepted_timeout'
         ResultsRejected = 'results_rejected'
+        ResultsFailed = 'results_failed'
 
     ENUM_SLOTS = {
         'origin': Origin,
