@@ -194,6 +194,19 @@ class SubtaskResultsSettledTest(mixins.RegisteredMessageTestMixin,
         self.assertEqual(expected, msg.slots())
         self.assertIsInstance(msg.task_to_compute, message.tasks.TaskToCompute)
 
+    def test_subtask_result_settled_results_failed(self):
+        ttc = factories.tasks.TaskToComputeFactory()
+        msg = factories.concents.SubtaskResultsSettledFactory.\
+            origin_results_failed(task_to_compute=ttc)
+        expected = [
+            ['origin',
+             concents.SubtaskResultsSettled.Origin.ResultsFailed.value],
+            ['task_to_compute', ttc]
+        ]
+
+        self.assertEqual(expected, msg.slots())
+        self.assertIsInstance(msg.task_to_compute, message.tasks.TaskToCompute)
+
 
 class ForceGetTaskResultTest(mixins.RegisteredMessageTestMixin,
                              mixins.SerializationMixin,

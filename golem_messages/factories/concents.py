@@ -110,7 +110,13 @@ class SubtaskResultsSettledFactory(helpers.MessageFactory):
     @classmethod
     def origin_results_rejected(cls, *args, **kwargs):
         kwargs['origin'] = \
-                concents.SubtaskResultsSettled.Origin.ResultsRejected
+            concents.SubtaskResultsSettled.Origin.ResultsRejected
+        return cls(*args, **kwargs)
+
+    @classmethod
+    def origin_results_failed(cls, *args, **kwargs):
+        kwargs['origin'] = \
+            concents.SubtaskResultsSettled.Origin.ResultsFailed
         return cls(*args, **kwargs)
 
 
