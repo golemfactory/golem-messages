@@ -1,3 +1,4 @@
+from uuid import UUID
 import binascii
 
 
@@ -13,3 +14,11 @@ def encode_hex(b):
 
 def decode_hex(b):
     return binascii.unhexlify(b)
+
+
+def uuid_to_bytes32(uuid: UUID) -> bytes:
+    return uuid.bytes + b'\x00' * 16
+
+
+def bytes32_to_uuid(b: bytes) -> UUID:
+    return UUID(bytes=b[:16])
