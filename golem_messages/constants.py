@@ -16,11 +16,14 @@ MTD = datetime.timedelta(minutes=0, seconds=10)
 # machine operation.
 MAT = datetime.timedelta(minutes=2, seconds=15)
 
+# Maximum Concent Ping Interval
+MAX_CONCENT_PING_INTERVAL = datetime.timedelta(minutes=1)
+
 # Concent Messaging Time
-CMT = datetime.timedelta(hours=1)
+CMT = 4 * MAX_CONCENT_PING_INTERVAL
 
 # Force Acceptance Time
-FAT = datetime.timedelta(hours=4)
+FAT = 4 * CMT
 
 # Payment Due Time
 PDT = datetime.timedelta(hours=12)
@@ -31,8 +34,6 @@ DOWNLOAD_LEADIN_TIME = datetime.timedelta(minutes=1)
 # the assumed default resource download rate
 DEFAULT_UPLOAD_RATE = int(384 / 8)  # KB/s = kbps / 8
 
-DEFAULT_MSG_LIFETIME = (3 * MMTT + 3 * MAT)
-
 # Time to wait before sending a message
 MSG_DELAYS = collections.defaultdict(
     lambda: datetime.timedelta(0),
@@ -40,7 +41,3 @@ MSG_DELAYS = collections.defaultdict(
         message.ForceReportComputedTask: (2 * MMTT + MAT),
     },
 )
-
-# A valid period of time for sending a message
-MSG_LIFETIMES = {
-}
