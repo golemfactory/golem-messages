@@ -35,7 +35,7 @@ class SubtaskVerificationTimeTestCase(TestCase):
     def test_svt(self, mdt_mock):
         result = helpers.subtask_verification_time(self.msg)
         mdt_mock.assert_called_once_with(size=self.msg.size)
-        self.assertEqual(result, datetime.timedelta(seconds=14530))
+        self.assertEqual(result, datetime.timedelta(seconds=1090))
 
 
 class ReqesutorDepostiAmountTestCase(TestCase):
