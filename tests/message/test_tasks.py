@@ -61,6 +61,14 @@ class ComputeTaskDefTestCase(unittest.TestCase):
         ctd = factories.tasks.ComputeTaskDefFactory()
         extra_data = ctd['extra_data']
         self.assertIsInstance(extra_data, dict)
+        self.assertEqual(extra_data['path_root'], '')
+        self.assertTrue(extra_data['start_task'])
+        self.assertTrue(extra_data['end_task'])
+        self.assertTrue(extra_data['total_tasks'])
+        self.assertTrue(extra_data['outfilebasename'])
+        self.assertTrue(extra_data['scene_file'])
+        self.assertTrue(extra_data['script_src'])
+        self.assertTrue(extra_data['frames'])
         self.assertTrue(extra_data['output_format'])
 
 

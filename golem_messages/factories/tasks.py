@@ -32,6 +32,14 @@ class CTDBlenderExtraDataFactory(factory.DictFactory):
     class Meta:
         model = dict
 
+    path_root = ''
+    start_task = 1
+    end_task = 1
+    total_tasks = 1
+    outfilebasename = 'test task'
+    scene_file = 'golem/resources/look_to_windward.blend'
+    script_src = 'pass'
+    frames = [1]
     output_format = 'PNG'
 
 
