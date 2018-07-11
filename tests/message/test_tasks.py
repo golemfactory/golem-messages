@@ -57,6 +57,12 @@ class ComputeTaskDefTestCase(unittest.TestCase):
         self.assertEqual(ctd, msg2.compute_task_def)
         self.assertIsInstance(msg2.compute_task_def, message.ComputeTaskDef)
 
+    def test_extra_data(self):
+        ctd = factories.tasks.ComputeTaskDefFactory()
+        extra_data = ctd['extra_data']
+        self.assertIsInstance(extra_data, dict)
+        self.assertTrue(extra_data['output_format'])
+
 
 class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
                                  mixins.SerializationMixin,

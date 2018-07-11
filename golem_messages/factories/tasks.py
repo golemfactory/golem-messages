@@ -28,6 +28,13 @@ class WantToComputeTaskFactory(helpers.MessageFactory):
     task_id = factory.Faker('uuid4')
 
 
+class CTDBlenderExtraDataFactory(factory.DictFactory):
+    class Meta:
+        model = dict
+
+    output_format = 'PNG'
+
+
 class ComputeTaskDefFactory(factory.DictFactory):
     class Meta:
         model = tasks.ComputeTaskDef
@@ -38,6 +45,7 @@ class ComputeTaskDefFactory(factory.DictFactory):
         lambda: calendar.timegm(time.gmtime()) +
         int(datetime.timedelta(days=1).total_seconds()))
     src_code = factory.Faker('text')
+    extra_data = factory.SubFactory(CTDBlenderExtraDataFactory)
 
 
 class TaskToComputeFactory(helpers.MessageFactory):
