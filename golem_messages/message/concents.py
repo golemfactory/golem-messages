@@ -473,6 +473,7 @@ class ForceSubtaskResultsRejected(tasks.TaskMessage,
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
 
+
 class ForcePayment(base.Message):
     """
     Sent from the Provider to the Concent to force payment for which the
