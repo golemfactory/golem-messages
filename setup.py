@@ -47,8 +47,8 @@ setup(
         'eth-utils==0.7.4',
         'Faker==0.8.9',
         'factory-boy==2.9.2',
-        'pycodestyle',
-        'pylint',
+        'pycodestyle==2.4.0',
+        'pylint==1.9.2',
         'freezegun',
     ],
 )
