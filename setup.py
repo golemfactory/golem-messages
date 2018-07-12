@@ -48,7 +48,7 @@ setup(
         'Faker==0.8.9',
         'factory-boy==2.9.2',
         'pycodestyle==2.4.0',
-        'pylint<=2.0.0',
+        'pylint==1.9.2',
         'freezegun',
     ],
 )
