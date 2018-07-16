@@ -640,9 +640,43 @@ class VerdictReportComputeTaskTestCase(
         with self.assertRaises(exceptions.ValidationError):
             self.msg.is_valid()
 
+
 class ClientAuthorizationTestCase(
         mixins.RegisteredMessageTestMixin,
         mixins.SerializationMixin,
         unittest.TestCase):
     MSG_CLASS = concents.ClientAuthorization
     FACTORY = factories.concents.ClientAuthorizationFactory
+
+
+class TransactionSigningRequestTest(mixins.RegisteredMessageTestMixin,
+                                    mixins.SerializationMixin,
+                                    unittest.TestCase):
+    MSG_CLASS = concents.TransactionSigningRequest
+    FACTORY = factories.concents.TransactionSigningRequestFactory
+
+    def test_factory(self):
+        msg = self.FACTORY()
+        self.assertIsInstance(msg, self.MSG_CLASS)
+
+
+class SignedTransactionTest(mixins.RegisteredMessageTestMixin,
+                            mixins.SerializationMixin,
+                            unittest.TestCase):
+    MSG_CLASS = concents.SignedTransaction
+    FACTORY = factories.concents.SignedTransactionFactory
+
+    def test_factory(self):
+        msg = self.FACTORY()
+        self.assertIsInstance(msg, self.MSG_CLASS)
+
+
+class TransactionRejectedTest(mixins.RegisteredMessageTestMixin,
+                              mixins.SerializationMixin,
+                              unittest.TestCase):
+    MSG_CLASS = concents.TransactionRejected
+    FACTORY = factories.concents.TransactionRejectedFactory
+
+    def test_factory(self):
+        msg = self.FACTORY()
+        self.assertIsInstance(msg, self.MSG_CLASS)

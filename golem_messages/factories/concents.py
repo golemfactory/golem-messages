@@ -381,3 +381,49 @@ class ServiceRefusedFactory(helpers.MessageFactory):
     reason = factory.fuzzy.FuzzyChoice(concents.ServiceRefused.REASON)
     task_to_compute = factory.SubFactory(
         'golem_messages.factories.tasks.TaskToComputeFactory')
+
+
+class NonceAbstractMessageFactory(helpers.MessageFactory):
+    class Meta:
+        model = concents.NonceAbstractMessage
+
+    nonce = factory.LazyFunction(
+        lambda: random.randint(0, denoms.turing)
+    )
+
+
+class TransactionSigningRequestFactory(NonceAbstractMessageFactory):
+    class Meta:
+        model = concents.TransactionSigningRequest
+
+    gasprice = factory.LazyFunction(
+        lambda: random.randint(0, denoms.turing)
+    )
+    startgas = factory.LazyFunction(
+        lambda: random.randint(0, denoms.turing)
+    )
+    to = factory.fuzzy.FuzzyText(length=20, chars='0123456789abcdef')
+    value = factory.LazyFunction(
+        lambda: random.randint(0, denoms.turing)
+    )
+    data = b''
+
+
+class SignedTransactionFactory(TransactionSigningRequestFactory):
+    class Meta:
+        model = concents.SignedTransaction
+
+    v = factory.fuzzy.FuzzyChoice(choices=[28, 29])
+    r = factory.LazyFunction(
+        lambda: random.randint(0, denoms.turing)
+    )
+    s = factory.LazyFunction(
+        lambda: random.randint(0, denoms.turing)
+    )
+
+
+class TransactionRejectedFactory(NonceAbstractMessageFactory):
+    class Meta:
+        model = concents.TransactionRejected
+
+    reason = factory.fuzzy.FuzzyChoice(concents.TransactionRejected.TransactionRejectionReason)
