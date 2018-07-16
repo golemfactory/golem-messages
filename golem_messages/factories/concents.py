@@ -392,9 +392,9 @@ class NonceAbstractMessageFactory(helpers.MessageFactory):
     )
 
 
-class TransactionSigningRequestFactory(NonceAbstractMessageFactory):
+class TransactionAbstractMessage(NonceAbstractMessageFactory):
     class Meta:
-        model = concents.TransactionSigningRequest
+        model = concents.NonceAbstractMessage
 
     gasprice = factory.LazyFunction(
         lambda: random.randint(0, denoms.turing)
@@ -409,7 +409,20 @@ class TransactionSigningRequestFactory(NonceAbstractMessageFactory):
     data = b''
 
 
-class SignedTransactionFactory(TransactionSigningRequestFactory):
+class TransactionSigningRequestFactory(TransactionAbstractMessage):
+    class Meta:
+        model = concents.TransactionSigningRequest
+
+    # pylint: disable=no-self-argument
+
+    @factory.post_generation
+    def arct_report_computed_task(msg, _create, _extracted, **kwargs):   # pylint: disable=unused-argument
+        setattr(msg, 'from', factory.fuzzy.FuzzyText(length=20, chars='0123456789abcdef').fuzz())
+
+    # pylint: enable=no-self-argument
+
+
+class SignedTransactionFactory(TransactionAbstractMessage):
     class Meta:
         model = concents.SignedTransaction
 
@@ -426,4 +439,4 @@ class TransactionRejectedFactory(NonceAbstractMessageFactory):
     class Meta:
         model = concents.TransactionRejected
 
-    reason = factory.fuzzy.FuzzyChoice(concents.TransactionRejected.TransactionRejectionReason)
+    reason = factory.fuzzy.FuzzyChoice(concents.TransactionRejected.REASON)
