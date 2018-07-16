@@ -19,3 +19,12 @@ def validate_integer(field_name, value):
             field=field_name,
             value=value,
         )
+
+
+def validate_bytes(field_name, value):
+    if not isinstance(value, bytes):
+        raise exceptions.FieldError(
+            "Should be a bytes field",
+            field=field_name,
+            value=value,
+        )

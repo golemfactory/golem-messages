@@ -2,6 +2,7 @@ import enum
 
 from golem_messages import datastructures
 from golem_messages import exceptions
+from golem_messages import validators
 
 from . import base
 from . import tasks
@@ -609,3 +610,124 @@ class ClientAuthorization(base.Message):
     __slots__ = [
         'client_public_key',
     ] + base.Message.__slots__
+
+
+class NonceAbstractMessage(base.Message):
+    """
+    Abstract message containing `nonce` field and its validation.
+    """
+
+    __slots__ = [
+        'nonce',
+    ] + base.Message.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        if key == 'nonce':
+            validators.validate_integer(field_name=key, value=value)
+        return value
+
+
+class TransactionAbstractMessage(NonceAbstractMessage):
+    """
+    Abstract message containing transaction data and its validation.
+    """
+    __slots__ = [
+        'gasprice',
+        'startgas',
+        'to',
+        'value',
+        'data',
+    ] + NonceAbstractMessage.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        if key == 'to':
+            validators.validate_varchar(
+                field_name=key,
+                value=value,
+                max_length=20,
+            )
+        if key == 'data':
+            validators.validate_bytes(
+                field_name=key,
+                value=value,
+            )
+        if key in ('gasprice', 'startgas', 'value'):
+            validators.validate_integer(field_name=key, value=value)
+        return value
+
+
+class TransactionSigningRequest(TransactionAbstractMessage):
+    """
+    Message sent from SCI transaction signing callback to a Concent,
+    containing data about transaction which client wants to sign using SigningService.
+    """
+
+    TYPE = CONCENT_MSG_BASE + 23
+
+    __slots__ = [
+        'from',
+    ] + TransactionAbstractMessage.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        if key == 'from':
+            validators.validate_varchar(
+                field_name=key,
+                value=value,
+                max_length=20,
+            )
+        return value
+
+
+class SignedTransaction(TransactionAbstractMessage):
+    """
+    Message sent from SigningService to the Concent,
+    if transaction was successfully signed,
+    containing data about transaction and its signature.
+
+    Concent should copy the signature data to the transaction object passed
+    to the callback by SCI.
+    """
+
+    TYPE = CONCENT_MSG_BASE + 24
+
+    __slots__ = [
+        'v',
+        'r',
+        's',
+    ] + TransactionAbstractMessage.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        if key in ('v', 'r', 's'):
+            validators.validate_integer(field_name=key, value=value)
+        return value
+
+
+class TransactionRejected(NonceAbstractMessage):
+    """
+    Message sent from SigningService to the Concent,
+    if transaction cannot be signed from any of various reasons.
+    """
+
+    TYPE = CONCENT_MSG_BASE + 25
+
+    @enum.unique
+    class REASON(enum.Enum):
+        # The message itself is valid but does not describe a valid Ethereum
+        # transaction. Use this if it passes our validations but the Ethereum
+        # library still rejects it for any reason.
+        InvalidTransaction = 'invalid_transaction'
+        # The service is not authorized to transfer funds from the account
+        # specified in the transaction.
+        UnauthorizedAccount = 'unauthorized_account'
+
+    ENUM_SLOTS = {
+        'reason': REASON,
+    }
+
+    __slots__ = [
+        'reason',
+    ] + NonceAbstractMessage.__slots__
