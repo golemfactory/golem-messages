@@ -628,14 +628,10 @@ class NonceAbstractMessage(base.Message):
         return value
 
 
-class TransactionSigningRequest(NonceAbstractMessage):
+class TransactionAbstractMessage(NonceAbstractMessage):
     """
-    Message sent from SCI transaction signing callback to a Middleman,
-    containing data about transaction which client wants to sign using SigningService.
+    Abstract message containing transaction data and its validation.
     """
-
-    TYPE = CONCENT_MSG_BASE + 23
-
     __slots__ = [
         'gasprice',
         'startgas',
@@ -662,13 +658,36 @@ class TransactionSigningRequest(NonceAbstractMessage):
         return value
 
 
-class SignedTransaction(TransactionSigningRequest):
+class TransactionSigningRequest(TransactionAbstractMessage):
     """
-    Message sent from SigningService to the Middleman,
+    Message sent from SCI transaction signing callback to a Concent,
+    containing data about transaction which client wants to sign using SigningService.
+    """
+
+    TYPE = CONCENT_MSG_BASE + 23
+
+    __slots__ = [
+        'from',
+    ] + TransactionAbstractMessage.__slots__
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        if key == 'from':
+            validators.validate_varchar(
+                field_name=key,
+                value=value,
+                max_length=20,
+            )
+        return value
+
+
+class SignedTransaction(TransactionAbstractMessage):
+    """
+    Message sent from SigningService to the Concent,
     if transaction was successfully signed,
     containing data about transaction and its signature.
 
-    Middleman should copy the signature data to the transaction object passed
+    Concent should copy the signature data to the transaction object passed
     to the callback by SCI.
     """
 
@@ -678,7 +697,7 @@ class SignedTransaction(TransactionSigningRequest):
         'v',
         'r',
         's',
-    ] + TransactionSigningRequest.__slots__
+    ] + TransactionAbstractMessage.__slots__
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
@@ -689,14 +708,14 @@ class SignedTransaction(TransactionSigningRequest):
 
 class TransactionRejected(NonceAbstractMessage):
     """
-    Message sent from SigningService to the Middleman,
+    Message sent from SigningService to the Concent,
     if transaction cannot be signed from any of various reasons.
     """
 
     TYPE = CONCENT_MSG_BASE + 25
 
     @enum.unique
-    class TransactionRejectionReason(enum.Enum):
+    class REASON(enum.Enum):
         # The message itself is valid but does not describe a valid Ethereum
         # transaction. Use this if it passes our validations but the Ethereum
         # library still rejects it for any reason.
@@ -706,7 +725,7 @@ class TransactionRejected(NonceAbstractMessage):
         UnauthorizedAccount = 'unauthorized_account'
 
     ENUM_SLOTS = {
-        'reason': TransactionRejectionReason,
+        'reason': REASON,
     }
 
     __slots__ = [
