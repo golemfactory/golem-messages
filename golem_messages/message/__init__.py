@@ -148,7 +148,10 @@ def init_messages():
             concents.ForcePaymentRejected,
             concents.ForceReportComputedTask,
             concents.ForceReportComputedTaskResponse,
-            concents.ClientAuthorization
+            concents.ClientAuthorization,
+            concents.TransactionSigningRequest,
+            concents.SignedTransaction,
+            concents.TransactionRejected
     ):
         if message_class.TYPE in registered_message_types:
             raise RuntimeError(
