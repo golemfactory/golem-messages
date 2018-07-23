@@ -12,7 +12,7 @@ def override_timestamp(
         msg: 'Message',
         timestamp: int) -> None:
     new_hdr = datastructures.MessageHeader(
-        msg.TYPE,
+        msg.header.type_,
         timestamp,
         msg.encrypted,
     )

@@ -1,5 +1,7 @@
+# pylint: disable=protected-access
 import golem_messages
 from golem_messages import message
+from golem_messages.register import library
 
 # pylint: disable=too-few-public-methods
 
@@ -9,7 +11,7 @@ class RegisteredMessageTestMixin():
 
     def test_registered(self):
         self.assertIn(self.MSG_CLASS,
-                      message.registered_message_types.values())
+                      library._reversed)
 
 # pylint: enable=too-few-public-methods
 

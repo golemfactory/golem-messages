@@ -1,6 +1,17 @@
-# For backwards compatibility import all old messages by name
-# pylint: disable=unused-import
 # pylint: disable=cyclic-import
+
+from . import base
+from . import concents
+from . import p2p
+from . import resources
+from . import tasks
+
+# pylint: enable=cyclic-import
+
+
+# For backwards compatibility import all old messages by name
+# DO NOT ADD ANY NEW IMPORT BY NAME; ONLY REMOVE
+# pylint: disable=unused-import,cyclic-import,wrong-import-order
 from golem_messages.message.base import Message  # noqa
 from golem_messages.message.base import Hello  # noqa
 from golem_messages.message.base import RandVal  # noqa
@@ -48,114 +59,4 @@ from golem_messages.message.concents import ServiceRefused  # noqa
 from golem_messages.message.concents import ForceReportComputedTask  # noqa
 from golem_messages.message.tasks import AckReportComputedTask  # noqa
 from golem_messages.message.tasks import RejectReportComputedTask  # noqa
-from golem_messages.message.concents import VerdictReportComputedTask  # noqa
-from golem_messages.message.concents import FileTransferToken  # noqa
-# pylint: enable=unused-import
-
-from . import base
-from . import concents
-from . import p2p
-from . import resources
-from . import tasks
-# pylint: enable=cyclic-import
-
-
-# Message types that are allowed to be sent in the network
-registered_message_types = {}
-
-
-def init_messages():
-    """Add supported messages to register messages list"""
-    if registered_message_types:
-        return
-    for message_class in (
-            # Basic messages
-            base.Hello,
-            base.RandVal,
-            base.Disconnect,
-            base.ChallengeSolution,
-
-            # P2P messages
-            p2p.Ping,
-            p2p.Pong,
-            p2p.GetPeers,
-            p2p.GetTasks,
-            p2p.Peers,
-            p2p.Tasks,
-            p2p.RemoveTask,
-            p2p.RemoveTaskContainer,
-            p2p.FindNode,
-            p2p.GetResourcePeers,
-            p2p.ResourcePeers,
-            p2p.WantToStartTaskSession,
-            p2p.SetTaskSession,
-            # Ranking messages
-            p2p.Degree,
-            p2p.Gossip,
-            p2p.StopGossip,
-            p2p.LocRank,
-
-            # Task messages
-            tasks.CannotAssignTask,
-            tasks.CannotComputeTask,
-            tasks.TaskToCompute,
-            tasks.WantToComputeTask,
-            tasks.ReportComputedTask,
-            tasks.TaskFailure,
-            tasks.StartSessionResponse,
-
-            tasks.WaitingForResults,
-            tasks.SubtaskResultsAccepted,
-            tasks.SubtaskResultsRejected,
-            tasks.GetResource,
-
-            tasks.AckReportComputedTask,
-            tasks.RejectReportComputedTask,
-
-            # Resource messages
-            resources.PushResource,
-            resources.HasResource,
-            resources.WantsResource,
-            resources.PullResource,
-            resources.PullAnswer,
-            resources.ResourceList,
-
-            resources.ResourceHandshakeStart,
-            resources.ResourceHandshakeNonce,
-            resources.ResourceHandshakeVerdict,
-
-            tasks.SubtaskPayment,
-            tasks.SubtaskPaymentRequest,
-
-            # Concent messages
-            concents.ServiceRefused,
-            concents.VerdictReportComputedTask,
-            concents.FileTransferToken,
-            concents.SubtaskResultsVerify,
-            concents.AckSubtaskResultsVerify,
-            concents.SubtaskResultsSettled,
-            concents.ForceGetTaskResult,
-            concents.AckForceGetTaskResult,
-            concents.ForceGetTaskResultFailed,
-            concents.ForceGetTaskResultRejected,
-            concents.ForceGetTaskResultUpload,
-            concents.ForceGetTaskResultDownload,
-            concents.ForceSubtaskResults,
-            concents.ForceSubtaskResultsResponse,
-            concents.ForceSubtaskResultsRejected,
-            concents.ForcePayment,
-            concents.ForcePaymentCommitted,
-            concents.ForcePaymentRejected,
-            concents.ForceReportComputedTask,
-            concents.ForceReportComputedTaskResponse,
-            concents.ClientAuthorization
-    ):
-        if message_class.TYPE in registered_message_types:
-            raise RuntimeError(
-                "Duplicated message {}.TYPE: {}"
-                .format(message_class.__name__, message_class.TYPE)
-            )
-        registered_message_types[message_class.TYPE] = message_class
-
-
-init_messages()
+# pylint: enable=unused-import,cyclic-import,wrong-import-order

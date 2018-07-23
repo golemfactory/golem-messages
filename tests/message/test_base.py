@@ -5,6 +5,7 @@ import unittest.mock as mock
 
 from golem_messages import exceptions
 from golem_messages.message import base
+from golem_messages.register import library
 
 
 class MessageTestCase(unittest.TestCase):
@@ -13,7 +14,7 @@ class MessageTestCase(unittest.TestCase):
         decrypt = mock.Mock(side_effect=UnboundLocalError)
         header = struct.pack(
             base.Message.HDR_FORMAT,
-            base.RandVal.TYPE,
+            library.get_type(base.RandVal),
             int(datetime.datetime.utcnow().timestamp()),
             True,
         )
@@ -26,10 +27,12 @@ class MessageTestCase(unittest.TestCase):
         decrypt.assert_called_once_with(mock.ANY)
 
 
+@library.register(-1)
 class VerifySlotChild(base.Message):
-    pass
+    __slots__ = base.Message.__slots__
 
 
+@library.register(-2)
 class VerifySlotParent(base.Message):
     __slots__ = [
         'child'
@@ -40,6 +43,7 @@ class VerifySlotParent(base.Message):
         return super().deserialize_slot(key, value)
 
 
+@library.register(-3)
 class VerifySlotListParent(base.Message):
     __slots__ = [
         'child_list'
@@ -60,7 +64,7 @@ class VerifySlotTest(unittest.TestCase):
 
     def test_verify_slot_not_expected_class(self):
         with self.assertRaises(exceptions.FieldError):
-            VerifySlotParent(slots=[('child', base.Message()), ])
+            VerifySlotParent(slots=[('child', base.RandVal()), ])
 
     def test_verify_slot_list(self):
         msg = VerifySlotListParent(slots=[('child_list', [self.child, ]), ])
@@ -72,4 +76,4 @@ class VerifySlotTest(unittest.TestCase):
 
     def test_verify_slot_list_not_expected_class(self):
         with self.assertRaises(exceptions.FieldError):
-            VerifySlotListParent(slots=[('child_list', [base.Message(), ]), ])
+            VerifySlotListParent(slots=[('child_list', [base.RandVal(), ]), ])
