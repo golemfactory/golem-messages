@@ -1,3 +1,8 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 class MessageRegister():
     """Register of all Message "types" that can be transferred on the wire"""
     __slots__ = ('_types', '_reversed')
@@ -13,7 +18,7 @@ class MessageRegister():
                     "Duplicated message {}.TYPE: {}"
                     .format(message_class.__name__, type_)
                 )
-            print('Register %s as %s' % (message_class.__qualname__, type_))
+            logger.debug('Register %s as %s', message_class.__qualname__, type_)
             self._types[type_] = message_class
             self._reversed[message_class] = type_
             return message_class

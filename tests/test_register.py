@@ -2,6 +2,7 @@ import unittest
 
 from golem_messages import register
 
+
 class RegisterTest(unittest.TestCase):
     def setUp(self):
         self.library = register.MessageRegister()
