@@ -488,17 +488,18 @@ class NestedMessageTestCase(unittest.TestCase):
                 message.Message.deserialize(s, decrypt_func=None)
 
     def test_reject_report_computed_task_with_cannot_compute_task(self):
-        msg = message.RejectReportComputedTask()
-        msg.reason = message.RejectReportComputedTask.REASON.GotMessageCannotComputeTask  # noqa
-        msg.cannot_compute_task = message.CannotComputeTask()
+        msg = message.tasks.RejectReportComputedTask()
+        msg.reason = message.tasks.RejectReportComputedTask \
+            .REASON.GotMessageCannotComputeTask  # noqa
+        msg.cannot_compute_task = message.tasks.CannotComputeTask()
         msg.cannot_compute_task.reason =\
-            message.CannotComputeTask.REASON.WrongCTD
+            message.tasks.CannotComputeTask.REASON.WrongCTD
         msg.cannot_compute_task.task_to_compute = \
             factories.tasks.TaskToComputeFactory()
         invalid_deadline = ("You call it madness, "
                             "but I call it Love -- Nat King Cole")
         msg.cannot_compute_task.task_to_compute.compute_task_def =\
-            message.ComputeTaskDef({'deadline': invalid_deadline, })
+            message.tasks.ComputeTaskDef({'deadline': invalid_deadline, })
         s = msg.serialize()
         msg2 = message.Message.deserialize(s, None)
         self.assertEqual(

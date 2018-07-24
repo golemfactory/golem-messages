@@ -53,7 +53,7 @@ class MessageTestCase(unittest.TestCase):
         first_sig = report_computed_task.sig
         first_hash = report_computed_task.get_short_hash()
 
-        force_report = message.ForceReportComputedTask()
+        force_report = message.concents.ForceReportComputedTask()
         force_report.report_computed_task = report_computed_task
 
         s_force_report = shortcuts.dump(
