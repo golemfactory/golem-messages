@@ -6,6 +6,7 @@ from ethereum.utils import sha3
 from golem_messages import datastructures
 from golem_messages import exceptions
 from golem_messages import validators
+from golem_messages.register import library
 from golem_messages.utils import decode_hex
 
 from . import base
@@ -219,9 +220,8 @@ class ConcentEnabled:  # noqa pylint:disable=too-few-public-methods
         self.concent_enabled = bool(self.concent_enabled)  # noqa pylint:disable=assigning-non-slot
 
 
+@library.register(TASK_MSG_BASE + 1)
 class WantToComputeTask(ConcentEnabled, base.Message):
-    TYPE = TASK_MSG_BASE + 1
-
     __slots__ = [
         'node_name',
         'task_id',
@@ -235,8 +235,8 @@ class WantToComputeTask(ConcentEnabled, base.Message):
     ] + base.Message.__slots__
 
 
+@library.register(TASK_MSG_BASE + 2)
 class TaskToCompute(ConcentEnabled, TaskMessage):
-    TYPE = TASK_MSG_BASE + 2
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
 
     __slots__ = [
@@ -293,9 +293,8 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         return self
 
 
+@library.register(TASK_MSG_BASE + 3)
 class CannotAssignTask(base.AbstractReasonMessage):
-    TYPE = TASK_MSG_BASE + 3
-
     __slots__ = [
         'task_id'
     ] + base.AbstractReasonMessage.__slots__
@@ -306,13 +305,13 @@ class CannotAssignTask(base.AbstractReasonMessage):
         ConcentDisabled = enum.auto()
 
 
+@library.register(TASK_MSG_BASE + 4)
 class ReportComputedTask(TaskMessage):
     """
     Message sent from a Provider to a Requestor, announcing completion
     of the assigned subtask (attached as `task_to_compute`)
     """
     # FIXME this message should be simpler
-    TYPE = TASK_MSG_BASE + 4
     RESULT_TYPE = {
         'DATA': 0,
         'FILES': 1,
@@ -345,16 +344,16 @@ class ReportComputedTask(TaskMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(TASK_MSG_BASE + 8)
 class GetResource(base.Message):
     """Request a resource for a given task"""
-    TYPE = TASK_MSG_BASE + 8
-
     __slots__ = [
         'task_id',
         'resource_header'
     ] + base.Message.__slots__
 
 
+@library.register(TASK_MSG_BASE + 10)
 class SubtaskResultsAccepted(TaskMessage):
     """
     Sent from the Requestor to the Provider, accepting the provider's
@@ -362,7 +361,6 @@ class SubtaskResultsAccepted(TaskMessage):
 
     Having received this message, the Provider expects payment to follow.
     """
-    TYPE = TASK_MSG_BASE + 10
     TASK_ID_PROVIDERS = ('task_to_compute', )
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
 
@@ -376,6 +374,7 @@ class SubtaskResultsAccepted(TaskMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(TASK_MSG_BASE + 11)
 class SubtaskResultsRejected(TaskMessage, base.AbstractReasonMessage):
     """
     Sent from the Requestor to the Provider, rejecting the provider's
@@ -388,7 +387,6 @@ class SubtaskResultsRejected(TaskMessage, base.AbstractReasonMessage):
     because it had been previously determined authoritatively that the
     results could not have been retrieved.)
     """
-    TYPE = TASK_MSG_BASE + 11
     TASK_ID_PROVIDERS = ('report_computed_task', )
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor,
                        TaskMessage.OWNER_CHOICES.concent)
@@ -413,8 +411,8 @@ class SubtaskResultsRejected(TaskMessage, base.AbstractReasonMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(TASK_MSG_BASE + 15)
 class TaskFailure(TaskMessage):
-    TYPE = TASK_MSG_BASE + 15
     TASK_ID_PROVIDERS = ('task_to_compute', )
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.provider, )
 
@@ -428,9 +426,8 @@ class TaskFailure(TaskMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(TASK_MSG_BASE + 16)
 class StartSessionResponse(base.Message):
-    TYPE = TASK_MSG_BASE + 16
-
     __slots__ = ['conn_id'] + base.Message.__slots__
 
     def __init__(self, conn_id=None, **kwargs):
@@ -442,14 +439,13 @@ class StartSessionResponse(base.Message):
         super().__init__(**kwargs)
 
 
+@library.register(TASK_MSG_BASE + 25)
 class WaitingForResults(base.Message):
-    TYPE = TASK_MSG_BASE + 25
-
     __slots__ = base.Message.__slots__
 
 
+@library.register(TASK_MSG_BASE + 26)
 class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
-    TYPE = TASK_MSG_BASE + 26
     TASK_ID_PROVIDERS = ('task_to_compute', )
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.provider, )
 
@@ -472,6 +468,7 @@ class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(TASK_MSG_BASE + 27)
 class SubtaskPayment(base.Message):
     """Informs about payment for a subtask.
     It succeeds SubtaskResultsAccepted but could
@@ -485,9 +482,6 @@ class SubtaskPayment(base.Message):
     :param int block_number: eth blockNumber
     :param dict dict_repr: dictionary representation of a message
     """
-
-    TYPE = TASK_MSG_BASE + 27
-
     __slots__ = [
         'subtask_id',
         'reward',
@@ -496,18 +490,17 @@ class SubtaskPayment(base.Message):
     ] + base.Message.__slots__
 
 
+@library.register(TASK_MSG_BASE + 28)
 class SubtaskPaymentRequest(base.Message):
     """Requests information about payment for a subtask.
 
     :param str subtask_id: accepted subtask id
     :param dict dict_repr: dictionary representation of a message
     """
-
-    TYPE = TASK_MSG_BASE + 28
-
     __slots__ = ['subtask_id'] + base.Message.__slots__
 
 
+@library.register(TASK_MSG_BASE + 29)
 class AckReportComputedTask(TaskMessage):
     """
     Sent from Requestor to the Provider, acknowledging reception of the
@@ -518,8 +511,6 @@ class AckReportComputedTask(TaskMessage):
     acknowledgement, this message will be sent from the Concent to the Provider
     and has the same effect as the regular Requestor's acknowledgement.
     """
-
-    TYPE = TASK_MSG_BASE + 29
     TASK_ID_PROVIDERS = ('report_computed_task', )
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor,
                        TaskMessage.OWNER_CHOICES.concent)
@@ -533,10 +524,8 @@ class AckReportComputedTask(TaskMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(TASK_MSG_BASE + 30)
 class RejectReportComputedTask(TaskMessage, base.AbstractReasonMessage):
-    TYPE = TASK_MSG_BASE + 30
-
-    #
     # because other inner messages can also include `TaskToCompute`
     # we need to differentiate between the universal `task_to_compute` accessor
     # and the `TaskToCompute` attached directly into `RejectReportComputedTask`

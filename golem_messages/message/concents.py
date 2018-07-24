@@ -2,6 +2,7 @@ import enum
 
 from golem_messages import datastructures
 from golem_messages import exceptions
+from golem_messages.register import library
 
 from . import base
 from . import tasks
@@ -10,6 +11,7 @@ from . import tasks
 CONCENT_MSG_BASE = 4000
 
 
+@library.register(CONCENT_MSG_BASE)
 class ServiceRefused(tasks.TaskMessage, base.AbstractReasonMessage):
     """
     Sent (synchronously) as a response from the Concent to the calling party
@@ -20,7 +22,6 @@ class ServiceRefused(tasks.TaskMessage, base.AbstractReasonMessage):
 
     :param REASON reason: the reason for the refusal
     """
-    TYPE = CONCENT_MSG_BASE
     TASK_ID_PROVIDERS = ('task_to_compute', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
@@ -43,6 +44,7 @@ class ServiceRefused(tasks.TaskMessage, base.AbstractReasonMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 1)
 class ForceReportComputedTask(tasks.TaskMessage):
     """
     Message sent from a Provider to the Concent, requesting an forced
@@ -51,7 +53,6 @@ class ForceReportComputedTask(tasks.TaskMessage):
 
     The same, rewritten message is then sent from the Concent to the Requestor.
     """
-    TYPE = CONCENT_MSG_BASE + 1
     TASK_ID_PROVIDERS = ('report_computed_task', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.provider,
                        tasks.TaskMessage.OWNER_CHOICES.concent)
@@ -66,6 +67,7 @@ class ForceReportComputedTask(tasks.TaskMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 4)
 class VerdictReportComputedTask(tasks.TaskMessage):
     """
     Informational message sent from from the Concent to the affected
@@ -76,7 +78,6 @@ class VerdictReportComputedTask(tasks.TaskMessage):
     The state of the Provider/Requestor interaction is assumed to be the same
     as if the Requestor sent the `AckReportComputedTask` on their own.
     """
-    TYPE = CONCENT_MSG_BASE + 4
     TASK_ID_PROVIDERS = ('force_report_computed_task',
                          'ack_report_computed_task', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
@@ -106,13 +107,12 @@ class VerdictReportComputedTask(tasks.TaskMessage):
         return True
 
 
+@library.register(CONCENT_MSG_BASE + 5)
 class FileTransferToken(base.Message):
     """
     Sent from the Concent (usually, as an attachment in another message) to
     enable upload/download of files pertaining to the subtask at hand.
     """
-    TYPE = CONCENT_MSG_BASE + 5
-
     @enum.unique
     class Operation(datastructures.StringEnum):
         upload = enum.auto()
@@ -194,6 +194,7 @@ class FileTransferToken(base.Message):
         return None
 
 
+@library.register(CONCENT_MSG_BASE + 6)
 class SubtaskResultsVerify(tasks.TaskMessage):
     """
     Message sent from a Provider to the Concent, requesting additional
@@ -203,7 +204,6 @@ class SubtaskResultsVerify(tasks.TaskMessage):
            the original reject message
 
     """
-    TYPE = CONCENT_MSG_BASE + 6
     TASK_ID_PROVIDERS = ('subtask_results_rejected', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.provider, )
 
@@ -216,6 +216,7 @@ class SubtaskResultsVerify(tasks.TaskMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 7)
 class AckSubtaskResultsVerify(tasks.TaskMessage):
     """
     Message sent from the Concent to the Provider to acknowledge reception
@@ -223,7 +224,6 @@ class AckSubtaskResultsVerify(tasks.TaskMessage):
     required `FileTransferToken` message to the Provider which must use it
     to upload files to the Concent service.
     """
-    TYPE = CONCENT_MSG_BASE + 7
     TASK_ID_PROVIDERS = ('subtask_results_verify', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
@@ -238,6 +238,7 @@ class AckSubtaskResultsVerify(tasks.TaskMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 8)
 class SubtaskResultsSettled(tasks.TaskMessage):
     """
     Message sent from the Concent to both the Provider and the Requestor
@@ -252,8 +253,6 @@ class SubtaskResultsSettled(tasks.TaskMessage):
                                                 pertains to
 
     """
-
-    TYPE = CONCENT_MSG_BASE + 8
     TASK_ID_PROVIDERS = ('task_to_compute', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
@@ -276,12 +275,12 @@ class SubtaskResultsSettled(tasks.TaskMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 9)
 class ForceGetTaskResult(tasks.TaskMessage):
     """
     Sent from the Requestor to the Concent, requesting assistance in
     downloading the results from the Provider.
     """
-    TYPE = CONCENT_MSG_BASE + 9
     TASK_ID_PROVIDERS = ('report_computed_task', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.requestor, )
 
@@ -294,12 +293,12 @@ class ForceGetTaskResult(tasks.TaskMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 10)
 class AckForceGetTaskResult(tasks.TaskMessage):
     """
     Sent from the Concent to the Requestor to acknowledge reception of the
     `ForceGetTaskResult` message
     """
-    TYPE = CONCENT_MSG_BASE + 10
     TASK_ID_PROVIDERS = ('force_get_task_result', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
@@ -312,6 +311,7 @@ class AckForceGetTaskResult(tasks.TaskMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 11)
 class ForceGetTaskResultFailed(tasks.TaskMessage):
     """
     Sent from the Concent to the Requestor to announce a failure to retrieve
@@ -321,7 +321,6 @@ class ForceGetTaskResultFailed(tasks.TaskMessage):
     to reject any attempt at forced acceptance by proving the result
     could not have been downloaded in the first place.
     """
-    TYPE = CONCENT_MSG_BASE + 11
     TASK_ID_PROVIDERS = ('task_to_compute', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
@@ -334,13 +333,13 @@ class ForceGetTaskResultFailed(tasks.TaskMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 12)
 class ForceGetTaskResultRejected(tasks.TaskMessage,
                                  base.AbstractReasonMessage):
     """
     Sent from the Concent to the Requestor to notify them that the
     `ForceGetTaskResult` message was not allowed at this time
     """
-    TYPE = CONCENT_MSG_BASE + 12
     TASK_ID_PROVIDERS = ('force_get_task_result', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
@@ -356,12 +355,12 @@ class ForceGetTaskResultRejected(tasks.TaskMessage,
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 13)
 class ForceGetTaskResultUpload(tasks.TaskMessage):
     """
     Sent from the Concent to the Provider to notify them they can (and need to)
     upload the results to them
     """
-    TYPE = CONCENT_MSG_BASE + 13
     TASK_ID_PROVIDERS = ('force_get_task_result', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
@@ -376,12 +375,12 @@ class ForceGetTaskResultUpload(tasks.TaskMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 14)
 class ForceGetTaskResultDownload(tasks.TaskMessage):
     """
     Sent from the Concent to the Requestor to notify them that the results
     are available for download.
     """
-    TYPE = CONCENT_MSG_BASE + 14
     TASK_ID_PROVIDERS = ('force_get_task_result', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
@@ -396,6 +395,7 @@ class ForceGetTaskResultDownload(tasks.TaskMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 15)
 class ForceSubtaskResults(tasks.TaskMessage):
     """
     Sent from the Provider to the Concent, in an effort to force the
@@ -407,7 +407,6 @@ class ForceSubtaskResults(tasks.TaskMessage):
                                                            of the reception
                                                            of the RCT message
     """
-    TYPE = CONCENT_MSG_BASE + 15
     TASK_ID_PROVIDERS = ('ack_report_computed_task', )
     EXPECTED_OWNERS = (
         tasks.TaskMessage.OWNER_CHOICES.provider,
@@ -423,6 +422,7 @@ class ForceSubtaskResults(tasks.TaskMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 16)
 class ForceSubtaskResultsResponse(tasks.TaskMessage):
     """
     Sent from the Concent to the Provider to communicate the final resolution
@@ -433,7 +433,6 @@ class ForceSubtaskResultsResponse(tasks.TaskMessage):
     :param SubtaskResultsAccepted subtask_results_accepted:
     :param SubtaskResultsRejected subtask_results_rejected:
     """
-    TYPE = CONCENT_MSG_BASE + 16
     TASK_ID_PROVIDERS = ('subtask_results_accepted',
                          'subtask_results_rejected', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
@@ -449,6 +448,7 @@ class ForceSubtaskResultsResponse(tasks.TaskMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 17)
 class ForceSubtaskResultsRejected(tasks.TaskMessage,
                                   base.AbstractReasonMessage):
     """
@@ -457,7 +457,6 @@ class ForceSubtaskResultsRejected(tasks.TaskMessage,
     it's made.
     """
 
-    TYPE = CONCENT_MSG_BASE + 17
     TASK_ID_PROVIDERS = ('force_subtask_results', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
 
@@ -474,6 +473,7 @@ class ForceSubtaskResultsRejected(tasks.TaskMessage,
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 18)
 class ForcePayment(base.Message):
     """
     Sent from the Provider to the Concent to force payment for which the
@@ -482,8 +482,6 @@ class ForcePayment(base.Message):
     :param list subtask_results_accepted_list: the list of
         `SubtaskResultsAccepted` messages
     """
-    TYPE = CONCENT_MSG_BASE + 18
-
     __slots__ = [
         'subtask_results_accepted_list'
     ] + base.Message.__slots__
@@ -494,6 +492,7 @@ class ForcePayment(base.Message):
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 19)
 class ForcePaymentCommitted(base.Message):
     """
     Sent from the Concent to the Provider to acknowledge that Provider
@@ -503,8 +502,6 @@ class ForcePaymentCommitted(base.Message):
     Message of the same content is also sent as an information to the Requestor
     whose deposit is affected by the operation.
     """
-    TYPE = CONCENT_MSG_BASE + 19
-
     __slots__ = [
         # the closure time for the Concent's payment,
         # iow, the amount paid should satisfy all pending payments
@@ -531,6 +528,7 @@ class ForcePaymentCommitted(base.Message):
     }
 
 
+@library.register(CONCENT_MSG_BASE + 20)
 class ForcePaymentRejected(base.AbstractReasonMessage):
     """
     Sent from the Concent to the Provider to inform them that Concent was
@@ -539,8 +537,6 @@ class ForcePaymentRejected(base.AbstractReasonMessage):
 
     (the latter means that most likely, the Provider's clock is out of sync)
     """
-    TYPE = CONCENT_MSG_BASE + 20
-
     @enum.unique
     class REASON(enum.Enum):
         NoUnsettledTasksFound = 'no unsettled tasks found'
@@ -555,11 +551,11 @@ class ForcePaymentRejected(base.AbstractReasonMessage):
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 21)
 class ForceReportComputedTaskResponse(tasks.TaskMessage,
                                       base.AbstractReasonMessage):
     """Sent from Concent to Provider as a response to ForceReportComputedTask.
     """
-    TYPE = CONCENT_MSG_BASE + 21
     TASK_ID_PROVIDERS = ('ack_report_computed_task',
                          'reject_report_computed_task', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
@@ -596,6 +592,7 @@ class ForceReportComputedTaskResponse(tasks.TaskMessage,
         return super().deserialize_slot(key, value)
 
 
+@library.register(CONCENT_MSG_BASE + 22)
 class ClientAuthorization(base.Message):
     """
     Message sent from a Provider or Requestor to the Concent,
@@ -604,8 +601,6 @@ class ClientAuthorization(base.Message):
     This message must be signed with the key it contains.
     This the proof that the client indeed has the private part of that key.
     """
-    TYPE = CONCENT_MSG_BASE + 22
-
     __slots__ = [
         'client_public_key',
     ] + base.Message.__slots__

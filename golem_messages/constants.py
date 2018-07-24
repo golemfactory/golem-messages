@@ -38,6 +38,6 @@ DEFAULT_UPLOAD_RATE = int(384 / 8)  # KB/s = kbps / 8
 MSG_DELAYS = collections.defaultdict(
     lambda: datetime.timedelta(0),
     {
-        message.ForceReportComputedTask: (2 * MMTT + MAT),
+        message.concents.ForceReportComputedTask: (2 * MMTT + MAT),
     },
 )

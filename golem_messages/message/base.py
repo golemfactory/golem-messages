@@ -17,6 +17,7 @@ from golem_messages import datastructures
 from golem_messages import exceptions
 from golem_messages import serializer
 from golem_messages import settings
+from golem_messages.register import library
 
 logger = logging.getLogger('golem.network.transport.message')
 
@@ -188,7 +189,6 @@ class Message():
     HDR_LEN = struct.calcsize(HDR_FORMAT)
     SIG_LEN = 65
 
-    TYPE = None
     ENCRYPT = True
     SIGN = True
     ENUM_SLOTS = {}
@@ -231,7 +231,7 @@ class Message():
         # Header
         if header is None:
             header = datastructures.MessageHeader(
-                self.TYPE,
+                library.get_type(self.__class__),
                 # Since epoch differs between OS, we use calendar.timegm()
                 # instead of time.time() to unify it.
                 calendar.timegm(time.gmtime()),
@@ -250,8 +250,7 @@ class Message():
         """
 
         return (
-            isinstance(obj, Message)
-            and self.TYPE == obj.TYPE
+            self.__class__ is obj.__class__
             and self.header.type_ == obj.header.type_
             and self.timestamp == obj.timestamp
             and self.sig == obj.sig
@@ -295,7 +294,7 @@ class Message():
         # still need to have a valid signature.
         # SEE: test_serializer.MessageTestCase.test_message_sig()
         hash_header = serializer.dumps(
-            [self.TYPE, self.timestamp, ]
+            [self.header.type_, self.timestamp, ]
         )
         sha.update(hash_header)
         sha.update(payload or b'')
@@ -345,7 +344,7 @@ class Message():
         """
         return struct.pack(
             self.HDR_FORMAT,
-            self.TYPE,
+            library.get_type(self.__class__),
             self.timestamp,
             self.encrypted,
         )
@@ -393,9 +392,7 @@ class Message():
                 )
             )
 
-        from golem_messages.message import registered_message_types
-
-        if header.type_ not in registered_message_types:
+        if header.type_ not in library:
             raise exceptions.HeaderError(
                 "Unknown message type {got}".format(got=header.type_),
             )
@@ -418,8 +415,6 @@ class Message():
                               type is unknown
         """
 
-        from golem_messages.message import registered_message_types
-
         if not msg or len(msg) <= cls.HDR_LEN + cls.SIG_LEN:
             raise exceptions.MessageError("Message too short")
 
@@ -430,7 +425,7 @@ class Message():
         if check_time:
             verify_time(header.timestamp)
 
-        class_ = registered_message_types[header.type_]
+        class_ = library[header.type_]
         return class_.deserialize_with_header(
             header,
             data,
@@ -558,8 +553,8 @@ class AbstractReasonMessage(Message):
 ##################
 
 
+@library.register(0)
 class Hello(Message):
-    TYPE = 0
     ENCRYPT = False
     VERSION_FORMAT = '!32p'
     VERSION_LENGTH = struct.calcsize(VERSION_FORMAT)
@@ -632,16 +627,14 @@ class Hello(Message):
         return super().__eq__(obj)
 
 
+@library.register(1)
 class RandVal(Message):
     """Message with signed random value"""
-
-    TYPE = 1
-
     __slots__ = ['rand_val'] + Message.__slots__
 
 
+@library.register(2)
 class Disconnect(AbstractReasonMessage):
-    TYPE = 2
     ENCRYPT = False
 
     __slots__ = AbstractReasonMessage.__slots__
@@ -661,7 +654,6 @@ class Disconnect(AbstractReasonMessage):
         Bootstrap = 'bootstrap'
 
 
+@library.register(3)
 class ChallengeSolution(Message):
-    TYPE = 3
-
     __slots__ = ['solution'] + Message.__slots__

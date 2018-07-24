@@ -529,7 +529,7 @@ class ForcePaymentTest(mixins.RegisteredMessageTestMixin, unittest.TestCase):
     def test_sra_list_wrong_class(self):
         with self.assertRaises(exceptions.FieldError):
             concents.ForcePayment(slots=[
-                ('subtask_results_accepted_list', [message.base.Message()]),
+                ('subtask_results_accepted_list', [message.base.RandVal()]),
             ])
 
 
@@ -569,7 +569,7 @@ class ForcePaymentRejectedTest(mixins.RegisteredMessageTestMixin,
     def test_force_payment_wrong_class(self):
         with self.assertRaises(exceptions.FieldError):
             concents.ForcePaymentRejected(slots=[
-                ('force_payment', message.base.Message())
+                ('force_payment', message.base.RandVal())
             ])
 
 

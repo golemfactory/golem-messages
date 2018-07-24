@@ -86,7 +86,7 @@ class MessagesTestCase(unittest.TestCase):
         set_tz('Europe/Warsaw')
         warsaw_time = time.localtime(epoch_t)
         msg_pre = message.Hello(header=datastructures.MessageHeader(
-            message.Hello.TYPE,
+            0,
             epoch_t,
             False,
         ))

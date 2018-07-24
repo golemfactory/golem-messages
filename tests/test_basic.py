@@ -16,6 +16,7 @@ from golem_messages import serializer
 from golem_messages import datastructures
 
 from golem_messages.factories.helpers import clone_message
+from golem_messages.register import library
 
 one_second = datetime.timedelta(seconds=1)
 
@@ -24,9 +25,8 @@ def dt_to_ts(dt):
     return calendar.timegm(dt.utctimetuple())
 
 
+@library.register(-667)
 class RandValClone(message.RandVal):
-    TYPE = -667
-
     __slots__ = message.RandVal.__slots__
 
 
@@ -214,18 +214,8 @@ class BasicTestCase(unittest.TestCase):
         self.assertNotEqual(msg1, msg2)
         eq_mock.assert_not_called()
 
-    @mock.patch("golem_messages.message.base.RandVal")
-    def test_init_messages_error(self, mock_message_rand_val):
-        copy_registered = dict(message.registered_message_types)
-        message.registered_message_types = {}
-        mock_message_rand_val.__name__ = "randvalmessage"
-        mock_message_rand_val.TYPE = message.Hello.TYPE
-        with self.assertRaises(RuntimeError):
-            message.init_messages()
-        message.registered_message_types = copy_registered
-
     def test_slots(self):
-        for cls in message.registered_message_types.values():
+        for cls in library._reversed:
             # only __slots__ can be present in objects
             self.assertFalse(
                 hasattr(cls(), '__dict__'),
@@ -317,7 +307,7 @@ class MessageSignatureTest(unittest.TestCase):
         msg2 = factories.helpers.clone_message(
             msg,
             override_header=datastructures.MessageHeader(
-                msg.TYPE,
+                library.get_type(msg.__class__),
                 msg.timestamp + 667,
                 msg.encrypted,
             )
@@ -473,7 +463,7 @@ class NestedMessageTestCase(unittest.TestCase):
         TEST_SIG = (b'jak przystalo na bistro czesto sie zmienia'
                     b'i jest wypisywane na tablicy w lokalu'
                    )[:message.Message.SIG_LEN]  # noqa
-        for class_ in message.registered_message_types.values():
+        for class_ in library._reversed:
             if 'task_to_compute' not in class_.__slots__:
                 continue
             msg = class_()
@@ -485,7 +475,7 @@ class NestedMessageTestCase(unittest.TestCase):
             self.assertEqual(msg2.task_to_compute.sig, TEST_SIG)
 
     def test_invalid_task_to_compute(self):
-        for class_ in message.registered_message_types.values():
+        for class_ in library._reversed:
             if 'task_to_compute' not in class_.__slots__:
                 continue
             msg = class_()
@@ -498,17 +488,18 @@ class NestedMessageTestCase(unittest.TestCase):
                 message.Message.deserialize(s, decrypt_func=None)
 
     def test_reject_report_computed_task_with_cannot_compute_task(self):
-        msg = message.RejectReportComputedTask()
-        msg.reason = message.RejectReportComputedTask.REASON.GotMessageCannotComputeTask  # noqa
-        msg.cannot_compute_task = message.CannotComputeTask()
+        msg = message.tasks.RejectReportComputedTask()
+        msg.reason = message.tasks.RejectReportComputedTask \
+            .REASON.GotMessageCannotComputeTask  # noqa
+        msg.cannot_compute_task = message.tasks.CannotComputeTask()
         msg.cannot_compute_task.reason =\
-            message.CannotComputeTask.REASON.WrongCTD
+            message.tasks.CannotComputeTask.REASON.WrongCTD
         msg.cannot_compute_task.task_to_compute = \
             factories.tasks.TaskToComputeFactory()
         invalid_deadline = ("You call it madness, "
                             "but I call it Love -- Nat King Cole")
         msg.cannot_compute_task.task_to_compute.compute_task_def =\
-            message.ComputeTaskDef({'deadline': invalid_deadline, })
+            message.tasks.ComputeTaskDef({'deadline': invalid_deadline, })
         s = msg.serialize()
         msg2 = message.Message.deserialize(s, None)
         self.assertEqual(
