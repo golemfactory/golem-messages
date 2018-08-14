@@ -318,7 +318,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         )
         (ethsig, ) = struct.unpack(
             cls.ETHSIG_FORMAT, ethsig_data)
-        instance._ethsig = ethsig or None
+        instance._ethsig = ethsig or None  # noqa pylint: disable=protected-access,assigning-non-slot
         return instance
 
 @library.register(TASK_MSG_BASE + 3)
