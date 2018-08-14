@@ -1,5 +1,6 @@
 import enum
 import functools
+import struct
 
 from ethereum.utils import sha3
 
@@ -238,6 +239,8 @@ class WantToComputeTask(ConcentEnabled, base.Message):
 @library.register(TASK_MSG_BASE + 2)
 class TaskToCompute(ConcentEnabled, TaskMessage):
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
+    ETHSIG_FORMAT = '66p'
+    ETHSIG_LENGTH = struct.calcsize(ETHSIG_FORMAT)
 
     __slots__ = [
         'requestor_id',  # a.k.a. node id
@@ -251,6 +254,8 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         'size',  # the size of the resources zip file
         'concent_enabled',
         'price',  # total subtask price computed as `price * subtask_timeout`
+
+        '_ethsig'  # must be last
     ] + base.Message.__slots__
 
     @property
@@ -292,6 +297,29 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
     def task_to_compute(self):
         return self
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not hasattr(self, '_ethsig'):
+            self._ethsig = None
+
+    def serialize(self, *args, **kwargs):  # pylint: disable=arguments-differ
+        serialized = super().serialize(*args, **kwargs)
+        ethsig = struct.pack(
+            self.ETHSIG_FORMAT,
+            self._ethsig or b''
+        )
+        return serialized + ethsig
+
+    @classmethod
+    def deserialize_with_header(cls, header, data, *args, **kwargs):  # noqa pylint: disable=arguments-differ
+        ethsig_data, data = data[-cls.ETHSIG_LENGTH:], data[:-cls.ETHSIG_LENGTH]
+        instance = super().deserialize_with_header(
+            header, data, *args, **kwargs
+        )
+        (ethsig, ) = struct.unpack(
+            cls.ETHSIG_FORMAT, ethsig_data)
+        instance._ethsig = ethsig or None
+        return instance
 
 @library.register(TASK_MSG_BASE + 3)
 class CannotAssignTask(base.AbstractReasonMessage):
