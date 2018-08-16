@@ -462,6 +462,7 @@ class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
         WrongDockerImages = enum.auto()
         ConcentRequired = enum.auto()
         ConcentDisabled = enum.auto()
+        InsufficientBalance = enum.auto()
         InsufficientDeposit = enum.auto()  # GNTB deposit too low
         TooShortDeposit = enum.auto()  # GNTB deposit has too short lock
 
