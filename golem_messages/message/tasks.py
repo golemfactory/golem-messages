@@ -462,6 +462,8 @@ class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
         WrongDockerImages = enum.auto()
         ConcentRequired = enum.auto()
         ConcentDisabled = enum.auto()
+        InsufficientDeposit = enum.auto()  # GNTB deposit too low
+        TooShortDeposit = enum.auto()  # GNTB deposit has too short lock
 
     @base.verify_slot('task_to_compute', TaskToCompute)
     def deserialize_slot(self, key, value):
