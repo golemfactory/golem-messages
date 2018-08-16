@@ -500,6 +500,24 @@ class Message():
             and (name not in Message.__slots__) \
             and (name in self.__slots__)
 
+    def _verify_signature(
+            self, signature: bytes, public_key: bytes, msg_hash: bytes = None
+    ) -> bool:
+        """
+        Verify a signature against the provided public key and message hash.
+
+        :param public_key: the public key of the expected signer
+        :param msg_hash: if provided, a call to `get_short_hash()`
+                         will be skipped and the provided hash used instead
+        :return: `True` if the signature is correct.
+        :raises: `exceptions.InvalidSignature` if the signature is corrupted
+        """
+        return cryptography.ecdsa_verify(
+            pubkey=public_key,
+            signature=signature,
+            message=msg_hash or self.get_short_hash()
+        )
+
     def verify_signature(
             self, public_key: bytes, msg_hash: bytes = None) -> bool:
         """
@@ -508,15 +526,25 @@ class Message():
         indeed signed by the expected party.
 
         :param public_key: the public key of the expected sender
-        :param msg_hash: if provided, a call to `get_short_hash()`
-                         will be skipped and the provided hash used instead
+        :param msg_hash: maybe optionally provided to skip generation
+                         of the message hash during the verification
         :return: `True` if the signature is correct.
         :raises: `exceptions.InvalidSignature` if the signature is corrupted
         """
-        return cryptography.ecdsa_verify(
-            pubkey=public_key,
-            signature=self.sig,
-            message=msg_hash or self.get_short_hash()
+        return self._verify_signature(self.sig, public_key, msg_hash)
+
+    def _get_signature(
+            self, private_key: bytes, msg_hash: bytes = None) -> bytes:
+        """
+        Calculate message signature using the provided private key.
+
+        :param private_key: th private key used to generate the signature
+        :param msg_hash: if given, a call to `get_short_hash()`
+                         will be skipped and the provided hash used instead
+        """
+        return cryptography.ecdsa_sign(
+            privkey=private_key,
+            msghash=msg_hash or self.get_short_hash()
         )
 
     def sign_message(
@@ -525,13 +553,10 @@ class Message():
         Calculate and set message signature using the provided private key.
 
         :param private_key: sender's private key
-        :param msg_hash: if provided, a call to `get_short_hash()`
-                         will be skipped and the provided hash used instead
+        :param msg_hash: may be optionally provided to skip generation
+                         of the message hash while signing
         """
-        self.sig = cryptography.ecdsa_sign(
-            privkey=private_key,
-            msghash=msg_hash or self.get_short_hash()
-        )
+        self.sig = self._get_signature(private_key, msg_hash)
 
     def _fake_sign(self):
         self.sig = b'\0' * Message.SIG_LEN

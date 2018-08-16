@@ -326,6 +326,34 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         instance._ethsig = ethsig or None  # noqa pylint: disable=protected-access,assigning-non-slot
         return instance
 
+    def generate_ethsig(
+            self, private_key: bytes, msg_hash: bytes = None) -> None:
+        """
+        Calculate and set message's ethereum signature
+        using the provided ethereum private key.
+
+        :param private_key: ethereum private key
+        :param msg_hash: may be optionally provided to skip generation
+                         of the message hash while signing
+        """
+        self._ethsig = self._get_signature(private_key, msg_hash)
+
+    def verify_ethsig(
+            self, msg_hash: bytes = None) -> bool:
+        """
+        Verify the message's ethereum signature using the provided public key.
+        Ensures that the requestor has control over the ethereum address
+        associated with `requestor_ethereum_public_key`
+
+        :param msg_hash: maybe optionally provided to skip generation
+                         of the message hash during the verification
+        :return: `True` if the signature is correct.
+        :raises: `exceptions.InvalidSignature` if the signature is corrupted
+        """
+        return self._verify_signature(
+            self._ethsig, decode_hex(self.requestor_ethereum_public_key), msg_hash
+        )
+
 @library.register(TASK_MSG_BASE + 3)
 class CannotAssignTask(base.AbstractReasonMessage):
     __slots__ = [
