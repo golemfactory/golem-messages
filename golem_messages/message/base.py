@@ -7,6 +7,7 @@ import logging
 import struct
 import time
 import warnings
+import typing
 
 import semantic_version
 
@@ -300,7 +301,8 @@ class Message():
         sha.update(payload or b'')
         return sha.digest()
 
-    def serialize(self, sign_as: bytes = None, encrypt_func=None):
+    def serialize(
+            self, sign_as: typing.Optional[bytes] = None, encrypt_func=None):
         """ Return serialized message
         :return str: serialized message """
 
@@ -402,7 +404,7 @@ class Message():
     def deserialize(cls, msg,
                     decrypt_func,
                     check_time=True,
-                    sender_public_key: bytes = None):
+                    sender_public_key: typing.Optional[bytes] = None):
         """
         Deserialize single message
         :param str msg: serialized message
@@ -434,9 +436,10 @@ class Message():
         )
 
     @classmethod
-    def deserialize_with_header(cls, header, data,
-                                decrypt_func, sender_public_key: bytes = None,
-                                **kwargs):
+    def deserialize_with_header(
+            cls, header, data,
+            decrypt_func, sender_public_key: typing.Optional[bytes] = None,
+            **kwargs):
         sig = data[:cls.SIG_LEN]
         payload = data[cls.SIG_LEN:]
 
@@ -501,7 +504,8 @@ class Message():
             and (name in self.__slots__)
 
     def _verify_signature(
-            self, signature: bytes, public_key: bytes, msg_hash: bytes = None
+            self, signature: bytes, public_key: bytes,
+            msg_hash: typing.Optional[bytes] = None
     ) -> bool:
         """
         Verify a signature against the provided public key and message hash.
@@ -519,7 +523,10 @@ class Message():
         )
 
     def verify_signature(
-            self, public_key: bytes, msg_hash: bytes = None) -> bool:
+            self,
+            public_key: bytes,
+            msg_hash: typing.Optional[bytes] = None
+    ) -> bool:
         """
         Verify the message's signature using the provided public key.
         Ensures that the message's content is intact and that it has been
@@ -534,7 +541,10 @@ class Message():
         return self._verify_signature(self.sig, public_key, msg_hash)
 
     def _get_signature(
-            self, private_key: bytes, msg_hash: bytes = None) -> bytes:
+            self,
+            private_key: bytes,
+            msg_hash: typing.Optional[bytes] = None
+    ) -> bytes:
         """
         Calculate message signature using the provided private key.
 
@@ -548,7 +558,10 @@ class Message():
         )
 
     def sign_message(
-            self, private_key: bytes, msg_hash: bytes = None) -> None:
+            self,
+            private_key: bytes,
+            msg_hash: typing.Optional[bytes] = None
+    ) -> None:
         """
         Calculate and set message signature using the provided private key.
 
@@ -560,6 +573,7 @@ class Message():
 
     def _fake_sign(self):
         self.sig = b'\0' * Message.SIG_LEN
+
 
 class AbstractReasonMessage(Message):
     __slots__ = [
