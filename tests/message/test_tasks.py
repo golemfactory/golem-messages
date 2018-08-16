@@ -210,6 +210,31 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         with self.assertRaises(exceptions.FieldError):
             self._dump_and_load(ttc)
 
+    def test_ethsig(self):
+        msg: message.tasks.TaskToCompute = \
+            factories.tasks.TaskToComputeFactory()
+        ethsig = bytes(range(0, 65))
+        msg._ethsig = ethsig
+        msgdata = msg.serialize(None, None)
+        msg2 = message.Message.deserialize(msgdata, None, None)
+        self.assertEqual(msg2._ethsig, ethsig)
+
+    def test_ethsig_toolong(self):
+        msg: message.tasks.TaskToCompute = \
+            factories.tasks.TaskToComputeFactory()
+        ethsig = bytes(range(0, 66))
+        msg._ethsig = ethsig
+        with self.assertRaises(ValueError):
+            msg.serialize(None, None)
+
+    def test_ethsig_none(self):
+        msg: message.tasks.TaskToCompute = \
+            factories.tasks.TaskToComputeFactory()
+        self.assertIsNone(msg._ethsig)
+        msg2 = message.Message.deserialize(
+            msg.serialize(None, None), None, None)
+        self.assertIsNone(msg2._ethsig)
+
 
 class PriceTaskToComputeTestCase(unittest.TestCase):
     def setUp(self):

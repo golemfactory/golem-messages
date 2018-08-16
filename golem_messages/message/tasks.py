@@ -304,6 +304,11 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
 
     def serialize(self, *args, **kwargs):  # pylint: disable=arguments-differ
         serialized = super().serialize(*args, **kwargs)
+        sig_length = self.ETHSIG_LENGTH - 1
+        if self._ethsig and len(self._ethsig) != sig_length:
+            raise ValueError(
+                "'_ethsig' must be exactly %s bytes long (or None)"
+                % sig_length)
         ethsig = struct.pack(
             self.ETHSIG_FORMAT,
             self._ethsig or b''
