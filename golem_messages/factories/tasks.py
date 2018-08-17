@@ -101,7 +101,7 @@ class TaskToComputeFactory(helpers.MessageFactory):
             raise factory.errors.InvalidDeclarationError(
                 "You need to specify either `privkey` or `keys`, not both.")
 
-        # if there's no privkey given and there's also so
+        # if there's no privkey given and there's also no
         # requestor_ethereum_public_key set on the TTC,
         # just use a keypair (given or generated) to
         # both fill message's public key field
