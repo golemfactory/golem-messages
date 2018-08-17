@@ -1,5 +1,7 @@
 import enum
 import functools
+import struct
+import typing
 
 from ethereum.utils import sha3
 
@@ -238,6 +240,8 @@ class WantToComputeTask(ConcentEnabled, base.Message):
 @library.register(TASK_MSG_BASE + 2)
 class TaskToCompute(ConcentEnabled, TaskMessage):
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
+    ETHSIG_FORMAT = '66p'
+    ETHSIG_LENGTH = struct.calcsize(ETHSIG_FORMAT)
 
     __slots__ = [
         'requestor_id',  # a.k.a. node id
@@ -251,6 +255,8 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         'size',  # the size of the resources zip file
         'concent_enabled',
         'price',  # total subtask price computed as `price * subtask_timeout`
+
+        '_ethsig'  # must be last
     ] + base.Message.__slots__
 
     @property
@@ -291,6 +297,65 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
     @property
     def task_to_compute(self):
         return self
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not hasattr(self, '_ethsig'):
+            self._ethsig = None
+
+    def serialize(self, *args, **kwargs):  # pylint: disable=arguments-differ
+        serialized = super().serialize(*args, **kwargs)
+        sig_length = self.ETHSIG_LENGTH - 1
+        if self._ethsig and len(self._ethsig) != sig_length:
+            raise ValueError(
+                "'_ethsig' must be exactly %s bytes long (or None)"
+                % sig_length)
+        ethsig = struct.pack(
+            self.ETHSIG_FORMAT,
+            self._ethsig or b''
+        )
+        return serialized + ethsig
+
+    @classmethod
+    def deserialize_with_header(cls, header, data, *args, **kwargs):  # noqa pylint: disable=arguments-differ
+        ethsig_data, data = data[-cls.ETHSIG_LENGTH:], data[:-cls.ETHSIG_LENGTH]
+        instance = super().deserialize_with_header(
+            header, data, *args, **kwargs
+        )
+        (ethsig, ) = struct.unpack(
+            cls.ETHSIG_FORMAT, ethsig_data)
+        instance._ethsig = ethsig or None  # noqa pylint: disable=protected-access,assigning-non-slot
+        return instance
+
+    def generate_ethsig(
+            self, private_key: bytes, msg_hash: typing.Optional[bytes] = None
+    ) -> None:
+        """
+        Calculate and set message's ethereum signature
+        using the provided ethereum private key.
+
+        :param private_key: ethereum private key
+        :param msg_hash: may be optionally provided to skip generation
+                         of the message hash while signing
+        """
+        self._ethsig = self._get_signature(private_key, msg_hash)
+
+    def verify_ethsig(
+            self, msg_hash: typing.Optional[bytes] = None
+    ) -> bool:
+        """
+        Verify the message's ethereum signature using the provided public key.
+        Ensures that the requestor has control over the ethereum address
+        associated with `requestor_ethereum_public_key`
+
+        :param msg_hash: maybe optionally provided to skip generation
+                         of the message hash during the verification
+        :return: `True` if the signature is correct.
+        :raises: `exceptions.InvalidSignature` if the signature is corrupted
+        """
+        return self._verify_signature(
+            self._ethsig, decode_hex(self.requestor_ethereum_public_key), msg_hash
+        )
 
 
 @library.register(TASK_MSG_BASE + 3)

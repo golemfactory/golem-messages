@@ -210,6 +210,61 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         with self.assertRaises(exceptions.FieldError):
             self._dump_and_load(ttc)
 
+    # pylint:disable=protected-access
+
+    def test_ethsig(self):
+        msg: message.tasks.TaskToCompute = \
+            factories.tasks.TaskToComputeFactory()
+        ethsig = bytes(range(0, 65))
+        msg._ethsig = ethsig
+        msg2 = self._dump_and_load(msg)
+        self.assertEqual(msg2._ethsig, ethsig)
+
+    def test_ethsig_toolong(self):
+        msg: message.tasks.TaskToCompute = \
+            factories.tasks.TaskToComputeFactory()
+        ethsig = bytes(range(0, 66))
+        msg._ethsig = ethsig
+        with self.assertRaises(ValueError):
+            msg.serialize(None, None)
+
+    def test_ethsig_none(self):
+        msg: message.tasks.TaskToCompute = \
+            factories.tasks.TaskToComputeFactory()
+        self.assertIsNone(msg._ethsig)
+        msg2 = self._dump_and_load(msg)
+        self.assertIsNone(msg2._ethsig)
+
+    def _get_ethkeys_and_ttc(self):
+        requestor_eth_keys = cryptography.ECCx(None)
+        msg: message.tasks.TaskToCompute = \
+            factories.tasks.TaskToComputeFactory(
+                requestor_ethereum_public_key=encode_hex(
+                    requestor_eth_keys.raw_pubkey
+                )
+            )
+        return requestor_eth_keys, msg
+
+    def test_generate_ethsig(self):
+        requestor_eth_keys, msg = self._get_ethkeys_and_ttc()
+        msg.generate_ethsig(requestor_eth_keys.raw_privkey)
+        self.assertTrue(msg.verify_ethsig())
+
+    def test_verify_ethsig(self):
+        provider_keys = cryptography.ECCx(None)
+        requestor_keys = cryptography.ECCx(None)
+        requestor_eth_keys, msg = self._get_ethkeys_and_ttc()
+        msg.generate_ethsig(requestor_eth_keys.raw_privkey)
+        self.assertTrue(msg._ethsig)
+        data = shortcuts.dump(
+            msg, requestor_keys.raw_privkey, provider_keys.raw_pubkey)
+        msg2: message.tasks.TaskToCompute = shortcuts.load(
+            data, provider_keys.raw_privkey, requestor_keys.raw_pubkey)
+        self.assertTrue(msg2._ethsig)
+        self.assertTrue(msg2.verify_ethsig())
+
+    # pylint:enable=protected-access
+
 
 class PriceTaskToComputeTestCase(unittest.TestCase):
     def setUp(self):
