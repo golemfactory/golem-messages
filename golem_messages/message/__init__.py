@@ -11,6 +11,11 @@ from . import tasks
 
 # For backwards compatibility import all old messages by name
 # DO NOT ADD ANY NEW IMPORT BY NAME; ONLY REMOVE
+#
+# DEPRECATION WARNING: using imports from this root module is deprecated
+# and they'll be removed soon, please import those message classes from
+# their respective modules directly
+#
 # pylint: disable=unused-import,cyclic-import,wrong-import-order
 from golem_messages.message.base import Message  # noqa
 from golem_messages.message.base import Hello  # noqa

@@ -7,3 +7,8 @@ Shared module for formatting and parsing messages for Golem and Concent.
 
 Includes a library of all message types used by Golem client and by the Concent
 Service. 
+
+* **Deprecation Warning:** using message class imports from the root `message`
+module is now deprecated and will be removed soon - please use imports from
+their respective modules - e.g. `base`, `tasks`, `concents`...
+
