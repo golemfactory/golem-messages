@@ -1,6 +1,7 @@
 import enum
 import functools
 import struct
+import typing
 
 from ethereum.utils import sha3
 
@@ -327,7 +328,8 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         return instance
 
     def generate_ethsig(
-            self, private_key: bytes, msg_hash: bytes = None) -> None:
+            self, private_key: bytes, msg_hash: typing.Optional[bytes] = None
+    ) -> None:
         """
         Calculate and set message's ethereum signature
         using the provided ethereum private key.
@@ -339,7 +341,8 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         self._ethsig = self._get_signature(private_key, msg_hash)
 
     def verify_ethsig(
-            self, msg_hash: bytes = None) -> bool:
+            self, msg_hash: typing.Optional[bytes] = None
+    ) -> bool:
         """
         Verify the message's ethereum signature using the provided public key.
         Ensures that the requestor has control over the ethereum address
@@ -353,6 +356,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         return self._verify_signature(
             self._ethsig, decode_hex(self.requestor_ethereum_public_key), msg_hash
         )
+
 
 @library.register(TASK_MSG_BASE + 3)
 class CannotAssignTask(base.AbstractReasonMessage):
