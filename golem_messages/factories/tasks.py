@@ -89,7 +89,7 @@ class TaskToComputeFactory(helpers.MessageFactory):
         })
         return cls(*args, **kwargs)
 
-    # pylint: disable=no-self-argument
+    # pylint: disable=no-self-argument,attribute-defined-outside-init
 
     @factory.post_generation
     def ethsig(
@@ -119,7 +119,16 @@ class TaskToComputeFactory(helpers.MessageFactory):
                     " with no `requestor_ethereum_public_key` in place...")
             ttc.generate_ethsig(privkey)
 
-    # pylint: enable=no-self-argument
+    # work around the implicit ordering of the hooks...
+    # from: https://factoryboy.readthedocs.io/en/latest/reference.html
+    # ```Post-generation hooks are called in the same order
+    # they are declared in the factory class```
+
+    @factory.post_generation
+    def sign(msg: 'Message', _, __, **kwargs):
+        helpers.MessageFactory.sign_message(msg, _, __, **kwargs)
+
+    # pylint: enable=no-self-argument,attribute-defined-outside-init
 
 
 class CannotComputeTaskFactory(helpers.MessageFactory):

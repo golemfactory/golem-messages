@@ -230,7 +230,8 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
 
     def test_ethsig_none(self):
         msg: message.tasks.TaskToCompute = \
-            factories.tasks.TaskToComputeFactory()
+            factories.tasks.TaskToComputeFactory(
+                requestor_ethereum_public_key=b'no implicit value')
         self.assertIsNone(msg._ethsig)
         msg2 = self._dump_and_load(msg)
         self.assertIsNone(msg2._ethsig)
