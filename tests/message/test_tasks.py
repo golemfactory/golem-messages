@@ -5,6 +5,7 @@ import unittest
 import unittest.mock as mock
 
 from ethereum.utils import sha3
+import factory
 
 from golem_messages import cryptography
 from golem_messages import exceptions
@@ -13,7 +14,7 @@ from golem_messages import message
 from golem_messages import shortcuts
 from golem_messages.utils import encode_hex, decode_hex
 
-from tests.message import mixins
+from tests.message import mixins, helpers
 
 
 class WantToComputeTaskTest(unittest.TestCase):
@@ -194,30 +195,28 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         ttc = factories.tasks.TaskToComputeFactory.past_deadline()
         self.assertGreater(now, ttc.compute_task_def.get('deadline'))
 
-    @staticmethod
-    def _dump_and_load(msg):
-        msg_d = shortcuts.dump(msg, None, None)
-        return shortcuts.load(msg_d, None, None)
-
     def test_size(self):
         size = 1234567
-        ttc = self._dump_and_load(
+        ttc = helpers.dump_and_load(
             factories.tasks.TaskToComputeFactory(size=size))
         self.assertEqual(ttc.size, size)
 
     def test_size_notint(self):
         ttc = factories.tasks.TaskToComputeFactory(size=None)
         with self.assertRaises(exceptions.FieldError):
-            self._dump_and_load(ttc)
+            helpers.dump_and_load(ttc)
 
     # pylint:disable=protected-access
+
+
+class TaskToComputeEthsigTest(unittest.TestCase):
 
     def test_ethsig(self):
         msg: message.tasks.TaskToCompute = \
             factories.tasks.TaskToComputeFactory()
         ethsig = bytes(range(0, 65))
         msg._ethsig = ethsig
-        msg2 = self._dump_and_load(msg)
+        msg2 = helpers.dump_and_load(msg)
         self.assertEqual(msg2._ethsig, ethsig)
 
     def test_ethsig_toolong(self):
@@ -230,9 +229,10 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
 
     def test_ethsig_none(self):
         msg: message.tasks.TaskToCompute = \
-            factories.tasks.TaskToComputeFactory()
+            factories.tasks.TaskToComputeFactory(
+                requestor_ethereum_public_key=b'no implicit value')
         self.assertIsNone(msg._ethsig)
-        msg2 = self._dump_and_load(msg)
+        msg2 = helpers.dump_and_load(msg)
         self.assertIsNone(msg2._ethsig)
 
     def _get_ethkeys_and_ttc(self):
@@ -250,6 +250,16 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         msg.generate_ethsig(requestor_eth_keys.raw_privkey)
         self.assertTrue(msg.verify_ethsig())
 
+    def test_generate_ethsig_public_key_none(self):
+        keys = cryptography.ECCx(None)
+        ttc = factories.tasks.TaskToComputeFactory(
+            requestor_ethereum_public_key=None,
+            ethsig__disable=True,
+        )
+        with self.assertRaisesRegex(exceptions.FieldError,
+                                    "^It doesn't really make sense"):
+            ttc.generate_ethsig(keys.raw_privkey)
+
     def test_verify_ethsig(self):
         provider_keys = cryptography.ECCx(None)
         requestor_keys = cryptography.ECCx(None)
@@ -264,6 +274,86 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         self.assertTrue(msg2.verify_ethsig())
 
     # pylint:enable=protected-access
+
+
+class TaskToComputeEthsigFactory(unittest.TestCase):
+
+    @staticmethod
+    def _get_ethkeys():
+        return cryptography.ECCx(None)
+
+    def test_factory_ethsig_correct_default(self):
+        ttc = factories.tasks.TaskToComputeFactory()
+        self.assertTrue(ttc.verify_ethsig())
+
+    def test_factory_keys(self):
+        requestor_eth_keys = self._get_ethkeys()
+        ttc = factories.tasks.TaskToComputeFactory(
+            ethsig__keys=requestor_eth_keys)
+        self.assertTrue(ttc.verify_ethsig())
+        self.assertEqual(
+            ttc.requestor_ethereum_public_key,
+            encode_hex(requestor_eth_keys.raw_pubkey)
+        )
+
+    def test_factory_fail_keys_and_privkey(self):
+        requestor_eth_keys = self._get_ethkeys()
+        with self.assertRaisesRegex(factory.errors.InvalidDeclarationError,
+                                    "^You need to specify either"):
+            factories.tasks.TaskToComputeFactory(
+                ethsig__keys=requestor_eth_keys,
+                ethsig__privkey=requestor_eth_keys.raw_privkey
+            )
+
+    def test_factory_requestor_ethereum_public_key_and_privkey(self):
+        requestor_eth_keys = self._get_ethkeys()
+        ttc = factories.tasks.TaskToComputeFactory(
+            requestor_ethereum_public_key=encode_hex(
+                requestor_eth_keys.raw_pubkey
+            ),
+            ethsig__privkey=requestor_eth_keys.raw_privkey
+        )
+        self.assertTrue(ttc.verify_ethsig())
+
+    def test_factory_requestor_ethereum_public_key_nosig(self):
+        requestor_eth_keys = self._get_ethkeys()
+        ttc = factories.tasks.TaskToComputeFactory(
+            requestor_ethereum_public_key=encode_hex(
+                requestor_eth_keys.raw_pubkey
+            )
+        )
+        self.assertIsNone(ttc._ethsig)  # noqa pylint:disable=protected-access
+        with self.assertRaises(exceptions.InvalidSignature):
+            ttc.verify_ethsig()
+
+    def test_fail_factory_privkey_only(self):
+        requestor_eth_keys = self._get_ethkeys()
+        with self.assertRaisesRegex(exceptions.FieldError,
+                                    "^It doesn't really make sense"):
+            factories.tasks.TaskToComputeFactory(
+                ethsig__privkey=requestor_eth_keys.raw_privkey
+            )
+
+    def test_fail_factory_privkey_and_disable(self):
+        requestor_eth_keys = self._get_ethkeys()
+        with self.assertRaisesRegex(factory.errors.InvalidDeclarationError,
+                                    ".*disable the default ethereum signature "
+                                    "generation and at the same time "
+                                    "provide the private key"):
+            factories.tasks.TaskToComputeFactory(
+                ethsig__privkey=requestor_eth_keys.raw_privkey,
+                ethsig__disable=True,
+            )
+
+    def test_fail_factory_keys_and_disable(self):
+        with self.assertRaisesRegex(factory.errors.InvalidDeclarationError,
+                                    ".*disable the default ethereum signature "
+                                    "generation and at the same time "
+                                    "provide the private key"):
+            factories.tasks.TaskToComputeFactory(
+                ethsig__keys=self._get_ethkeys(),
+                ethsig__disable=True,
+            )
 
 
 class PriceTaskToComputeTestCase(unittest.TestCase):

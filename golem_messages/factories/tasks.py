@@ -3,6 +3,7 @@ import calendar
 import datetime
 import os
 import time
+import typing
 
 from eth_utils import encode_hex
 import factory.fuzzy
@@ -73,8 +74,6 @@ class TaskToComputeFactory(helpers.MessageFactory):
     )
     requestor_public_key = factory.LazyFunction(
         lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey))
-    requestor_ethereum_public_key = factory.SelfAttribute(
-        'requestor_public_key')
 
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
     package_hash = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
@@ -89,6 +88,52 @@ class TaskToComputeFactory(helpers.MessageFactory):
             'compute_task_def__deadline': past_deadline
         })
         return cls(*args, **kwargs)
+
+    # pylint: disable=no-self-argument,attribute-defined-outside-init
+
+    @factory.post_generation
+    def ethsig(
+            ttc: tasks.TaskToCompute, _, __,
+            privkey: typing.Optional[bytes] = None,
+            keys: typing.Optional[cryptography.ECCx] = None,
+            disable: bool = False,
+    ):
+        if (privkey or keys) and disable:
+            raise factory.errors.InvalidDeclarationError(
+                "Seems unlikely one would intentionally disable the default "
+                "ethereum signature generation and at the same time provide "
+                "the private key for that purpose")
+
+        if disable:
+            return
+
+        if keys and privkey:
+            raise factory.errors.InvalidDeclarationError(
+                "You need to specify either `privkey` or `keys`, not both.")
+
+        # if there's no privkey given and there's also no
+        # requestor_ethereum_public_key set on the TTC,
+        # just use a keypair (given or generated) to
+        # both fill message's public key field
+        # and generate the ethereum signature
+        if not privkey and not ttc.requestor_ethereum_public_key:
+            keys = keys or cryptography.ECCx(None)
+            privkey = keys.raw_privkey
+            ttc.requestor_ethereum_public_key = encode_key_id(keys.raw_pubkey)
+
+        if privkey:
+            ttc.generate_ethsig(privkey)
+
+    # work around the implicit ordering of the hooks...
+    # from: https://factoryboy.readthedocs.io/en/latest/reference.html
+    # ```Post-generation hooks are called in the same order
+    # they are declared in the factory class```
+
+    @factory.post_generation
+    def sign(msg: 'Message', _, __, **kwargs):
+        helpers.MessageFactory.sign_message(msg, _, __, **kwargs)
+
+    # pylint: enable=no-self-argument,attribute-defined-outside-init
 
 
 class CannotComputeTaskFactory(helpers.MessageFactory):

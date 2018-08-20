@@ -325,6 +325,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         (ethsig, ) = struct.unpack(
             cls.ETHSIG_FORMAT, ethsig_data)
         instance._ethsig = ethsig or None  # noqa pylint: disable=protected-access,assigning-non-slot
+
         return instance
 
     def generate_ethsig(
@@ -338,6 +339,16 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         :param msg_hash: may be optionally provided to skip generation
                          of the message hash while signing
         """
+
+        if not self.requestor_ethereum_public_key:
+            raise exceptions.FieldError(
+                "It doesn't really make sense to"
+                " generate the ethereum signature"
+                " with no `requestor_ethereum_public_key` in place...",
+                field='requestor_ethereum_public_key',
+                value=self.requestor_ethereum_public_key,
+            )
+
         self._ethsig = self._get_signature(private_key, msg_hash)
 
     def verify_ethsig(

@@ -62,10 +62,8 @@ def optional_subfactory(field: str, object_factory: factory.Factory):
 
 class MessageFactory(factory.Factory):
 
-    # pylint: disable=no-self-argument
-
-    @factory.post_generation
-    def sign(msg: 'Message', _, __, **kwargs):
+    @staticmethod
+    def sign_message(msg: 'Message', _, __, **kwargs):
         privkey = kwargs.pop('privkey', None)
 
         if kwargs:
@@ -74,5 +72,11 @@ class MessageFactory(factory.Factory):
 
         if privkey:
             msg.sign_message(privkey)
+
+    # pylint: disable=no-self-argument
+
+    @factory.post_generation
+    def sign(msg: 'Message', _, __, **kwargs):
+        MessageFactory.sign_message(msg, _, __, **kwargs)
 
     # pylint: enable=no-self-argument
