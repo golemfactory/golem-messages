@@ -250,6 +250,16 @@ class TaskToComputeEthsigTest(unittest.TestCase):
         msg.generate_ethsig(requestor_eth_keys.raw_privkey)
         self.assertTrue(msg.verify_ethsig())
 
+    def test_generate_ethsig_public_key_none(self):
+        keys = cryptography.ECCx(None)
+        ttc = factories.tasks.TaskToComputeFactory(
+            requestor_ethereum_public_key=None,
+            ethsig__disable=True,
+        )
+        with self.assertRaisesRegex(exceptions.FieldError,
+                                    "^It doesn't really make sense"):
+            ttc.generate_ethsig(keys.raw_privkey)
+
     def test_verify_ethsig(self):
         provider_keys = cryptography.ECCx(None)
         requestor_keys = cryptography.ECCx(None)
@@ -318,10 +328,31 @@ class TaskToComputeEthsigFactory(unittest.TestCase):
 
     def test_fail_factory_privkey_only(self):
         requestor_eth_keys = self._get_ethkeys()
-        with self.assertRaisesRegex(factory.errors.InvalidDeclarationError,
+        with self.assertRaisesRegex(exceptions.FieldError,
                                     "^It doesn't really make sense"):
             factories.tasks.TaskToComputeFactory(
                 ethsig__privkey=requestor_eth_keys.raw_privkey
+            )
+
+    def test_fail_factory_privkey_and_disable(self):
+        requestor_eth_keys = self._get_ethkeys()
+        with self.assertRaisesRegex(factory.errors.InvalidDeclarationError,
+                                    ".*disable the default ethereum signature "
+                                    "generation and at the same time "
+                                    "provide the private key"):
+            factories.tasks.TaskToComputeFactory(
+                ethsig__privkey=requestor_eth_keys.raw_privkey,
+                ethsig__disable=True,
+            )
+
+    def test_fail_factory_keys_and_disable(self):
+        with self.assertRaisesRegex(factory.errors.InvalidDeclarationError,
+                                    ".*disable the default ethereum signature "
+                                    "generation and at the same time "
+                                    "provide the private key"):
+            factories.tasks.TaskToComputeFactory(
+                ethsig__keys=self._get_ethkeys(),
+                ethsig__disable=True,
             )
 
 

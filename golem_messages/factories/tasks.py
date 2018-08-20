@@ -96,7 +96,17 @@ class TaskToComputeFactory(helpers.MessageFactory):
             ttc: tasks.TaskToCompute, _, __,
             privkey: typing.Optional[bytes] = None,
             keys: typing.Optional[cryptography.ECCx] = None,
+            disable: bool = False,
     ):
+        if (privkey or keys) and disable:
+            raise factory.errors.InvalidDeclarationError(
+                "Seems unlikely one would intentionally disable the default "
+                "ethereum signature generation and at the same time provide "
+                "the private key for that purpose")
+
+        if disable:
+            return
+
         if keys and privkey:
             raise factory.errors.InvalidDeclarationError(
                 "You need to specify either `privkey` or `keys`, not both.")
@@ -112,11 +122,6 @@ class TaskToComputeFactory(helpers.MessageFactory):
             ttc.requestor_ethereum_public_key = encode_key_id(keys.raw_pubkey)
 
         if privkey:
-            if not ttc.requestor_ethereum_public_key:
-                raise factory.errors.InvalidDeclarationError(
-                    "It doesn't really make sense to"
-                    " generate the ethereum signature"
-                    " with no `requestor_ethereum_public_key` in place...")
             ttc.generate_ethsig(privkey)
 
     # work around the implicit ordering of the hooks...
