@@ -37,6 +37,7 @@ setup(
         'bitcoin',
         'cbor2==3.0.4',
         'coincurve>=7.1.0',
+        'eth-utils==1.0.3',
         'ethereum==1.6.1',
         'pyelliptic==1.5.10',
         'pytz',
@@ -44,7 +45,6 @@ setup(
         'semantic_version',
     ],
     tests_require=[
-        'eth-utils==0.7.4',
         'Faker==0.8.9',
         'factory-boy==2.9.2',
         'pycodestyle==2.4.0',

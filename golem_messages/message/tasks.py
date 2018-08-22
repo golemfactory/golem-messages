@@ -3,6 +3,7 @@ import functools
 import struct
 import typing
 
+from eth_utils import to_checksum_address
 from ethereum.utils import sha3
 
 from golem_messages import datastructures
@@ -261,13 +262,13 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
 
     @property
     def requestor_ethereum_address(self):
-        return '0x{}'.format(
-            sha3(decode_hex(self.requestor_ethereum_public_key))[12:].hex(),
+        return to_checksum_address(
+            sha3(decode_hex(self.requestor_ethereum_public_key))[12:].hex()
         )
 
     @property
     def provider_ethereum_address(self):
-        return '0x{}'.format(
+        return to_checksum_address(
             sha3(decode_hex(self.provider_ethereum_public_key))[12:].hex(),
         )
 
