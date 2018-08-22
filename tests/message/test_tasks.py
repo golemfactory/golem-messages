@@ -4,6 +4,7 @@ import time
 import unittest
 import unittest.mock as mock
 
+from eth_utils import is_checksum_address, to_checksum_address
 from ethereum.utils import sha3
 import factory
 
@@ -173,14 +174,16 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         provider_public_key = decode_hex(msg.provider_ethereum_public_key)
 
         self.assertEqual(msg.provider_ethereum_address,
-                         '0x' + sha3(provider_public_key)[12:].hex())
+                         to_checksum_address(
+                             '0x' + sha3(provider_public_key)[12:].hex()))
 
     def test_ethereum_address_requestor(self):
         msg = factories.tasks.TaskToComputeFactory()
         requestor_public_key = decode_hex(msg.requestor_ethereum_public_key)
 
         self.assertEqual(msg.requestor_ethereum_address,
-                         '0x' + sha3(requestor_public_key)[12:].hex())
+                         to_checksum_address(
+                             '0x' + sha3(requestor_public_key)[12:].hex()))
 
     def test_task_id(self):
         self.assertEqual(self.msg.task_id,
@@ -206,7 +209,20 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         with self.assertRaises(exceptions.FieldError):
             helpers.dump_and_load(ttc)
 
-    # pylint:disable=protected-access
+
+class TaskToComputeEthereumAddressChecksum(unittest.TestCase):
+    def test_requestor_ethereum_address_checksum(self):
+        ttc = factories.tasks.TaskToComputeFactory()
+        self.assertTrue(ttc.requestor_ethereum_public_key)
+        self.assertTrue(is_checksum_address(ttc.requestor_ethereum_address))
+
+    def test_provider_ethereum_address_checksum(self):
+        ttc = factories.tasks.TaskToComputeFactory()
+        self.assertTrue(ttc.provider_ethereum_public_key)
+        self.assertTrue(is_checksum_address(ttc.provider_ethereum_address))
+
+
+# pylint:disable=protected-access
 
 
 class TaskToComputeEthsigTest(unittest.TestCase):
@@ -273,7 +289,8 @@ class TaskToComputeEthsigTest(unittest.TestCase):
         self.assertTrue(msg2._ethsig)
         self.assertTrue(msg2.verify_ethsig())
 
-    # pylint:enable=protected-access
+
+# pylint:enable=protected-access
 
 
 class TaskToComputeEthsigFactory(unittest.TestCase):
