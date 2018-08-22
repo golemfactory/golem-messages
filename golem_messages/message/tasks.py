@@ -634,3 +634,28 @@ class RejectReportComputedTask(TaskMessage, base.AbstractReasonMessage):
     @base.verify_slot('cannot_compute_task', CannotComputeTask)
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
+
+@library.register(TASK_MSG_BASE + 31)
+class StateUpdate(base.Message):
+
+    @enum.unique
+    class DIRECTION(datastructures.StringEnum):
+        Call = enum.auto()
+        Response = enum.auto()
+
+    __slots__ = [
+        'data',
+        'state_update_id',
+        'direction',
+        # task_id and subtask_id are added here manually to avoid inheriting
+        # from TaskMessage - since this message doesn't need any other fields
+        'task_id',
+        'subtask_id'
+    ] + base.Message.__slots__
+
+    @base.verify_slot('direction', DIRECTION)
+    @base.verify_slot('state_update_id', str)
+    @base.verify_slot('task_id', str)
+    @base.verify_slot('subtask_id', str)
+    def deserialize_slot(self, key, value):
+        return super().deserialize_slot(key, value)

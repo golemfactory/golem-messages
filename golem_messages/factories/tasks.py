@@ -231,3 +231,8 @@ class SubtaskResultsRejectedFactory(helpers.MessageFactory):
         model = tasks.SubtaskResultsRejected
 
     report_computed_task = factory.SubFactory(ReportComputedTaskFactory)
+
+
+class StateUpdateFactory(helpers.MessageFactory):
+    class Meta:
+        model = tasks.StateUpdate

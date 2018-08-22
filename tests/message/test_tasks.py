@@ -652,3 +652,11 @@ class TaskFailureTest(
     MSG_CLASS = message.tasks.TaskFailure
     FACTORY = factories.tasks.TaskFailureFactory
     TASK_ID_PROVIDER = 'task_to_compute'
+
+
+class StateUpdateTest(
+        mixins.RegisteredMessageTestMixin,
+        mixins.SerializationMixin,
+        unittest.TestCase):
+    MSG_CLASS = message.tasks.StateUpdate
+    FACTORY = factories.tasks.StateUpdateFactory
