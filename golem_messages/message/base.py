@@ -233,8 +233,8 @@ class Message():
         if header is None:
             header = datastructures.MessageHeader(
                 library.get_type(self.__class__),
-                # Since epoch differs between OS, we use calendar.timegm()
-                # instead of time.time() to unify it.
+                # On AppVeyorCI time.time() returns unreliable values thus
+                # we use calendar.timegm() instead of time.time() to unify it.
                 calendar.timegm(time.gmtime()),
                 False,
             )
@@ -369,19 +369,25 @@ class Message():
         return value
 
     @classmethod
-    def deserialize_header(cls, data):
-        """ Deserialize message's header
-
-        :param data: bytes
-        :return: datastructures.MessageHeader
-        """
+    def unpack_header(cls, data: bytes) -> datastructures.MessageHeader:
+        """Unpack message's header"""
         try:
             header = datastructures.MessageHeader(
                 *struct.unpack(cls.HDR_FORMAT, data),
             )
         except (struct.error, TypeError) as e:
             raise exceptions.HeaderError() from e
+        return header
 
+    @classmethod
+    def deserialize_header(cls, data):
+        """ Deserialize message's header
+
+        :param data: bytes
+        :return: datastructures.MessageHeader
+        """
+
+        header = cls.unpack_header(data)
         logger.debug("deserialize_header(): %r", header)
         if not settings.MIN_TIMESTAMP < header.timestamp < \
                 settings.MAX_TIMESTAMP:
@@ -411,8 +417,8 @@ class Message():
         :param bool check_time: whether the message's timestamp
                                 should be validated
         :param function(data) decrypt_func: decryption function
-        :param bytes sender_public_key: if specified, sender's public key against
-                                    which the signature is verified
+        :param bytes sender_public_key: if specified, sender's public key
+                                against which the signature is verified
         :return Message|None: deserialized message or none if this message
                               type is unknown
         """
