@@ -259,6 +259,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         'provider_public_key',  # key used for msg signing and encryption
         'provider_ethereum_public_key',  # used for transactions on blockchain
         'compute_task_def',
+        'want_to_compute_task',
         'package_hash',  # the hash of the package (resources) zip file
         'size',  # the size of the resources zip file
         'concent_enabled',
@@ -279,6 +280,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
             sha3(decode_hex(self.provider_ethereum_public_key))[12:].hex(),
         )
 
+    @base.verify_slot('want_to_compute_task', WantToComputeTask)
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
         if key == 'compute_task_def':
