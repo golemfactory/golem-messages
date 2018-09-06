@@ -242,6 +242,8 @@ class WantToComputeTask(ConcentEnabled, base.Message):
                             # `golem-messages` should be intentionally agnostic
                             # with regards to the contents of this field.
 
+        'provider_public_key',  # key used for msg signing and encryption
+        'provider_ethereum_public_key',  # used for transactions on blockchain
     ] + base.Message.__slots__
 
 
@@ -279,6 +281,14 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         return to_checksum_address(
             sha3(decode_hex(self.provider_ethereum_public_key))[12:].hex(),
         )
+
+    @property
+    def provider_public_key(self):
+        return self.want_to_compute_task.provider_public_key
+
+    @property
+    def provider_ethereum_public_key(self):
+        return self.want_to_compute_task.provider_ethereum_public_key
 
     @base.verify_slot('want_to_compute_task', WantToComputeTask)
     def deserialize_slot(self, key, value):
