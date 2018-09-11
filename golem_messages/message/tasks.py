@@ -18,6 +18,33 @@ from . import base
 TASK_MSG_BASE = 2000
 
 
+class OUTPUT_FORMAT(datastructures.StringEnum):
+    PNG = enum.auto()
+    EXR = enum.auto()
+    JPG = enum.auto()
+
+
+class BlenderScriptPackage(datastructures.ValidatingDict, datastructures.FrozenDict):
+    """
+    Represents data package for Blender rendering
+    Package is used to create python script
+    which is passed to Blender
+    """
+    ITEMS = {
+        'resolution': [],
+        'borders_x': [],
+        'borders_y': [],
+        'use_compositing': False,
+        'samples': '',
+        'frames': [],
+        'output_format': '',
+    }
+
+
+class TaskType(datastructures.StringEnum):
+    Blender = enum.auto()
+
+
 class ComputeTaskDef(datastructures.ValidatingDict, datastructures.FrozenDict):
     """Represents SUBTASK metadata."""
     ITEMS = {
@@ -28,11 +55,18 @@ class ComputeTaskDef(datastructures.ValidatingDict, datastructures.FrozenDict):
         # Task headers are received in MessageTasks.tasks.
         'deadline': 0,
         'src_code': '',
+        'script_template_hash': '',
+        'task_type': '',
+        'meta_parameters': '',
         'extra_data': {},  # safe because of copy in parent.__missing__()
         'short_description': '',
         'working_directory': '',
         'performance': 0,
         'docker_images': None,
+    }
+
+    TASK_TYPE_META_PARAMETERS = {
+        TaskType.Blender.name: BlenderScriptPackage,
     }
 
     validate_task_id = functools.partial(
