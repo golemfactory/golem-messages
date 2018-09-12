@@ -637,7 +637,14 @@ class RejectReportComputedTask(TaskMessage, base.AbstractReasonMessage):
 
 @library.register(TASK_MSG_BASE + 31)
 class StateUpdate(base.Message):
-
+    """
+    Message used in state update communication between Provider and Requestor.
+    First Provider sends it to the Requestor (with DIRECTION=Call), then Requestor answers (with
+    DIRECTION=Response). The slot `data` contains arbitrary data, defined by app itself, and golem
+    is agnostic about it.
+    Example usage: provider sends progress update, requestor decides if the computation should be
+    aborted.
+    """
     @enum.unique
     class DIRECTION(datastructures.StringEnum):
         Call = enum.auto()
