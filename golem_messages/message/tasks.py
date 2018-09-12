@@ -320,13 +320,19 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
     @classmethod
     def deserialize_with_header(cls, header, data, *args, **kwargs):  # noqa pylint: disable=arguments-differ
         ethsig_data, data = data[-cls.ETHSIG_LENGTH:], data[:-cls.ETHSIG_LENGTH]
-        instance = super().deserialize_with_header(
+        instance: TaskToCompute = super().deserialize_with_header(
             header, data, *args, **kwargs
         )
         (ethsig, ) = struct.unpack(
             cls.ETHSIG_FORMAT, ethsig_data)
         instance._ethsig = ethsig or None  # noqa pylint: disable=protected-access,assigning-non-slot
-
+        try:
+            instance.verify_ethsig()
+        except exceptions.InvalidSignature:
+            raise exceptions.InvalidSignature(
+                "ethereum address signature verification failed for `%s`"
+                % instance.requestor_ethereum_public_key
+            )
         return instance
 
     def generate_ethsig(
