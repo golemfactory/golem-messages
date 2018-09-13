@@ -129,22 +129,22 @@ class BasicTestCase(unittest.TestCase):
         self.assertEqual(result, ping)
 
     def test_deserialize_verify_different_key(self):
-        task_to_compute = message.TaskToCompute()
+        other_class = message.tasks.WantToComputeTask()
         result = message.base.deserialize_verify(
             key='abracadabra',
             verify_key='ping',
-            value=task_to_compute,
+            value=other_class,
             verify_class=message.Ping,
         )
-        self.assertEqual(result, task_to_compute)
+        self.assertEqual(result, other_class)
 
     def test_deserialize_verify_fail(self):
-        task_to_compute = message.TaskToCompute()
+        other_class = message.tasks.WantToComputeTask()
         with self.assertRaises(exceptions.FieldError):
             message.base.deserialize_verify(
                 key='ping',
                 verify_key='ping',
-                value=task_to_compute,
+                value=other_class,
                 verify_class=message.Ping,
             )
 
@@ -467,9 +467,10 @@ class NestedMessageTestCase(unittest.TestCase):
             if 'task_to_compute' not in class_.__slots__:
                 continue
             msg = class_()
-            msg.task_to_compute = \
-                factories.tasks.TaskToComputeFactory(sig=TEST_SIG)
-            msg.task_to_compute.compute_task_def = message.ComputeTaskDef()
+            msg.task_to_compute = factories.tasks.TaskToComputeFactory(
+                sig=TEST_SIG,
+                compute_task_def=message.ComputeTaskDef()
+            )
             s = msg.serialize()
             msg2 = message.Message.deserialize(s, decrypt_func=None)
             self.assertEqual(msg2.task_to_compute.sig, TEST_SIG)
@@ -488,18 +489,20 @@ class NestedMessageTestCase(unittest.TestCase):
                 message.Message.deserialize(s, decrypt_func=None)
 
     def test_reject_report_computed_task_with_cannot_compute_task(self):
+        invalid_deadline = ("You call it madness, "
+                            "but I call it Love -- Nat King Cole")
+        ttc = factories.tasks.TaskToComputeFactory(
+            compute_task_def=message.tasks.ComputeTaskDef(
+                {'deadline': invalid_deadline, }
+            )
+        )
         msg = message.tasks.RejectReportComputedTask()
         msg.reason = message.tasks.RejectReportComputedTask \
             .REASON.GotMessageCannotComputeTask  # noqa
         msg.cannot_compute_task = message.tasks.CannotComputeTask()
         msg.cannot_compute_task.reason =\
             message.tasks.CannotComputeTask.REASON.WrongCTD
-        msg.cannot_compute_task.task_to_compute = \
-            factories.tasks.TaskToComputeFactory()
-        invalid_deadline = ("You call it madness, "
-                            "but I call it Love -- Nat King Cole")
-        msg.cannot_compute_task.task_to_compute.compute_task_def =\
-            message.tasks.ComputeTaskDef({'deadline': invalid_deadline, })
+        msg.cannot_compute_task.task_to_compute = ttc
         s = msg.serialize()
         msg2 = message.Message.deserialize(s, None)
         self.assertEqual(
