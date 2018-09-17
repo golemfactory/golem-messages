@@ -230,10 +230,9 @@ class TaskToComputeEthsigTest(unittest.TestCase):
     def test_ethsig(self):
         msg: message.tasks.TaskToCompute = \
             factories.tasks.TaskToComputeFactory()
-        ethsig = bytes(range(0, 65))
-        msg._ethsig = ethsig
+        self.assertTrue(msg._ethsig)
         msg2 = helpers.dump_and_load(msg)
-        self.assertEqual(msg2._ethsig, ethsig)
+        self.assertEqual(msg2._ethsig, msg._ethsig)
 
     def test_ethsig_toolong(self):
         msg: message.tasks.TaskToCompute = \
@@ -246,12 +245,14 @@ class TaskToComputeEthsigTest(unittest.TestCase):
     def test_ethsig_none(self):
         msg: message.tasks.TaskToCompute = \
             factories.tasks.TaskToComputeFactory(
-                requestor_ethereum_public_key=b'no implicit value')
+                requestor_ethereum_public_key=encode_hex(
+                    cryptography.ECCx(None).raw_pubkey))
         self.assertIsNone(msg._ethsig)
-        msg2 = helpers.dump_and_load(msg)
-        self.assertIsNone(msg2._ethsig)
+        with self.assertRaises(exceptions.InvalidSignature):
+            helpers.dump_and_load(msg)
 
-    def _get_ethkeys_and_ttc(self):
+    @staticmethod
+    def _get_ethkeys_and_ttc():
         requestor_eth_keys = cryptography.ECCx(None)
         msg: message.tasks.TaskToCompute = \
             factories.tasks.TaskToComputeFactory(
@@ -375,19 +376,19 @@ class TaskToComputeEthsigFactory(unittest.TestCase):
 
 class PriceTaskToComputeTestCase(unittest.TestCase):
     def setUp(self):
-        self.msg = factories.tasks.TaskToComputeFactory()
+        self.factory = factories.tasks.TaskToComputeFactory
 
     def test_valid_price_value(self):
         price = 1994
-        self.msg.price = price
-        s = self.msg.serialize()
+        msg = self.factory(price=price)
+        s = msg.serialize()
         msg2 = message.Message.deserialize(s, None)
         self.assertEqual(msg2.price, price)
 
     def test_invalid_price_value(self):
         price = '1994'
-        self.msg.price = price
-        s = self.msg.serialize()
+        msg = self.factory(price=price)
+        s = msg.serialize()
         with self.assertRaises(exceptions.FieldError):
             message.Message.deserialize(s, None)
 
