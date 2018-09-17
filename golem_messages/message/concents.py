@@ -39,7 +39,7 @@ class ServiceRefused(tasks.TaskMessage, base.AbstractReasonMessage):
         'task_to_compute',
     ] + base.AbstractReasonMessage.__slots__
 
-    @base.verify_slot('task_to_compute', tasks.TaskToCompute)
+    @base.verify_slot('task_to_compute', tasks.TaskToCompute, allow_none=True)
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
 
@@ -442,8 +442,16 @@ class ForceSubtaskResultsResponse(tasks.TaskMessage):
         'subtask_results_rejected',
     ] + base.Message.__slots__
 
-    @base.verify_slot('subtask_results_accepted', tasks.SubtaskResultsAccepted)
-    @base.verify_slot('subtask_results_rejected', tasks.SubtaskResultsRejected)
+    @base.verify_slot(
+        'subtask_results_accepted',
+        tasks.SubtaskResultsAccepted,
+        allow_none=True,
+    )
+    @base.verify_slot(
+        'subtask_results_rejected',
+        tasks.SubtaskResultsRejected,
+        allow_none=True,
+    )
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
 
@@ -583,10 +591,12 @@ class ForceReportComputedTaskResponse(tasks.TaskMessage,
     @base.verify_slot(
         'ack_report_computed_task',
         tasks.AckReportComputedTask,
+        allow_none=True,
     )
     @base.verify_slot(
         'reject_report_computed_task',
         tasks.RejectReportComputedTask,
+        allow_none=True,
     )
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
