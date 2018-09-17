@@ -9,6 +9,7 @@ from golem_messages import utils
 
 class IDGeneratorBase(unittest.TestCase):
     PRIVKEY = None
+
     def setUp(self):
         keys = cryptography.ECCx(self.PRIVKEY)
         self.node_bytes: bytes = keys.raw_pubkey
