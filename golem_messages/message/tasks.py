@@ -8,6 +8,7 @@ from ethereum.utils import sha3
 
 from golem_messages import datastructures
 from golem_messages import exceptions
+from golem_messages import idgenerator
 from golem_messages import validators
 from golem_messages.register import library
 from golem_messages.utils import decode_hex
@@ -333,6 +334,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
                 "ethereum address signature verification failed for `%s`"
                 % instance.requestor_ethereum_public_key
             )
+        instance.validate_taskid()
         return instance
 
     def generate_ethsig(
@@ -374,6 +376,18 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         return self._verify_signature(
             self._ethsig, decode_hex(self.requestor_ethereum_public_key), msg_hash
         )
+
+    def validate_taskid(self) -> None:
+        for key in ('task_id', 'subtask_id'):
+            value = self.compute_task_def[key]
+            if not idgenerator.check_id_hexseed(value, self.requestor_id):
+                raise exceptions.FieldError(
+                    "Should be generated with node == ({node:x})".format(
+                        node=idgenerator.hexseed_to_node(self.requestor_id),
+                    ),
+                    field=key,
+                    value=value,
+                )
 
 
 @library.register(TASK_MSG_BASE + 3)

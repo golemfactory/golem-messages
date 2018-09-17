@@ -1,11 +1,18 @@
 # pylint: disable=too-few-public-methods
 import typing
+import uuid
+
 import factory
+import faker
 
 from golem_messages import datastructures
+from golem_messages import idgenerator
 
 if typing.TYPE_CHECKING:
     from golem_messages.message.base import Message  # noqa pylint:disable=unused-import
+
+
+fake = faker.Faker()
 
 
 def override_timestamp(
@@ -58,6 +65,22 @@ def optional_subfactory(field: str, object_factory: factory.Factory):
             call_subfactory(object_factory, create, extracted, **kwargs)
         )
     return factory.post_generation(_subfactory)
+
+
+def fake_golem_uuid(node_id: str) -> str:
+    random_uuid: uuid.UUID = uuid.UUID(fake.uuid4())
+    id_ = uuid.UUID(
+        # https://docs.python.org/3/library/uuid.html#uuid.UUID.fields
+        fields=(
+            random_uuid.time_low,
+            random_uuid.time_mid,
+            random_uuid.time_hi_version,
+            random_uuid.clock_seq_hi_variant,
+            random_uuid.clock_seq_low,
+            idgenerator.hexseed_to_node(node_id),
+        ),
+    )
+    return str(id_)
 
 
 class MessageFactory(factory.Factory):
