@@ -125,15 +125,15 @@ def deserialize_verify_list(
     return value
 
 
-def verify_slot(slot_name, slot_class, allow_none=False):
+def verify_slot(slot_name: str, slot_class: type, allow_none: bool = False):
     """
     decorator for Message's `deserialize_slot` method
     ensures that the slot identified by `slot_name` is an instance of the
     message class given in `slot_class`
 
-    :param slot_name: the name of the slot
-    :param slot_class: the class to check against
-    :param allow_none: whether we're allowing the slot to be empty
+    :param str slot_name: the name of the slot
+    :param type slot_class: the class to check against
+    :param bool allow_none: whether we're allowing the slot to be empty
     :return: the verified value
     :raises: FieldError
 
@@ -159,15 +159,16 @@ def verify_slot(slot_name, slot_class, allow_none=False):
     return deserialize_slot
 
 
-def verify_slot_list(slot_name, item_class, allow_none=False):
+def verify_slot_list(
+        slot_name: str, item_class: type, allow_none: bool = False):
     """
     decorator for Message's `deserialize_slot` method
     ensures that the slot identified by `slot_name` is a list of messages with
     the given instance type (provided in `item_class`)
 
-    :param slot_name: the name of the slot to verify
-    :param item_class: the class to check list items against
-    :param allow_none: whether we're allowing the slot to be empty
+    :param str slot_name: the name of the slot to verify
+    :param type item_class: the class to check list items against
+    :param bool allow_none: whether we're allowing the slot to be empty
     :return: the verified value
     :raises: FieldError
     """
