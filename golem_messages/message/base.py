@@ -77,8 +77,8 @@ def verify_version(msg_version):
         )
 
 
-def _verify_slot_type(value, class_):
-    if not isinstance(value, (class_, type(None))):
+def _verify_slot_type(value, class_, allow_none=False):
+    if not isinstance(value, (class_, type(None)) if allow_none else class_):
         raise TypeError(
             "Invalid nested message type {} should be {}".format(
                 type(value),
@@ -87,9 +87,9 @@ def _verify_slot_type(value, class_):
         )
 
 
-def _validate_slot(key, value, verify_class):
+def _validate_slot(key, value, verify_class, allow_none=False):
     try:
-        _verify_slot_type(value, verify_class)
+        _verify_slot_type(value, verify_class, allow_none=allow_none)
     except TypeError as e:
         raise exceptions.FieldError(
             "Should be an instance of {should_be} not {is_now}".format(
@@ -101,17 +101,19 @@ def _validate_slot(key, value, verify_class):
         ) from e
 
 
-def deserialize_verify(key, value, verify_key, verify_class):
+def deserialize_verify(
+        key, value, verify_key, verify_class, allow_none=False):
     if key == verify_key:
-        _validate_slot(key, value, verify_class)
+        _validate_slot(key, value, verify_class, allow_none=allow_none)
     return value
 
 
-def deserialize_verify_list(key, value, verify_key, verify_class):
+def deserialize_verify_list(
+        key, value, verify_key, verify_class, allow_none=False):
     if key == verify_key:
         try:
             for v in value:
-                _validate_slot(key, v, verify_class)
+                _validate_slot(key, v, verify_class, allow_none=allow_none)
         except TypeError as e:
             raise exceptions.FieldError(
                 "Should be a list of {verify_class}".format(
@@ -123,14 +125,15 @@ def deserialize_verify_list(key, value, verify_key, verify_class):
     return value
 
 
-def verify_slot(slot_name, slot_class):
+def verify_slot(slot_name: str, slot_class: type, allow_none: bool = False):
     """
     decorator for Message's `deserialize_slot` method
     ensures that the slot identified by `slot_name` is an instance of the
     message class given in `slot_class`
 
-    :param slot_name: the name of the slot
-    :param slot_class: the class to check against
+    :param str slot_name: the name of the slot
+    :param type slot_class: the class to check against
+    :param bool allow_none: whether we're allowing the slot to be empty
     :return: the verified value
     :raises: FieldError
 
@@ -148,6 +151,7 @@ def verify_slot(slot_name, slot_class):
                 deserialize_verify,
                 verify_key=slot_name,
                 verify_class=slot_class,
+                allow_none=allow_none,
             )(
                 key, method(self, key, value)
             )
@@ -155,14 +159,16 @@ def verify_slot(slot_name, slot_class):
     return deserialize_slot
 
 
-def verify_slot_list(slot_name, item_class):
+def verify_slot_list(
+        slot_name: str, item_class: type, allow_none: bool = False):
     """
     decorator for Message's `deserialize_slot` method
     ensures that the slot identified by `slot_name` is a list of messages with
     the given instance type (provided in `item_class`)
 
-    :param slot_name: the name of the slot to verify
-    :param item_class: the class to check list items against
+    :param str slot_name: the name of the slot to verify
+    :param type item_class: the class to check list items against
+    :param bool allow_none: whether we're allowing the slot to be empty
     :return: the verified value
     :raises: FieldError
     """
@@ -174,6 +180,7 @@ def verify_slot_list(slot_name, item_class):
                 deserialize_verify_list,
                 verify_key=slot_name,
                 verify_class=item_class,
+                allow_none=allow_none,
             )(
                 key, method(self, key, value)
             )
