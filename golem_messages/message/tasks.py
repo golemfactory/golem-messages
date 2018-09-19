@@ -649,8 +649,20 @@ class RejectReportComputedTask(TaskMessage, base.AbstractReasonMessage):
         'cannot_compute_task',
     ] + base.AbstractReasonMessage.__slots__
 
-    @base.verify_slot('attached_task_to_compute', TaskToCompute)
-    @base.verify_slot('task_failure', TaskFailure)
-    @base.verify_slot('cannot_compute_task', CannotComputeTask)
+    @base.verify_slot(
+        'attached_task_to_compute',
+        TaskToCompute,
+        allow_none=True,
+    )
+    @base.verify_slot(
+        'task_failure',
+        TaskFailure,
+        allow_none=True
+    )
+    @base.verify_slot(
+        'cannot_compute_task',
+        CannotComputeTask,
+        allow_none=True
+    )
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
