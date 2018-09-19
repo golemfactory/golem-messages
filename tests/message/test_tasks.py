@@ -3,6 +3,7 @@ import calendar
 import time
 import unittest
 import unittest.mock as mock
+import uuid
 
 from eth_utils import is_checksum_address, to_checksum_address
 from ethereum.utils import sha3
@@ -138,7 +139,7 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         self.msg = self.FACTORY()
 
     def test_task_to_compute_basic(self):
-        ttc = factories.tasks.TaskToComputeFactory()
+        ttc = self.msg
         serialized = shortcuts.dump(ttc, None, None)
         msg = shortcuts.load(serialized, None, None)
         self.assertIsInstance(msg, message.tasks.TaskToCompute)
@@ -192,6 +193,22 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
     def test_subtask_id(self):
         self.assertEqual(self.msg.subtask_id,
                          self.msg.compute_task_def['subtask_id'])  # noqa pylint:disable=unsubscriptable-object
+
+    def _test_spoofed_id(self, key):
+        self.msg.compute_task_def[key] = str(uuid.uuid4())  # noqa pylint:disable=unsupported-assignment-operation
+
+        requestor_keys = cryptography.ECCx(None)
+        self.msg.requestor_ethereum_public_key = encode_hex(requestor_keys.raw_pubkey)
+        self.msg.generate_ethsig(private_key=requestor_keys.raw_privkey)
+        s = self.msg.serialize()
+        with self.assertRaises(exceptions.FieldError):
+            message.Message.deserialize(s, None)
+
+    def test_spoofed_task_id(self):
+        self._test_spoofed_id('task_id')
+
+    def test_spoofed_subtask_id(self):
+        self._test_spoofed_id('subtask_id')
 
     def test_past_deadline(self):
         now = calendar.timegm(time.gmtime())
