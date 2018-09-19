@@ -380,10 +380,10 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
     def validate_taskid(self) -> None:
         for key in ('task_id', 'subtask_id'):
             value = self.compute_task_def[key]
-            if not idgenerator.check_id_hexseed(value, self.requestor_id):
+            if not idgenerator.check_id_hex_seed(value, self.requestor_id):
                 raise exceptions.FieldError(
                     "Should be generated with node == ({node:x})".format(
-                        node=idgenerator.hexseed_to_node(self.requestor_id),
+                        node=idgenerator.hex_seed_to_node(self.requestor_id),
                     ),
                     field=key,
                     value=value,

@@ -15,8 +15,8 @@ def generate_id(seed: bytes) -> str:
     return str(uuid.uuid1(node=seed_to_node(seed)))
 
 
-def generate_id_from_hex(hexseed: str) -> str:
-    seed = utils.decode_hex(hexseed)
+def generate_id_from_hex(hex_seed: str) -> str:
+    seed = utils.decode_hex(hex_seed)
     return generate_id(seed)
 
 
@@ -37,8 +37,8 @@ def check_id_seed(id_: str, seed: bytes) -> bool:
         return False
 
 
-def check_id_hexseed(id_: str, hexseed: str) -> bool:
-    seed = utils.decode_hex(hexseed)
+def check_id_hex_seed(id_: str, hex_seed: str) -> bool:
+    seed = utils.decode_hex(hex_seed)
     return check_id_seed(id_, seed)
 
 
@@ -46,6 +46,6 @@ def seed_to_node(seed: bytes) -> int:
     return int.from_bytes(seed[:SEED_LEN], 'big')
 
 
-def hexseed_to_node(hexseed: str) -> int:
-    seed = utils.decode_hex(hexseed)
+def hex_seed_to_node(hex_seed: str) -> int:
+    seed = utils.decode_hex(hex_seed)
     return seed_to_node(seed)

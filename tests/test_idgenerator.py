@@ -62,12 +62,12 @@ class IDGeneratorTest(IDGeneratorBase):
         self.assertEqual(node1, node2)
 
     @mock.patch('golem_messages.idgenerator.check_id_seed')
-    def test_check_id_hexseed(self, check_mock):
+    def test_check_id_hex_seed(self, check_mock):
         id_ = idgenerator.generate_id(self.node_bytes)
-        idgenerator.check_id_hexseed(id_, self.node_id)
+        idgenerator.check_id_hex_seed(id_, self.node_id)
         check_mock.assert_called_once_with(id_, self.node_bytes)
 
     @mock.patch('golem_messages.idgenerator.seed_to_node')
-    def test_hexseed_to_node(self, stn_mock):
-        idgenerator.hexseed_to_node(self.node_id)
+    def test_hex_seed_to_node(self, stn_mock):
+        idgenerator.hex_seed_to_node(self.node_id)
         stn_mock.assert_called_once_with(self.node_bytes)

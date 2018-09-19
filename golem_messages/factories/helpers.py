@@ -77,7 +77,7 @@ def fake_golem_uuid(node_id: str) -> str:
             random_uuid.time_hi_version,
             random_uuid.clock_seq_hi_variant,
             random_uuid.clock_seq_low,
-            idgenerator.hexseed_to_node(node_id),
+            idgenerator.hex_seed_to_node(node_id),
         ),
     )
     return str(id_)
