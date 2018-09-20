@@ -33,6 +33,11 @@ class WantToComputeTaskTest(unittest.TestCase):
         wtct = message.tasks.WantToComputeTask(concent_enabled=True)
         self.assertTrue(wtct.concent_enabled)
 
+    def test_extra_data(self):
+        extra_data_content = {'some': 'content'}
+        wtct = message.tasks.WantToComputeTask(extra_data=extra_data_content)
+        wtct2 = helpers.dump_and_load(wtct)
+        self.assertEqual(wtct2.extra_data, extra_data_content)
 
 class ComputeTaskDefTestCase(unittest.TestCase):
     @mock.patch('golem_messages.message.tasks.ComputeTaskDef.validate_task_id')
