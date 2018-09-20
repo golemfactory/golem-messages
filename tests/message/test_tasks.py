@@ -198,7 +198,9 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         self.msg.compute_task_def[key] = str(uuid.uuid4())  # noqa pylint:disable=unsupported-assignment-operation
 
         requestor_keys = cryptography.ECCx(None)
-        self.msg.requestor_ethereum_public_key = encode_hex(requestor_keys.raw_pubkey)
+        self.msg.requestor_ethereum_public_key = encode_hex(
+            requestor_keys.raw_pubkey,
+        )
         self.msg.generate_ethsig(private_key=requestor_keys.raw_privkey)
         s = self.msg.serialize()
         with self.assertRaises(exceptions.FieldError):
@@ -209,6 +211,22 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
 
     def test_spoofed_subtask_id(self):
         self._test_spoofed_id('subtask_id')
+
+    def test_golem_id_shortcut(self):
+        task_id = 'tid'
+        subtask_id = 'sid'
+        ttc = factories.tasks.TaskToComputeFactory(
+            task_id=task_id,
+            subtask_id=subtask_id,
+        )
+        self.assertEqual(ttc.task_id, task_id)
+        self.assertEqual(ttc.compute_task_def['task_id'], task_id)  # noqa pylint: disable=unsubscriptable-object
+        self.assertEqual(ttc.subtask_id, subtask_id)
+        self.assertEqual(ttc.compute_task_def['subtask_id'], subtask_id)  # noqa pylint: disable=unsubscriptable-object
+
+    def test_no_compute_task_def(self):
+        # Should not raise
+        factories.tasks.TaskToComputeFactory(compute_task_def=None)
 
     def test_past_deadline(self):
         now = calendar.timegm(time.gmtime())
@@ -452,6 +470,7 @@ class AckReportComputedTaskTestCase(
         self.assertTrue(
             arct.validate_ownership(
                 concent_public_key=concent_keys.raw_pubkey))
+
 
 class RejectReportComputedTaskTestCase(
         mixins.RegisteredMessageTestMixin,
