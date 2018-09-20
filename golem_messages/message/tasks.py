@@ -236,6 +236,12 @@ class WantToComputeTask(ConcentEnabled, base.Message):
         'price',
         'concent_enabled',  # Provider notifies requestor
                             # about his concent status
+
+        'extra_data',       # used to specify additional required
+                            # information about the provider's environment.
+                            # `golem-messages` should be intentionally agnostic
+                            # with regards to the contents of this field.
+
     ] + base.Message.__slots__
 
 
