@@ -129,11 +129,6 @@ class SubtaskResultsRejectedTest(mixins.RegisteredMessageTestMixin,
                               message.tasks.ReportComputedTask)
 
 
-def test_no_compute_task_def():
-    # Should not raise
-    factories.tasks.TaskToComputeFactory(compute_task_def=None)
-
-
 class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
                         mixins.SerializationMixin,
                         unittest.TestCase, ):
@@ -228,6 +223,10 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         self.assertEqual(ttc.compute_task_def['task_id'], task_id)  # noqa pylint: disable=unsubscriptable-object
         self.assertEqual(ttc.subtask_id, subtask_id)
         self.assertEqual(ttc.compute_task_def['subtask_id'], subtask_id)  # noqa pylint: disable=unsubscriptable-object
+
+    def test_no_compute_task_def(self):
+        # Should not raise
+        factories.tasks.TaskToComputeFactory(compute_task_def=None)
 
     def test_past_deadline(self):
         now = calendar.timegm(time.gmtime())
