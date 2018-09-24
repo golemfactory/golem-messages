@@ -8,6 +8,7 @@ from ethereum.utils import sha3
 
 from golem_messages import datastructures
 from golem_messages import exceptions
+from golem_messages import idgenerator
 from golem_messages import validators
 from golem_messages.register import library
 from golem_messages.utils import decode_hex
@@ -235,6 +236,12 @@ class WantToComputeTask(ConcentEnabled, base.Message):
         'price',
         'concent_enabled',  # Provider notifies requestor
                             # about his concent status
+
+        'extra_data',       # used to specify additional required
+                            # information about the provider's environment.
+                            # `golem-messages` should be intentionally agnostic
+                            # with regards to the contents of this field.
+
     ] + base.Message.__slots__
 
 
@@ -333,6 +340,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
                 "ethereum address signature verification failed for `%s`"
                 % instance.requestor_ethereum_public_key
             )
+        instance.validate_taskid()
         return instance
 
     def generate_ethsig(
@@ -374,6 +382,18 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         return self._verify_signature(
             self._ethsig, decode_hex(self.requestor_ethereum_public_key), msg_hash
         )
+
+    def validate_taskid(self) -> None:
+        for key in ('task_id', 'subtask_id'):
+            value = self.compute_task_def[key]
+            if not idgenerator.check_id_hex_seed(value, self.requestor_id):
+                raise exceptions.FieldError(
+                    "Should be generated with node == ({node:x})".format(
+                        node=idgenerator.hex_seed_to_node(self.requestor_id),
+                    ),
+                    field=key,
+                    value=value,
+                )
 
 
 @library.register(TASK_MSG_BASE + 3)
@@ -635,9 +655,21 @@ class RejectReportComputedTask(TaskMessage, base.AbstractReasonMessage):
         'cannot_compute_task',
     ] + base.AbstractReasonMessage.__slots__
 
-    @base.verify_slot('attached_task_to_compute', TaskToCompute)
-    @base.verify_slot('task_failure', TaskFailure)
-    @base.verify_slot('cannot_compute_task', CannotComputeTask)
+    @base.verify_slot(
+        'attached_task_to_compute',
+        TaskToCompute,
+        allow_none=True,
+    )
+    @base.verify_slot(
+        'task_failure',
+        TaskFailure,
+        allow_none=True
+    )
+    @base.verify_slot(
+        'cannot_compute_task',
+        CannotComputeTask,
+        allow_none=True
+    )
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
 

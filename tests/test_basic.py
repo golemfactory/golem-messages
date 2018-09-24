@@ -35,7 +35,7 @@ class MessageEqualityTest(unittest.TestCase):
         self.ecc = golem_messages.ECCx(None)
 
     def test_dump_load(self):
-        msg = message.Ping()
+        msg = message.p2p.Ping()
         payload = golem_messages.dump(msg, self.ecc.raw_privkey,
                                       self.ecc.raw_pubkey)
         msg2 = golem_messages.load(payload, self.ecc.raw_privkey,
@@ -92,6 +92,121 @@ class MessageEqualityTest(unittest.TestCase):
         self.assertEqual(msg1.slots(), msg2.slots())
 
 
+# pylint:disable=not-callable
+class DeserializeVerifyBaseTest(unittest.TestCase):
+    func = None
+    expected_class = message.p2p.Ping
+
+    def _test_expected_value(self, value):
+        """Basic verificating deserializer"""
+        result = self.func(
+            key='ping',
+            verify_key='ping',
+            value=value,
+            verify_class=self.expected_class,
+        )
+        self.assertEqual(result, value)
+
+    def _test_different_key(self, other_class):
+        result = self.func(
+            key='abracadabra',
+            verify_key='ping',
+            value=other_class,
+            verify_class=self.expected_class,
+        )
+        self.assertEqual(result, other_class)
+
+    def _test_fail(self, other_class):
+        with self.assertRaises(exceptions.FieldError):
+            self.func(
+                key='ping',
+                verify_key='ping',
+                value=other_class,
+                verify_class=self.expected_class,
+            )
+
+    def _test_none(self, value):
+        with self.assertRaises(exceptions.FieldError):
+            self.func(
+                key='ping',
+                verify_key='ping',
+                value=value,
+                verify_class=self.expected_class,
+            )
+
+    def _test_none_allowed(self, value):
+        result = self.func(
+            key='ping',
+            verify_key='ping',
+            value=value,
+            verify_class=self.expected_class,
+            allow_none=True,
+        )
+        self.assertEqual(result, value)
+
+# pylint:enable=not-callable
+
+
+class DeserializeVerifyTest(DeserializeVerifyBaseTest):
+    def setUp(self):
+        self.func = message.base.deserialize_verify
+
+    def test_expected_value(self):
+        self._test_expected_value(
+            self.expected_class(),
+        )
+
+    def test_different_key(self):
+        self._test_different_key(
+            message.tasks.WantToComputeTask()
+        )
+
+    def test_fail(self):
+        other_class = message.tasks.WantToComputeTask()
+        self._test_fail(other_class)
+
+    def test_none(self):
+        self._test_none(None)
+
+    def test_none_allowed(self):
+        self._test_none_allowed(None)
+
+
+class DeserializeVerifyListTest(DeserializeVerifyBaseTest):
+    def setUp(self):
+        self.func = message.base.deserialize_verify_list
+
+    def test_expected_value(self):
+        self._test_expected_value(
+            [self.expected_class()],
+        )
+
+    def test_different_key(self):
+        self._test_different_key(
+            message.tasks.WantToComputeTask()
+        )
+
+    def test_fail(self):
+        other_class = message.tasks.WantToComputeTask()
+        self._test_fail([other_class])
+
+    def test_none(self):
+        self._test_none([None])
+
+    def test_none_allowed(self):
+        self._test_none_allowed([None])
+
+    def test_non_iterable(self):
+        value = self.expected_class()
+        with self.assertRaises(exceptions.FieldError):
+            self.func(
+                key='ping',
+                verify_key='ping',
+                value=value,
+                verify_class=self.expected_class,
+            )
+
+
 class BasicTestCase(unittest.TestCase):
     def setUp(self):
         self.ecc = golem_messages.ECCx(None)
@@ -116,37 +231,6 @@ class BasicTestCase(unittest.TestCase):
         golem_messages.load(payload, self.ecc.raw_privkey, self.ecc.raw_pubkey)
         # One call for hash_header
         dumps_mock.assert_called_once_with(mock.ANY)
-
-    def test_deserialize_verify(self):
-        """Basic verificating deserializer"""
-        ping = message.Ping()
-        result = message.base.deserialize_verify(
-            key='ping',
-            verify_key='ping',
-            value=ping,
-            verify_class=message.Ping,
-        )
-        self.assertEqual(result, ping)
-
-    def test_deserialize_verify_different_key(self):
-        other_class = message.tasks.WantToComputeTask()
-        result = message.base.deserialize_verify(
-            key='abracadabra',
-            verify_key='ping',
-            value=other_class,
-            verify_class=message.Ping,
-        )
-        self.assertEqual(result, other_class)
-
-    def test_deserialize_verify_fail(self):
-        other_class = message.tasks.WantToComputeTask()
-        with self.assertRaises(exceptions.FieldError):
-            message.base.deserialize_verify(
-                key='ping',
-                verify_key='ping',
-                value=other_class,
-                verify_class=message.Ping,
-            )
 
     @mock.patch('golem_messages.__version__')
     def test_hello_version(self, v_mock):
@@ -496,7 +580,9 @@ class NestedMessageTestCase(unittest.TestCase):
                 {'deadline': invalid_deadline, }
             )
         )
-        msg = message.tasks.RejectReportComputedTask()
+        msg = message.tasks.RejectReportComputedTask(
+            attached_task_to_compute=ttc
+        )
         msg.reason = message.tasks.RejectReportComputedTask \
             .REASON.GotMessageCannotComputeTask  # noqa
         msg.cannot_compute_task = message.tasks.CannotComputeTask()

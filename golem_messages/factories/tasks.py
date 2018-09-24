@@ -92,6 +92,32 @@ class TaskToComputeFactory(helpers.MessageFactory):
     # pylint: disable=no-self-argument,attribute-defined-outside-init
 
     @factory.post_generation
+    def task_id(
+            ttc: tasks.TaskToCompute,
+            _create,
+            extracted,
+    ):
+        if ttc.compute_task_def is None:
+            return
+
+        ttc.compute_task_def['task_id'] = extracted or helpers.fake_golem_uuid(  # noqa pylint: disable=unsupported-assignment-operation
+            node_id=ttc.requestor_id,
+        )
+
+    @factory.post_generation
+    def subtask_id(
+            ttc: tasks.TaskToCompute,
+            _create,
+            extracted,
+    ):
+        if ttc.compute_task_def is None:
+            return
+
+        ttc.compute_task_def['subtask_id'] = extracted or helpers.fake_golem_uuid(  # noqa pylint: disable=unsupported-assignment-operation
+            node_id=ttc.requestor_id,
+        )
+
+    @factory.post_generation
     def ethsig(
             ttc: tasks.TaskToCompute, _, __,
             privkey: typing.Optional[bytes] = None,

@@ -69,6 +69,7 @@ class MessagesTestCase(unittest.TestCase):
             ['num_cores', num_cores],
             ['price', price],
             ['concent_enabled', concent_enabled],
+            ['extra_data', None],
         ]
         self.assertEqual(expected, msg.slots())
 
