@@ -1,11 +1,9 @@
 # pylint: disable=too-few-public-methods,unnecessary-lambda
 import calendar
 import datetime
-import os
 import time
 import typing
 
-from eth_utils import encode_hex
 import factory.fuzzy
 import faker
 
@@ -27,6 +25,11 @@ class WantToComputeTaskFactory(helpers.MessageFactory):
 
     node_name = factory.Faker('name')
     task_id = factory.Faker('uuid4')
+    provider_public_key = factory.LazyFunction(
+        lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey))
+    provider_ethereum_public_key = factory.SelfAttribute(
+        'provider_public_key'
+    )
 
 
 class CTDBlenderExtraDataFactory(factory.DictFactory):
@@ -63,19 +66,14 @@ class TaskToComputeFactory(helpers.MessageFactory):
 
     requestor_id = factory.SelfAttribute(
         'requestor_public_key')
-    provider_id = factory.SelfAttribute(
-        'provider_public_key'
+    provider_id = factory.LazyAttribute(
+        lambda task_to_compute: task_to_compute.want_to_compute_task.provider_public_key
     )
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
-    provider_public_key = factory.LazyFunction(
-        lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey))
-    provider_ethereum_public_key = factory.SelfAttribute(
-        'provider_public_key'
-    )
     requestor_public_key = factory.LazyFunction(
         lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey))
 
-    compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
+    want_to_compute_task = factory.SubFactory(WantToComputeTaskFactory)
     package_hash = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
     size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
     price = factory.Faker('random_int', min=1 << 20, max=10 << 20)
@@ -186,7 +184,6 @@ class ReportComputedTaskFactory(helpers.MessageFactory):
     node_name = factory.Faker('name')
     address = factory.Faker('ipv4')
     port = factory.Faker('pyint')
-    eth_account = factory.LazyFunction(lambda: encode_hex(os.urandom(20)))
     key_id = factory.Faker('binary', length=64)
     task_to_compute = factory.SubFactory(TaskToComputeFactory)
     package_hash = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
