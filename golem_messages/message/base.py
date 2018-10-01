@@ -309,9 +309,11 @@ class Message():
         return sha.digest()
 
     def serialize(
-            self, sign_as: typing.Optional[bytes] = None, encrypt_func=None):
-        """ Return serialized message
-        :return str: serialized message """
+            self,
+            sign_as: typing.Optional[bytes] = None,
+            encrypt_func=None,
+    ) -> bytes:
+        """Returns serialized message"""
 
         if sign_as and self.sig:
             # If you wish to overwrite signature,
