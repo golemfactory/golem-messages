@@ -33,11 +33,32 @@ class WantToComputeTaskTest(unittest.TestCase):
         wtct = message.tasks.WantToComputeTask(concent_enabled=True)
         self.assertTrue(wtct.concent_enabled)
 
+
     def test_extra_data(self):
         extra_data_content = {'some': 'content'}
         wtct = message.tasks.WantToComputeTask(extra_data=extra_data_content)
         wtct2 = helpers.dump_and_load(wtct)
         self.assertEqual(wtct2.extra_data, extra_data_content)
+
+    def test_provider_ethereum_address_checksum(self):
+        msg = factories.tasks.WantToComputeTaskFactory()
+        self.assertTrue(msg.provider_ethereum_public_key)
+        self.assertTrue(is_checksum_address(msg.provider_ethereum_address))
+
+    def test_ethereum_address_provider(self):
+        msg = factories.tasks.WantToComputeTaskFactory()
+        provider_public_key = decode_hex(msg.provider_ethereum_public_key)
+
+        self.assertEqual(msg.provider_ethereum_address,
+                         to_checksum_address(
+                             '0x' + sha3(provider_public_key)[12:].hex()))
+
+    def test_ethereum_address(self):
+        msg = factories.tasks.WantToComputeTaskFactory()
+        serialized = shortcuts.dump(msg, None, None)
+        msg_l = shortcuts.load(serialized, None, None)
+        self.assertEqual(len(msg_l.provider_ethereum_address), 2 + (20*2))
+
 
 class ComputeTaskDefTestCase(unittest.TestCase):
     @mock.patch('golem_messages.message.tasks.ComputeTaskDef.validate_task_id')
@@ -165,31 +186,32 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         ttc = message.tasks.TaskToCompute(concent_enabled=None)
         self.assertFalse(ttc.concent_enabled)
 
-    def test_ethereum_address(self):
+    def test_ethereum_address_requestor(self):
         msg = factories.tasks.TaskToComputeFactory()
+        requestor_public_key = decode_hex(msg.requestor_ethereum_public_key)
         serialized = shortcuts.dump(msg, None, None)
         msg_l = shortcuts.load(serialized, None, None)
-        for addr_slot in (
-                'requestor_ethereum_address',
-                'provider_ethereum_address'):
-            address = getattr(msg_l, addr_slot)
-            self.assertEqual(len(address), 2 + (20*2))
+        self.assertEqual(len(msg_l.requestor_ethereum_address), 2 + (20*2))
+        self.assertEqual(msg.requestor_ethereum_address,
+                         to_checksum_address(
+                             '0x' + sha3(requestor_public_key)[12:].hex()))
 
     def test_ethereum_address_provider(self):
         msg = factories.tasks.TaskToComputeFactory()
         provider_public_key = decode_hex(msg.provider_ethereum_public_key)
-
+        serialized = shortcuts.dump(msg, None, None)
+        msg_l = shortcuts.load(serialized, None, None)
+        self.assertEqual(len(msg_l.provider_ethereum_address), 2 + (20*2))
+        self.assertEqual(msg_l.provider_ethereum_address,
+                         msg_l.want_to_compute_task.provider_ethereum_address)
         self.assertEqual(msg.provider_ethereum_address,
                          to_checksum_address(
                              '0x' + sha3(provider_public_key)[12:].hex()))
 
-    def test_ethereum_address_requestor(self):
+    def test_public_key_provider(self):
         msg = factories.tasks.TaskToComputeFactory()
-        requestor_public_key = decode_hex(msg.requestor_ethereum_public_key)
-
-        self.assertEqual(msg.requestor_ethereum_address,
-                         to_checksum_address(
-                             '0x' + sha3(requestor_public_key)[12:].hex()))
+        self.assertEqual(msg.provider_ethereum_public_key,
+                         msg.want_to_compute_task.provider_ethereum_public_key)
 
     def test_task_id(self):
         self.assertEqual(self.msg.task_id,
@@ -255,11 +277,6 @@ class TaskToComputeEthereumAddressChecksum(unittest.TestCase):
         ttc = factories.tasks.TaskToComputeFactory()
         self.assertTrue(ttc.requestor_ethereum_public_key)
         self.assertTrue(is_checksum_address(ttc.requestor_ethereum_address))
-
-    def test_provider_ethereum_address_checksum(self):
-        ttc = factories.tasks.TaskToComputeFactory()
-        self.assertTrue(ttc.provider_ethereum_public_key)
-        self.assertTrue(is_checksum_address(ttc.provider_ethereum_address))
 
 
 # pylint:disable=protected-access
@@ -554,8 +571,10 @@ class TaskMessageVerificationTest(unittest.TestCase):
 
     def get_ttc(self, **kwargs):
         return factories.tasks.TaskToComputeFactory(
-            provider_public_key=encode_hex(self.provider_keys.raw_pubkey),
             requestor_public_key=encode_hex(self.requestor_keys.raw_pubkey),
+            want_to_compute_task=factories.tasks.WantToComputeTaskFactory(
+                provider_public_key=encode_hex(self.provider_keys.raw_pubkey),
+            ),
             **kwargs,
         )
 

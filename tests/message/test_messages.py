@@ -5,10 +5,13 @@ import unittest
 import unittest.mock as mock
 import uuid
 
+from golem_messages import cryptography
 from golem_messages import datastructures
 from golem_messages import factories
 from golem_messages import message
 from golem_messages import shortcuts
+from golem_messages.utils import encode_hex
+
 
 class InitializationTestCase(unittest.TestCase):
     def test_default_slots(self):
@@ -51,6 +54,8 @@ class MessagesTestCase(unittest.TestCase):
         max_memory_size = random.randint(1, 2**10)
         num_cores = random.randint(1, 2**5)
         concent_enabled = random.random() > 0.5
+        provider_public_key = provider_ethereum_public_key = (
+            encode_hex(cryptography.ECCx(None).raw_pubkey))
         msg = message.WantToComputeTask(
             node_name=node_id,
             task_id=task_id,
@@ -59,7 +64,10 @@ class MessagesTestCase(unittest.TestCase):
             max_resource_size=max_resource_size,
             max_memory_size=max_memory_size,
             num_cores=num_cores,
-            concent_enabled=concent_enabled)
+            concent_enabled=concent_enabled,
+            provider_public_key=provider_public_key,
+            provider_ethereum_public_key=provider_ethereum_public_key,
+        )
         expected = [
             ['node_name', node_id],
             ['task_id', task_id],
@@ -70,6 +78,8 @@ class MessagesTestCase(unittest.TestCase):
             ['price', price],
             ['concent_enabled', concent_enabled],
             ['extra_data', None],
+            ['provider_public_key', provider_public_key],
+            ['provider_ethereum_public_key', provider_ethereum_public_key],
         ]
         self.assertEqual(expected, msg.slots())
 

@@ -242,7 +242,15 @@ class WantToComputeTask(ConcentEnabled, base.Message):
                             # `golem-messages` should be intentionally agnostic
                             # with regards to the contents of this field.
 
+        'provider_public_key',  # key used for msg signing and encryption
+        'provider_ethereum_public_key',  # used for transactions on blockchain
     ] + base.Message.__slots__
+
+    @property
+    def provider_ethereum_address(self):
+        return to_checksum_address(
+            sha3(decode_hex(self.provider_ethereum_public_key))[12:].hex(),
+        )
 
 
 @library.register(TASK_MSG_BASE + 2)
@@ -256,9 +264,8 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         'requestor_public_key',  # key used for msg signing and encryption
         'requestor_ethereum_public_key',  # used for transactions on blockchain
         'provider_id',  # a.k.a. node id
-        'provider_public_key',  # key used for msg signing and encryption
-        'provider_ethereum_public_key',  # used for transactions on blockchain
         'compute_task_def',
+        'want_to_compute_task',
         'package_hash',  # the hash of the package (resources) zip file
         'size',  # the size of the resources zip file
         'concent_enabled',
@@ -274,11 +281,18 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         )
 
     @property
-    def provider_ethereum_address(self):
-        return to_checksum_address(
-            sha3(decode_hex(self.provider_ethereum_public_key))[12:].hex(),
-        )
+    def provider_public_key(self):
+        return self.want_to_compute_task.provider_public_key
 
+    @property
+    def provider_ethereum_public_key(self):
+        return self.want_to_compute_task.provider_ethereum_public_key
+
+    @property
+    def provider_ethereum_address(self):
+        return self.want_to_compute_task.provider_ethereum_address
+
+    @base.verify_slot('want_to_compute_task', WantToComputeTask)
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
         if key == 'compute_task_def':
@@ -432,7 +446,6 @@ class ReportComputedTask(TaskMessage):
         'port',
         'key_id',
         'extra_data',
-        'eth_account',
         'task_to_compute',
         'size',
         'package_hash',  # sha1 hash of the package file (the zip file)
@@ -568,6 +581,7 @@ class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
         InsufficientBalance = enum.auto()
         InsufficientDeposit = enum.auto()  # GNTB deposit too low
         TooShortDeposit = enum.auto()  # GNTB deposit has too short lock
+        OfferCancelled = enum.auto()
 
     @base.verify_slot('task_to_compute', TaskToCompute)
     def deserialize_slot(self, key, value):
