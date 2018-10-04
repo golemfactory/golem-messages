@@ -721,3 +721,7 @@ class StateUpdateTest(
         unittest.TestCase):
     MSG_CLASS = message.tasks.StateUpdate
     FACTORY = factories.tasks.StateUpdateFactory
+
+    def test_direction_type(self):
+        msg = self.FACTORY()
+        assert(isinstance(msg.direction, StateUpdateTest.MSG_CLASS.DIRECTION))

@@ -712,7 +712,6 @@ class StateUpdate(base.Message):
         'subtask_id'
     ] + base.Message.__slots__
 
-    @base.verify_slot('direction', DIRECTION)
     @base.verify_slot('state_update_id', str)
     @base.verify_slot('task_id', str)
     @base.verify_slot('subtask_id', str)

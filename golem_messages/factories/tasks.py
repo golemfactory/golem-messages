@@ -259,3 +259,8 @@ class SubtaskResultsRejectedFactory(helpers.MessageFactory):
 class StateUpdateFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.StateUpdate
+    state_update_id = factory.Faker('text')
+    task_id = factory.Faker('uuid4')
+    subtask_id = factory.Faker('uuid4')
+    data = factory.Faker('binary')
+    direction = factory.fuzzy.FuzzyChoice(tasks.StateUpdate.DIRECTION)
