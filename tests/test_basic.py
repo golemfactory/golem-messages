@@ -553,7 +553,7 @@ class NestedMessageTestCase(unittest.TestCase):
             msg = class_()
             msg.task_to_compute = factories.tasks.TaskToComputeFactory(
                 sig=TEST_SIG,
-                compute_task_def=message.ComputeTaskDef()
+                compute_task_def=factories.tasks.ComputeTaskDefFactory()
             )
             s = msg.serialize()
             msg2 = message.Message.deserialize(s, decrypt_func=None)
@@ -576,9 +576,7 @@ class NestedMessageTestCase(unittest.TestCase):
         invalid_deadline = ("You call it madness, "
                             "but I call it Love -- Nat King Cole")
         ttc = factories.tasks.TaskToComputeFactory(
-            compute_task_def=message.tasks.ComputeTaskDef(
-                {'deadline': invalid_deadline, }
-            )
+            compute_task_def__deadline=invalid_deadline
         )
         msg = message.tasks.RejectReportComputedTask(
             attached_task_to_compute=ttc
