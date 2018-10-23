@@ -78,7 +78,7 @@ class ComputeTaskDefTestCase(unittest.TestCase):
         )
 
     def test_type(self):
-        ctd = message.ComputeTaskDef()
+        ctd = factories.tasks.ComputeTaskDefFactory()
         ctd['src_code'] = "custom code"
         msg = factories.tasks.TaskToComputeFactory(compute_task_def=ctd)
         s = msg.serialize()
@@ -96,9 +96,6 @@ class ComputeTaskDefTestCase(unittest.TestCase):
         self.assertTrue(extra_data['total_tasks'])
         self.assertTrue(extra_data['outfilebasename'])
         self.assertTrue(extra_data['scene_file'])
-        self.assertTrue(extra_data['script_src'])
-        self.assertTrue(extra_data['frames'])
-        self.assertTrue(extra_data['output_format'])
 
 
 class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
@@ -713,3 +710,115 @@ class TaskFailureTest(
     MSG_CLASS = message.tasks.TaskFailure
     FACTORY = factories.tasks.TaskFailureFactory
     TASK_ID_PROVIDER = 'task_to_compute'
+
+#  pylint: disable=line-too-long
+class BlenderScriptPackageTestCase(unittest.TestCase):
+    def setUp(self):
+        self.FACTORY = factories.tasks.BlenderScriptPackageFactory
+        self.positive_int_tuple = (1, 2)
+        self.positive_int_list = [1, 2]
+        self.positive_float_list = [1.2, 3.4]
+        self.number_of_samples = 1
+        self.frame_number = 1994
+
+    def test_that_factory_is_valid(self):
+        blender_script_package = self.FACTORY()
+        self.assertIsInstance(blender_script_package, message.tasks.BlenderScriptPackage)
+        self.assertIsInstance(blender_script_package['resolution'], list)
+        self.assertIsInstance(blender_script_package['borders_x'], list)
+        self.assertIsInstance(blender_script_package['borders_y'], list)
+        self.assertIsInstance(blender_script_package['use_compositing'], bool)
+        self.assertIsInstance(blender_script_package['samples'], int)
+        self.assertIsInstance(blender_script_package['frames'], list)
+        self.assertIsInstance(blender_script_package['output_format'], message.tasks.OUTPUT_FORMAT)
+
+    def test_that_resolution_validation_will_raise_exception_when_resolution_is_not_positive_int_list(self):
+        with self.assertRaises(exceptions.FieldError):
+            self.FACTORY(resolution=self.positive_int_tuple)
+
+        with self.assertRaises(exceptions.FieldError):
+            self.FACTORY(resolution=self.positive_float_list)
+
+    def test_that_resolution_validation_will_not_raise_exception_when_positive_int_list_is_given(self):
+        blender_script_package = self.FACTORY(resolution=self.positive_int_list)
+        self.assertEqual(blender_script_package['resolution'], self.positive_int_list)
+
+    def test_that_borders_x_validation_will_raise_exception_when_borders_x_is_not_positive_float_list(self):
+        with self.assertRaises(exceptions.FieldError):
+            self.FACTORY(borders_x=self.positive_int_tuple)
+
+        with self.assertRaises(exceptions.FieldError):
+            self.FACTORY(borders_x=self.positive_int_list)
+
+    def test_that_borders_x_validation_will_not_raise_exception_when_positive_float_list_is_given(self):
+        blender_script_package = self.FACTORY(borders_x=self.positive_float_list)
+        self.assertEqual(blender_script_package['borders_x'], self.positive_float_list)
+
+    def test_that_borders_y_validation_will_raise_exception_when_borders_y_is_not_positive_float_list(self):
+        with self.assertRaises(exceptions.FieldError):
+            self.FACTORY(borders_y=self.positive_int_tuple)
+
+        with self.assertRaises(exceptions.FieldError):
+            self.FACTORY(borders_y=self.positive_int_list)
+
+    def test_that_borders_y_validation_will_not_raise_exception_when_positive_float_list_is_given(self):
+        blender_script_package = self.FACTORY(borders_y=self.positive_float_list)
+        self.assertEqual(blender_script_package['borders_y'], self.positive_float_list)
+
+    def test_that_use_compositing_validation_will_raise_exception_when_use_compositing_is_not_boolean_value(self):
+        with self.assertRaises(exceptions.FieldError):
+            self.FACTORY(use_compositing='True')
+
+    def test_that_use_compositing_validation_will_not_raise_exception_when_use_compositing_is_boolean_value(self):
+        blender_script_package_false = self.FACTORY(use_compositing=False)
+        self.assertEqual(blender_script_package_false['use_compositing'], False)
+
+        blender_script_package_true = self.FACTORY(use_compositing=True)
+        self.assertEqual(blender_script_package_true['use_compositing'], True)
+
+    def test_that_samples_validation_will_raise_exception_when_samples_are_not_positive_integer(self):
+        with self.assertRaises(exceptions.FieldError):
+            self.FACTORY(samples=self.positive_int_list)
+
+        with self.assertRaises(exceptions.FieldError):
+            self.FACTORY(samples=self.positive_int_tuple)
+
+    def test_that_samples_validation_will_not_raise_exception_when_positive_integer_is_given(self):
+        blender_script_package = self.FACTORY(samples=self.number_of_samples)
+        self.assertEqual(blender_script_package['samples'], self.number_of_samples)
+
+    def test_that_frames_validation_will_raise_exception_when_frames_are_not_positive_int_list(self):
+        with self.assertRaises(exceptions.FieldError):
+            self.FACTORY(frames=self.positive_int_tuple)
+
+        with self.assertRaises(exceptions.FieldError):
+            self.FACTORY(frames=self.positive_float_list)
+
+        with self.assertRaises(exceptions.FieldError):
+            self.FACTORY(frames=self.frame_number)
+
+    def test_that_frames_validation_will_not_raise_exception_when_list_of_positive_integers_is_given(self):
+        blender_script_package = self.FACTORY(frames=[self.frame_number])
+        self.assertEqual(blender_script_package['frames'], [self.frame_number])
+
+    def test_that_output_format_validation_will_raise_exception_when_output_format_is_not_from_output_format_enum_class(self):
+        with self.assertRaises(exceptions.FieldError):
+            self.FACTORY(output_format='png')
+
+        with self.assertRaises(exceptions.FieldError):
+            self.FACTORY(output_format=1)
+
+    def test_that_output_format_validation_will_not_raise_exception_when_output_format_is_from_output_format_enum_class(self):
+        self.FACTORY(output_format=message.tasks.OUTPUT_FORMAT.PNG.name)
+        self.FACTORY(output_format=message.tasks.OUTPUT_FORMAT.EXR.name)
+        self.FACTORY(output_format=message.tasks.OUTPUT_FORMAT.JPG.name)
+
+    def test_message_task_to_compute_with_blender_script_package(self):
+        task_to_compute = factories.tasks.TaskToComputeFactory()
+        self.assertIsInstance(
+            task_to_compute.compute_task_def['meta_parameters'],  # pylint: disable=unsubscriptable-object
+            message.tasks.BlenderScriptPackage
+        )
+        serialized_message = shortcuts.dump(task_to_compute, None, None)
+        deserialzied_message = shortcuts.load(serialized_message, None, None)
+        self.assertEqual(task_to_compute, deserialzied_message)

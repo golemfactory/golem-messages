@@ -32,6 +32,30 @@ class WantToComputeTaskFactory(helpers.MessageFactory):
     )
 
 
+class BlenderScriptPackageFactory(factory.DictFactory):
+    class Meta:
+        model = tasks.BlenderScriptPackage
+
+    resolution = factory.List([
+        factory.Faker('random_int', min=1, max=4096),
+        factory.Faker('random_int', min=1, max=2160),
+    ])
+    borders_x = factory.List([
+        factory.Faker('pyfloat', positive=True, left_digits=1, right_digits=2),
+        factory.Faker('pyfloat', positive=True, left_digits=1, right_digits=2),
+    ])
+    borders_y = factory.List([
+        factory.Faker('pyfloat', positive=True, left_digits=1, right_digits=2),
+        factory.Faker('pyfloat', positive=True, left_digits=1, right_digits=2),
+    ])
+    use_compositing = factory.Faker('pybool')
+    samples = factory.Faker('random_int', min=1, max=10)
+    frames = factory.List([
+        factory.Faker('random_int', min=1, max=10)
+    ])
+    output_format = factory.fuzzy.FuzzyChoice(tasks.OUTPUT_FORMAT)
+
+
 class CTDBlenderExtraDataFactory(factory.DictFactory):
     class Meta:
         model = dict
@@ -42,9 +66,6 @@ class CTDBlenderExtraDataFactory(factory.DictFactory):
     total_tasks = 1
     outfilebasename = 'test task'
     scene_file = '/golem/resources/look_to_windward.blend'
-    script_src = 'pass'
-    frames = [1]
-    output_format = 'PNG'
 
 
 class ComputeTaskDefFactory(factory.DictFactory):
@@ -57,6 +78,8 @@ class ComputeTaskDefFactory(factory.DictFactory):
         lambda: calendar.timegm(time.gmtime()) +
         int(datetime.timedelta(days=1).total_seconds()))
     src_code = factory.Faker('text')
+    task_type = tasks.TaskType.Blender.name
+    meta_parameters = factory.SubFactory(BlenderScriptPackageFactory)
     extra_data = factory.SubFactory(CTDBlenderExtraDataFactory)
 
 
@@ -72,7 +95,6 @@ class TaskToComputeFactory(helpers.MessageFactory):
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
     requestor_public_key = factory.LazyFunction(
         lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey))
-
     want_to_compute_task = factory.SubFactory(WantToComputeTaskFactory)
     package_hash = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
     size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
