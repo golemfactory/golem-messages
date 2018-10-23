@@ -40,6 +40,45 @@ class BlenderScriptPackage(datastructures.ValidatingDict, datastructures.FrozenD
         'output_format': '',
     }
 
+    validate_resolution = functools.partial(
+        validators.validate_list_of_positive_integers,
+        field_name='resolution',
+        max_length=2,
+    )
+
+    validate_borders_x = functools.partial(
+        validators.validate_list_of_non_negative_floats,
+        field_name='borders_x',
+        max_length=2,
+    )
+
+    validate_borders_y = functools.partial(
+        validators.validate_list_of_non_negative_floats,
+        field_name='borders_y',
+        max_length=2,
+    )
+
+    validate_use_compositing = functools.partial(
+        validators.validate_boolean,
+        field_name='use_compositing'
+    )
+
+    validate_samples = functools.partial(
+        validators.validate_integer,
+        field_name='samples'
+    )
+
+    validate_frames = functools.partial(
+        validators.validate_list_of_positive_integers,
+        field_name='frames',
+    )
+
+    validate_output_format = functools.partial(
+        validators.validate_enum,
+        field_name='output_format',
+        enum_class=OUTPUT_FORMAT,
+    )
+
 
 class TaskType(datastructures.StringEnum):
     Blender = enum.auto()
@@ -80,6 +119,35 @@ class ComputeTaskDef(datastructures.ValidatingDict, datastructures.FrozenDict):
         field_name='subtask_id',
         max_length=128,
     )
+
+    def validate_meta_parameters(self, value):
+        if 'task_type' in self and value is not None:
+            validators.validate_task_type_with_meta_parameters(
+                field_name='meta_parameters',
+                task_type=self['task_type'],
+                meta_parameters=value,
+                task_type_meta_parameters=self.TASK_TYPE_META_PARAMETERS,
+            )
+        else:
+            validators.validate_correct_meta_parameters_class(
+                meta_parameters_classes=self.TASK_TYPE_META_PARAMETERS.values(),
+                value=value,
+            )
+
+    def validate_task_type(self, value):
+        if 'meta_parameters' in self and value is not None:
+            validators.validate_task_type_with_meta_parameters(
+                field_name='task_type',
+                task_type=value,
+                meta_parameters=self['meta_parameters'],
+                task_type_meta_parameters=self.TASK_TYPE_META_PARAMETERS,
+            )
+        else:
+            validators.validate_enum(
+                field_name='task_type',
+                value=value,
+                enum_class=TaskType
+            )
 
 
 class TaskMessage(base.Message):
