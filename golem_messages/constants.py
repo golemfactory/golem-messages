@@ -25,6 +25,9 @@ CMT = 4 * MAX_CONCENT_PING_INTERVAL
 # Force Acceptance Time
 FAT = 4 * CMT
 
+# Additional Verification Call Time
+AVCT = 3 * CMT + FAT
+
 # Payment Due Time
 PDT = datetime.timedelta(hours=12)
 
