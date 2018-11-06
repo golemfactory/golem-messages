@@ -33,7 +33,6 @@ class WantToComputeTaskTest(unittest.TestCase):
         wtct = message.tasks.WantToComputeTask(concent_enabled=True)
         self.assertTrue(wtct.concent_enabled)
 
-
     def test_extra_data(self):
         extra_data_content = {'some': 'content'}
         wtct = message.tasks.WantToComputeTask(extra_data=extra_data_content)
@@ -96,6 +95,7 @@ class ComputeTaskDefTestCase(unittest.TestCase):
         self.assertTrue(extra_data['total_tasks'])
         self.assertTrue(extra_data['outfilebasename'])
         self.assertTrue(extra_data['scene_file'])
+        self.assertTrue(extra_data['meta_parameters'])
 
 
 class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
@@ -814,11 +814,11 @@ class BlenderScriptPackageTestCase(unittest.TestCase):
         self.FACTORY(output_format=message.tasks.OUTPUT_FORMAT.JPG.name)
 
     def test_message_task_to_compute_with_blender_script_package(self):
-        task_to_compute = factories.tasks.TaskToComputeFactory()
+        ttc = factories.tasks.TaskToComputeFactory()
         self.assertIsInstance(
-            task_to_compute.compute_task_def['meta_parameters'],  # pylint: disable=unsubscriptable-object
+            ttc.compute_task_def['extra_data']['meta_parameters'],  # pylint: disable=unsubscriptable-object
             message.tasks.BlenderScriptPackage
         )
-        serialized_message = shortcuts.dump(task_to_compute, None, None)
+        serialized_message = shortcuts.dump(ttc, None, None)
         deserialzied_message = shortcuts.load(serialized_message, None, None)
-        self.assertEqual(task_to_compute, deserialzied_message)
+        self.assertEqual(ttc, deserialzied_message)

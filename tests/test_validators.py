@@ -239,7 +239,7 @@ class ValidateCorrectMetaParametersClass(unittest.TestCase):
         )
 
     def test_that_validator_will_not_raise_exception_when_meta_parameters_are_correct(self):  # noqa pylint: disable=line-too-long
-        self.validate(self.correct_values['meta_parameters'])
+        self.validate(self.correct_values['extra_data']['meta_parameters'])
 
     def test_that_validator_will_raise_exception_when_meta_parameters_is_empty_string(self):  # noqa pylint: disable=line-too-long
         with self.assertRaises(exceptions.FieldError):

@@ -66,6 +66,7 @@ class CTDBlenderExtraDataFactory(factory.DictFactory):
     total_tasks = 1
     outfilebasename = 'test task'
     scene_file = '/golem/resources/look_to_windward.blend'
+    meta_parameters = factory.SubFactory(BlenderScriptPackageFactory)
 
 
 class ComputeTaskDefFactory(factory.DictFactory):
@@ -79,7 +80,6 @@ class ComputeTaskDefFactory(factory.DictFactory):
         int(datetime.timedelta(days=1).total_seconds()))
     src_code = factory.Faker('text')
     task_type = tasks.TaskType.Blender.name
-    meta_parameters = factory.SubFactory(BlenderScriptPackageFactory)
     extra_data = factory.SubFactory(CTDBlenderExtraDataFactory)
 
 

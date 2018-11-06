@@ -96,8 +96,9 @@ class ComputeTaskDef(datastructures.ValidatingDict, datastructures.FrozenDict):
         'src_code': '',
         'script_template_hash': '',
         'task_type': '',
-        'meta_parameters': '',
-        'extra_data': {},  # safe because of copy in parent.__missing__()
+        'extra_data': {
+            'meta_parameters': {}
+        },  # safe because of copy in parent.__missing__()
         'short_description': '',
         'working_directory': '',
         'performance': 0,
@@ -120,34 +121,30 @@ class ComputeTaskDef(datastructures.ValidatingDict, datastructures.FrozenDict):
         max_length=128,
     )
 
-    def validate_meta_parameters(self, value):
-        if 'task_type' in self and value is not None:
+    def validate_extra_data(self, value):
+        if 'task_type' in self and self['task_type'] != '':
             validators.validate_task_type_with_meta_parameters(
                 field_name='meta_parameters',
                 task_type=self['task_type'],
-                meta_parameters=value,
+                meta_parameters=value['meta_parameters'],
                 task_type_meta_parameters=self.TASK_TYPE_META_PARAMETERS,
-            )
-        else:
-            validators.validate_correct_meta_parameters_class(
-                meta_parameters_classes=self.TASK_TYPE_META_PARAMETERS.values(),
-                value=value,
             )
 
     def validate_task_type(self, value):
-        if 'meta_parameters' in self and value is not None:
-            validators.validate_task_type_with_meta_parameters(
-                field_name='task_type',
-                task_type=value,
-                meta_parameters=self['meta_parameters'],
-                task_type_meta_parameters=self.TASK_TYPE_META_PARAMETERS,
-            )
-        else:
-            validators.validate_enum(
-                field_name='task_type',
-                value=value,
-                enum_class=TaskType
-            )
+        if value != '':
+            if 'extra_data' in self and 'meta_parameters' in self['extra_data']:
+                validators.validate_task_type_with_meta_parameters(
+                    field_name='task_type',
+                    task_type=value,
+                    meta_parameters=self['extra_data']['meta_parameters'],
+                    task_type_meta_parameters=self.TASK_TYPE_META_PARAMETERS,
+                )
+            else:
+                validators.validate_enum(
+                    field_name='task_type',
+                    value=value,
+                    enum_class=TaskType
+                )
 
 
 class TaskMessage(base.Message):
