@@ -34,6 +34,7 @@ class ServiceRefused(tasks.TaskMessage, base.AbstractReasonMessage):
         DuplicateRequest = 'DUPLICATE_REQUEST'
         InvalidRequest = 'REQUEST_FORMAT_OR_CONTENT_INVALID'
         ConcentDisabled = 'CONCENT_SERVICE_IS_NOT_ENABLED_FOR_THIS_SUBTASK'
+        UnsupportedProtocolVersion = 'UNSUPPORTED_PROTOCOL_VERSION'
 
     __slots__ = [
         'task_to_compute',
