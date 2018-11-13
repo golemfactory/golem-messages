@@ -477,15 +477,15 @@ class SubtaskResultsAccepted(TaskMessage):
 
     Having received this message, the Provider expects payment to follow.
     """
-    TASK_ID_PROVIDERS = ('task_to_compute', )
+    TASK_ID_PROVIDERS = ('report_computed_task', )
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
 
     __slots__ = [
         'payment_ts',
-        'task_to_compute',
+        'report_computed_task',
     ] + base.Message.__slots__
 
-    @base.verify_slot('task_to_compute', TaskToCompute)
+    @base.verify_slot('report_computed_task', ReportComputedTask)
     def deserialize_slot(self, key, value):
         return super().deserialize_slot(key, value)
 

@@ -107,7 +107,7 @@ class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
                                  unittest.TestCase):
     FACTORY = factories.tasks.SubtaskResultsAcceptedFactory
     MSG_CLASS = message.tasks.SubtaskResultsAccepted
-    TASK_ID_PROVIDER = 'task_to_compute'
+    TASK_ID_PROVIDER = 'report_computed_task'
 
     def test_factory(self):
         self.assertIsInstance(self.msg, message.tasks.SubtaskResultsAccepted)
@@ -115,14 +115,14 @@ class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
     def test_task_to_compute_wrong_class(self):
         with self.assertRaises(exceptions.FieldError):
             message.tasks.SubtaskResultsAccepted(slots=(
-                ('task_to_compute', 'something else'),
+                ('report_computed_task', 'something else'),
             ))
 
-    def test_task_to_compute_correct(self):
+    def test_report_computed_task_correct(self):
         msg = message.tasks.SubtaskResultsAccepted(slots=(
-            ('task_to_compute', factories.tasks.TaskToComputeFactory()),
+            ('report_computed_task', factories.tasks.ReportComputedTaskFactory()),
         ))
-        self.assertIsInstance(msg.task_to_compute, message.tasks.TaskToCompute)
+        self.assertIsInstance(msg.report_computed_task, message.tasks.ReportComputedTask)
 
 
 class SubtaskResultsRejectedTest(mixins.RegisteredMessageTestMixin,

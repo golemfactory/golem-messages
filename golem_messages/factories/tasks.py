@@ -241,7 +241,7 @@ class SubtaskResultsAcceptedFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.SubtaskResultsAccepted
 
-    task_to_compute = factory.SubFactory(TaskToComputeFactory)
+    report_computed_task = factory.SubFactory(ReportComputedTaskFactory)
     payment_ts = factory.LazyFunction(lambda: int(time.time()))
 
 
