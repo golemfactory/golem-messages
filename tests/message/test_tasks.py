@@ -112,7 +112,7 @@ class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
     def test_factory(self):
         self.assertIsInstance(self.msg, message.tasks.SubtaskResultsAccepted)
 
-    def test_task_to_compute_wrong_class(self):
+    def test_report_computed_task_wrong_class(self):
         with self.assertRaises(exceptions.FieldError):
             message.tasks.SubtaskResultsAccepted(slots=(
                 ('report_computed_task', 'something else'),
