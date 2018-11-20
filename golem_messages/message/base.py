@@ -200,6 +200,7 @@ class Message():
     ENCRYPT = True
     SIGN = True
     ENUM_SLOTS = {}
+    MSG_SLOTS = {}
 
     def __init__(self,
                  header: datastructures.MessageHeader = None,
@@ -294,7 +295,7 @@ class Message():
         :return bytes: sha1(TYPE, timestamp, payload)
         """
         if payload is None:
-            payload = serializer.dumps(self.slots())
+            payload = self._serialize_slots()
         sha = hashlib.sha1()
 
         # We can't use self.serialize_header() because it includes
@@ -307,6 +308,9 @@ class Message():
         sha.update(hash_header)
         sha.update(payload or b'')
         return sha.digest()
+
+    def _serialize_slots(self) -> bytes:
+        return serializer.dumps(self.slots())
 
     def serialize(
             self,
@@ -321,7 +325,7 @@ class Message():
             raise exceptions.SignatureAlreadyExists()
 
         self.encrypted = bool(self.ENCRYPT and encrypt_func)
-        payload = serializer.dumps(self.slots())
+        payload = self._serialize_slots()
 
         # When nesting one message inside another it's important
         # not to overwrite original signature.
@@ -362,19 +366,54 @@ class Message():
 
     def serialize_slot(self, key, value):  # noqa pylint: disable=unused-argument, no-self-use
         if isinstance(value, enum.Enum):
-            value = value.value
+            return value.value
+        if isinstance(value, Message):
+            return value.serialize()
+        if isinstance(value, list):
+            if all([isinstance(v, Message) for v in value]):
+                return [v.serialize() for v in value]
         return value
 
     def deserialize_slot(self, key, value):
+        # print('deserialize_slot', key, value)
         if (key in self.ENUM_SLOTS) and (value is not None):
             try:
-                value = self.ENUM_SLOTS[key](value)
+                return self.ENUM_SLOTS[key](value)
             except ValueError as e:
                 raise exceptions.FieldError(
                     "Invalid value for enum slot",
                     field=key,
                     value=value,
                 ) from e
+        if (key in self.MSG_SLOTS) and value is not None:
+            if isinstance(value, list) != isinstance(self.MSG_SLOTS[key], list):
+                raise exceptions.FieldError(
+                    "Invalid value for message slot",
+                    field=key,
+                    value=value,
+                )
+            try:
+                if not isinstance(value, list):
+                    return self.MSG_SLOTS[key].deserialize(
+                        value,
+                        decrypt_func=None,
+                        check_time=False,
+                    )
+                result = []
+                for m in value:
+                    result.append(self.MSG_SLOTS[key][0].deserialize(
+                        m,
+                        decrypt_func=None,
+                        check_time=False,
+                    ))
+                return result
+            except Exception as e:
+                raise exceptions.FieldError(
+                    "Invalid value for message slot",
+                    field=key,
+                    value=value,
+                ) from e
+
         return value
 
     @classmethod
@@ -483,16 +522,19 @@ class Message():
         return instance
 
     def load_slots(self, slots):
+        # print('load slots', slots)
         try:
             slots_dict = dict(slots)
         except (TypeError, ValueError):
             slots_dict = {}
 
         for name in self.__slots__:
+            # print('load slot', name)
             if hasattr(self, name):
                 continue
             if not self.valid_slot(name):
                 continue
+            # print('valid')
 
             try:
                 value = slots_dict[name]
@@ -500,12 +542,14 @@ class Message():
                 value = None
             else:
                 value = self.deserialize_slot(name, value)
+            # print(name, 'value', value)
             setattr(self, name, value)
 
     def slots(self):
         """Returns a list representation of any subclass message"""
         processed_slots = []
         for key in self.__slots__:
+            # print('serialize slot', key)
             if not self.valid_slot(key):
                 continue
             value = getattr(self, key, None)

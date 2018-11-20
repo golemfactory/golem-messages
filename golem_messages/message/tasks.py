@@ -259,6 +259,10 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
     ETHSIG_FORMAT = '66p'
     ETHSIG_LENGTH = struct.calcsize(ETHSIG_FORMAT)
 
+    MSG_SLOTS = {
+        'want_to_compute_task': WantToComputeTask,
+    }
+
     __slots__ = [
         'requestor_id',  # a.k.a. node id
         'requestor_public_key',  # key used for msg signing and encryption
@@ -292,7 +296,6 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
     def provider_ethereum_address(self):
         return self.want_to_compute_task.provider_ethereum_address
 
-    @base.verify_slot('want_to_compute_task', WantToComputeTask)
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
         if key == 'compute_task_def':
@@ -436,6 +439,9 @@ class ReportComputedTask(TaskMessage):
 
     TASK_ID_PROVIDERS = ('task_to_compute', )
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.provider, )
+    MSG_SLOTS = {
+        'task_to_compute': TaskToCompute,
+    }
 
     __slots__ = [
         # TODO why do we need the type here?
@@ -454,10 +460,6 @@ class ReportComputedTask(TaskMessage):
         'secret',
         'options',
     ] + base.Message.__slots__
-
-    @base.verify_slot('task_to_compute', TaskToCompute)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
 
 
 @library.register(TASK_MSG_BASE + 8)
@@ -484,10 +486,9 @@ class SubtaskResultsAccepted(TaskMessage):
         'payment_ts',
         'report_computed_task',
     ] + base.Message.__slots__
-
-    @base.verify_slot('report_computed_task', ReportComputedTask)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
+    MSG_SLOTS = {
+        'report_computed_task': ReportComputedTask,
+    }
 
 
 @library.register(TASK_MSG_BASE + 11)
@@ -510,6 +511,9 @@ class SubtaskResultsRejected(TaskMessage, base.AbstractReasonMessage):
     __slots__ = [
         'report_computed_task',
     ] + base.AbstractReasonMessage.__slots__
+    MSG_SLOTS = {
+        'report_computed_task': ReportComputedTask,
+    }
 
     @enum.unique
     class REASON(enum.Enum):
@@ -522,24 +526,19 @@ class SubtaskResultsRejected(TaskMessage, base.AbstractReasonMessage):
         ResourcesFailure = \
             'Could not retrieve resources'
 
-    @base.verify_slot('report_computed_task', ReportComputedTask)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
-
 
 @library.register(TASK_MSG_BASE + 15)
 class TaskFailure(TaskMessage):
     TASK_ID_PROVIDERS = ('task_to_compute', )
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.provider, )
+    MSG_SLOTS = {
+        'task_to_compute': TaskToCompute,
+    }
 
     __slots__ = [
         'task_to_compute',
         'err',
     ] + base.Message.__slots__
-
-    @base.verify_slot('task_to_compute', TaskToCompute)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
 
 
 @library.register(TASK_MSG_BASE + 16)
@@ -564,6 +563,9 @@ class WaitingForResults(base.Message):
 class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
     TASK_ID_PROVIDERS = ('task_to_compute', )
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.provider, )
+    MSG_SLOTS = {
+        'task_to_compute': TaskToCompute,
+    }
 
     __slots__ = [
         'task_to_compute',
@@ -582,10 +584,6 @@ class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
         InsufficientDeposit = enum.auto()  # GNTB deposit too low
         TooShortDeposit = enum.auto()  # GNTB deposit has too short lock
         OfferCancelled = enum.auto()
-
-    @base.verify_slot('task_to_compute', TaskToCompute)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
 
 
 @library.register(TASK_MSG_BASE + 27)
@@ -638,10 +636,9 @@ class AckReportComputedTask(TaskMessage):
     __slots__ = [
         'report_computed_task',
     ] + base.Message.__slots__
-
-    @base.verify_slot('report_computed_task', ReportComputedTask)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
+    MSG_SLOTS = {
+        'report_computed_task': ReportComputedTask,
+    }
 
 
 @library.register(TASK_MSG_BASE + 30)
@@ -656,6 +653,11 @@ class RejectReportComputedTask(TaskMessage, base.AbstractReasonMessage):
                          'cannot_compute_task', )
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor,
                        TaskMessage.OWNER_CHOICES.concent)
+    MSG_SLOTS = {
+        'attached_task_to_compute': TaskToCompute,
+        'task_failure': TaskFailure,
+        'cannot_compute_task': CannotComputeTask,
+    }
 
     @enum.unique
     class REASON(datastructures.StringEnum):
@@ -668,21 +670,3 @@ class RejectReportComputedTask(TaskMessage, base.AbstractReasonMessage):
         'task_failure',
         'cannot_compute_task',
     ] + base.AbstractReasonMessage.__slots__
-
-    @base.verify_slot(
-        'attached_task_to_compute',
-        TaskToCompute,
-        allow_none=True,
-    )
-    @base.verify_slot(
-        'task_failure',
-        TaskFailure,
-        allow_none=True
-    )
-    @base.verify_slot(
-        'cannot_compute_task',
-        CannotComputeTask,
-        allow_none=True
-    )
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)

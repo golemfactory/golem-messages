@@ -2,29 +2,29 @@ import unittest
 
 from golem_messages import cryptography
 from golem_messages import message
-from golem_messages import serializer
+# from golem_messages import serializer
 from golem_messages import shortcuts
 
 from golem_messages import factories
 
 
 class MessageTestCase(unittest.TestCase):
-    def equal_after_processing(self, o):
-        s = serializer.dumps(o)
-        o2 = serializer.loads(s)
-        self.assertEqual(o, o2)
+    # def equal_after_processing(self, o):
+    #     s = serializer.dumps(o)
+    #     o2 = serializer.loads(s)
+    #     self.assertEqual(o, o2)
 
-    def test_message(self):
-        m = message.Ping()
-        self.equal_after_processing(m)
+    # def test_message(self):
+    #     m = message.Ping()
+    #     self.equal_after_processing(m)
 
-    def test_message_list(self):
-        aList = [message.Ping()]
-        self.equal_after_processing(aList)
+    # def test_message_list(self):
+    #     aList = [message.Ping()]
+    #     self.equal_after_processing(aList)
 
-    def test_message_dict(self):
-        d = {'m': message.Ping()}
-        self.equal_after_processing(d)
+    # def test_message_dict(self):
+    #     d = {'m': message.Ping()}
+    #     self.equal_after_processing(d)
 
     def test_message_sig(self):
         """Signed message inside a signed message"""
