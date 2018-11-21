@@ -1,7 +1,6 @@
 import calendar
 import datetime
 import enum
-import functools
 import hashlib
 import logging
 import struct
@@ -75,117 +74,6 @@ def verify_version(msg_version):
                 theirs=theirs_v,
             )
         )
-
-
-def _verify_slot_type(value, class_, allow_none=False):
-    if not isinstance(value, (class_, type(None)) if allow_none else class_):
-        raise TypeError(
-            "Invalid nested message type {} should be {}".format(
-                type(value),
-                class_
-            )
-        )
-
-
-def _validate_slot(key, value, verify_class, allow_none=False):
-    try:
-        _verify_slot_type(value, verify_class, allow_none=allow_none)
-    except TypeError as e:
-        raise exceptions.FieldError(
-            "Should be an instance of {should_be} not {is_now}".format(
-                should_be=verify_class,
-                is_now=type(value),
-            ),
-            field=key,
-            value=value,
-        ) from e
-
-
-def deserialize_verify(
-        key, value, verify_key, verify_class, allow_none=False):
-    if key == verify_key:
-        _validate_slot(key, value, verify_class, allow_none=allow_none)
-    return value
-
-
-def deserialize_verify_list(
-        key, value, verify_key, verify_class, allow_none=False):
-    if key == verify_key:
-        try:
-            for v in value:
-                _validate_slot(key, v, verify_class, allow_none=allow_none)
-        except TypeError as e:
-            raise exceptions.FieldError(
-                "Should be a list of {verify_class}".format(
-                    verify_class=verify_class,
-                ),
-                field=key,
-                value=value,
-            ) from e
-    return value
-
-
-def verify_slot(slot_name: str, slot_class: type, allow_none: bool = False):
-    """
-    decorator for Message's `deserialize_slot` method
-    ensures that the slot identified by `slot_name` is an instance of the
-    message class given in `slot_class`
-
-    :param str slot_name: the name of the slot
-    :param type slot_class: the class to check against
-    :param bool allow_none: whether we're allowing the slot to be empty
-    :return: the verified value
-    :raises: FieldError
-
-    :Example:
-
-        @base.verify_slot('wrapped_msg', WrappedMessageClass)
-        def deserialize_slot(self, key, value):
-            return super().deserialize_slot(key, value)
-
-    """
-    def deserialize_slot(method):
-        @functools.wraps(method)
-        def _(self, key, value):
-            return functools.partial(
-                deserialize_verify,
-                verify_key=slot_name,
-                verify_class=slot_class,
-                allow_none=allow_none,
-            )(
-                key, method(self, key, value)
-            )
-        return _
-    return deserialize_slot
-
-
-def verify_slot_list(
-        slot_name: str, item_class: type, allow_none: bool = False):
-    """
-    decorator for Message's `deserialize_slot` method
-    ensures that the slot identified by `slot_name` is a list of messages with
-    the given instance type (provided in `item_class`)
-
-    :param str slot_name: the name of the slot to verify
-    :param type item_class: the class to check list items against
-    :param bool allow_none: whether we're allowing the slot to be empty
-    :return: the verified value
-    :raises: FieldError
-    """
-
-    def deserialize_slot(method):
-        @functools.wraps(method)
-        def _(self, key, value):
-            return functools.partial(
-                deserialize_verify_list,
-                verify_key=slot_name,
-                verify_class=item_class,
-                allow_none=allow_none,
-            )(
-                key, method(self, key, value)
-            )
-        return _
-    return deserialize_slot
 
 
 class Message():
@@ -295,7 +183,7 @@ class Message():
         :return bytes: sha1(TYPE, timestamp, payload)
         """
         if payload is None:
-            payload = self._serialize_slots()
+            payload = serializer.dumps(self.slots())
         sha = hashlib.sha1()
 
         # We can't use self.serialize_header() because it includes
@@ -308,9 +196,6 @@ class Message():
         sha.update(hash_header)
         sha.update(payload or b'')
         return sha.digest()
-
-    def _serialize_slots(self) -> bytes:
-        return serializer.dumps(self.slots())
 
     def serialize(
             self,
@@ -325,7 +210,7 @@ class Message():
             raise exceptions.SignatureAlreadyExists()
 
         self.encrypted = bool(self.ENCRYPT and encrypt_func)
-        payload = self._serialize_slots()
+        payload = serializer.dumps(self.slots())
 
         # When nesting one message inside another it's important
         # not to overwrite original signature.
@@ -375,7 +260,6 @@ class Message():
         return value
 
     def deserialize_slot(self, key, value):
-        # print('deserialize_slot', key, value)
         if (key in self.ENUM_SLOTS) and (value is not None):
             try:
                 return self.ENUM_SLOTS[key](value)
@@ -522,19 +406,16 @@ class Message():
         return instance
 
     def load_slots(self, slots):
-        # print('load slots', slots)
         try:
             slots_dict = dict(slots)
         except (TypeError, ValueError):
             slots_dict = {}
 
         for name in self.__slots__:
-            # print('load slot', name)
             if hasattr(self, name):
                 continue
             if not self.valid_slot(name):
                 continue
-            # print('valid')
 
             try:
                 value = slots_dict[name]
@@ -542,14 +423,12 @@ class Message():
                 value = None
             else:
                 value = self.deserialize_slot(name, value)
-            # print(name, 'value', value)
             setattr(self, name, value)
 
     def slots(self):
         """Returns a list representation of any subclass message"""
         processed_slots = []
         for key in self.__slots__:
-            # print('serialize slot', key)
             if not self.valid_slot(key):
                 continue
             value = getattr(self, key, None)

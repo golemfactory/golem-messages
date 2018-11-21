@@ -348,10 +348,10 @@ class MessagesTestCase(unittest.TestCase):
         ]
         self.assertEqual(expected, msg_l.slots())
         self.assertEqual(len(msg_l.remove_tasks), test_cases)
-        # for msg_remove_task in msg_l.remove_tasks:
-        #     self.assertIsInstance(
-        #         msg_remove_task,
-        #         message.p2p.RemoveTask
-        #     )
-        # for i in range(test_cases):
-        #     self.assertEqual(msg_l.remove_tasks[i].task_id, task_ids[i])
+        for msg_remove_task in msg_l.remove_tasks:
+            self.assertIsInstance(
+                msg_remove_task,
+                message.p2p.RemoveTask
+            )
+        for i in range(test_cases):
+            self.assertEqual(msg_l.remove_tasks[i].task_id, task_ids[i])
