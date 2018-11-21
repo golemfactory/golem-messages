@@ -269,23 +269,32 @@ class Message():
                     field=key,
                     value=value,
                 ) from e
-        if (key in self.MSG_SLOTS) and value is not None:
-            if isinstance(value, list) != isinstance(self.MSG_SLOTS[key], list):
+        if key in self.MSG_SLOTS:
+            slot = self.MSG_SLOTS[key]
+            if value is None:
+                if not slot.allow_none:
+                    raise exceptions.FieldError(
+                        "Disallowed None for message slot",
+                        field=key,
+                        value=value,
+                    )
+                return None
+            if isinstance(value, list) != slot.is_list:
                 raise exceptions.FieldError(
-                    "Invalid value for message slot",
+                    "Disallowed list for message slot",
                     field=key,
                     value=value,
                 )
             try:
                 if not isinstance(value, list):
-                    return self.MSG_SLOTS[key].deserialize(
+                    return slot.klass.deserialize(
                         value,
                         decrypt_func=None,
                         check_time=False,
                     )
                 result = []
                 for m in value:
-                    result.append(self.MSG_SLOTS[key][0].deserialize(
+                    result.append(slot.klass.deserialize(
                         m,
                         decrypt_func=None,
                         check_time=False,
@@ -511,6 +520,13 @@ class Message():
 
     def _fake_sign(self):
         self.sig = b'\0' * Message.SIG_LEN
+
+
+class MessageSlot:  # pylint: disable=too-few-public-methods
+    def __init__(self, klass, allow_none=False, is_list=False):
+        self.klass = klass
+        self.allow_none = allow_none
+        self.is_list = is_list
 
 
 class AbstractReasonMessage(Message):
