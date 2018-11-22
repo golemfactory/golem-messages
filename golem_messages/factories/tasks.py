@@ -180,7 +180,6 @@ class ReportComputedTaskFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.ReportComputedTask
 
-    result_type = 0
     node_name = factory.Faker('name')
     address = factory.Faker('ipv4')
     port = factory.Faker('pyint')
