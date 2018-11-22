@@ -490,9 +490,8 @@ class NestedMessageTestCase(unittest.TestCase):
                 "There’s so much to learn when you’re slinging"
                 "paint and pencil"
             )
-            s = msg.serialize()
             with self.assertRaises(exceptions.FieldError):
-                message.Message.deserialize(s, decrypt_func=None)
+                msg.serialize()
 
     def test_reject_report_computed_task_with_cannot_compute_task(self):
         invalid_deadline = ("You call it madness, "

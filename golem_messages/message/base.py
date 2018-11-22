@@ -252,11 +252,31 @@ class Message():
     def serialize_slot(self, key, value):  # noqa pylint: disable=unused-argument, no-self-use
         if isinstance(value, enum.Enum):
             return value.value
-        if isinstance(value, Message):
-            return value.serialize()
-        if isinstance(value, list):
-            if all([isinstance(v, Message) for v in value]):
+        if key in self.MSG_SLOTS:
+            slot = self.MSG_SLOTS[key]
+            if value is None and slot.allow_none:
+                return None
+            if slot.is_list:
+                if not isinstance(value, list):
+                    raise exceptions.FieldError(
+                        "Invalid non list value for message slot",
+                        field=key,
+                        value=value,
+                    )
+                if not all([isinstance(v, slot.klass) for v in value]):
+                    raise exceptions.FieldError(
+                        "Invalid list values for message slot",
+                        field=key,
+                        value=value,
+                    )
                 return [v.serialize() for v in value]
+            if not isinstance(value, slot.klass):
+                raise exceptions.FieldError(
+                    "Invalid value for message slot",
+                    field=key,
+                    value=value,
+                )
+            return value.serialize()
         return value
 
     def deserialize_slot(self, key, value):
