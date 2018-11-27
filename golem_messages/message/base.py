@@ -1,7 +1,6 @@
 import calendar
 import datetime
 import enum
-import functools
 import hashlib
 import logging
 import struct
@@ -77,117 +76,6 @@ def verify_version(msg_version):
         )
 
 
-def _verify_slot_type(value, class_, allow_none=False):
-    if not isinstance(value, (class_, type(None)) if allow_none else class_):
-        raise TypeError(
-            "Invalid nested message type {} should be {}".format(
-                type(value),
-                class_
-            )
-        )
-
-
-def _validate_slot(key, value, verify_class, allow_none=False):
-    try:
-        _verify_slot_type(value, verify_class, allow_none=allow_none)
-    except TypeError as e:
-        raise exceptions.FieldError(
-            "Should be an instance of {should_be} not {is_now}".format(
-                should_be=verify_class,
-                is_now=type(value),
-            ),
-            field=key,
-            value=value,
-        ) from e
-
-
-def deserialize_verify(
-        key, value, verify_key, verify_class, allow_none=False):
-    if key == verify_key:
-        _validate_slot(key, value, verify_class, allow_none=allow_none)
-    return value
-
-
-def deserialize_verify_list(
-        key, value, verify_key, verify_class, allow_none=False):
-    if key == verify_key:
-        try:
-            for v in value:
-                _validate_slot(key, v, verify_class, allow_none=allow_none)
-        except TypeError as e:
-            raise exceptions.FieldError(
-                "Should be a list of {verify_class}".format(
-                    verify_class=verify_class,
-                ),
-                field=key,
-                value=value,
-            ) from e
-    return value
-
-
-def verify_slot(slot_name: str, slot_class: type, allow_none: bool = False):
-    """
-    decorator for Message's `deserialize_slot` method
-    ensures that the slot identified by `slot_name` is an instance of the
-    message class given in `slot_class`
-
-    :param str slot_name: the name of the slot
-    :param type slot_class: the class to check against
-    :param bool allow_none: whether we're allowing the slot to be empty
-    :return: the verified value
-    :raises: FieldError
-
-    :Example:
-
-        @base.verify_slot('wrapped_msg', WrappedMessageClass)
-        def deserialize_slot(self, key, value):
-            return super().deserialize_slot(key, value)
-
-    """
-    def deserialize_slot(method):
-        @functools.wraps(method)
-        def _(self, key, value):
-            return functools.partial(
-                deserialize_verify,
-                verify_key=slot_name,
-                verify_class=slot_class,
-                allow_none=allow_none,
-            )(
-                key, method(self, key, value)
-            )
-        return _
-    return deserialize_slot
-
-
-def verify_slot_list(
-        slot_name: str, item_class: type, allow_none: bool = False):
-    """
-    decorator for Message's `deserialize_slot` method
-    ensures that the slot identified by `slot_name` is a list of messages with
-    the given instance type (provided in `item_class`)
-
-    :param str slot_name: the name of the slot to verify
-    :param type item_class: the class to check list items against
-    :param bool allow_none: whether we're allowing the slot to be empty
-    :return: the verified value
-    :raises: FieldError
-    """
-
-    def deserialize_slot(method):
-        @functools.wraps(method)
-        def _(self, key, value):
-            return functools.partial(
-                deserialize_verify_list,
-                verify_key=slot_name,
-                verify_class=item_class,
-                allow_none=allow_none,
-            )(
-                key, method(self, key, value)
-            )
-        return _
-    return deserialize_slot
-
-
 class Message():
     """ Communication message that is sent in all networks """
 
@@ -200,6 +88,7 @@ class Message():
     ENCRYPT = True
     SIGN = True
     ENUM_SLOTS = {}
+    MSG_SLOTS = {}
 
     def __init__(self,
                  header: datastructures.MessageHeader = None,
@@ -362,19 +251,112 @@ class Message():
 
     def serialize_slot(self, key, value):  # noqa pylint: disable=unused-argument, no-self-use
         if isinstance(value, enum.Enum):
-            value = value.value
+            return value.value
+        if key in self.MSG_SLOTS:
+            slot = self.MSG_SLOTS[key]
+            if value is None and slot.allow_none:
+                return None
+            if slot.is_list:
+                if not isinstance(value, list):
+                    raise exceptions.FieldError(
+                        "Invalid non list value for message slot",
+                        field=key,
+                        value=value,
+                    )
+                if not all([isinstance(v, slot.klass) for v in value]):
+                    raise exceptions.FieldError(
+                        "Invalid list values for message slot",
+                        field=key,
+                        value=value,
+                    )
+                return [v.serialize() for v in value]
+            if not isinstance(value, slot.klass):
+                raise exceptions.FieldError(
+                    "Invalid value for message slot",
+                    field=key,
+                    value=value,
+                )
+            return value.serialize()
         return value
 
-    def deserialize_slot(self, key, value):
+    def deserialize_slot(self, key, value):  # pylint:disable=too-many-branches
         if (key in self.ENUM_SLOTS) and (value is not None):
             try:
-                value = self.ENUM_SLOTS[key](value)
+                return self.ENUM_SLOTS[key](value)
             except ValueError as e:
                 raise exceptions.FieldError(
                     "Invalid value for enum slot",
                     field=key,
                     value=value,
                 ) from e
+        if key in self.MSG_SLOTS:
+            slot = self.MSG_SLOTS[key]
+            if value is None:
+                if not slot.allow_none:
+                    raise exceptions.FieldError(
+                        "Disallowed None for message slot",
+                        field=key,
+                        value=value,
+                    )
+                return None
+            if isinstance(value, list) != slot.is_list:
+                raise exceptions.FieldError(
+                    "Disallowed list for message slot",
+                    field=key,
+                    value=value,
+                )
+            if not isinstance(value, list):
+                try:
+                    result = slot.klass.deserialize(
+                        value,
+                        decrypt_func=None,
+                        check_time=False,
+                    )
+                except Exception as e:
+                    raise exceptions.FieldError(
+                        "Invalid value for message slot",
+                        field=key,
+                        value=value,
+                    ) from e
+                if not isinstance(result, slot.klass):
+                    raise exceptions.FieldError(
+                        "Incorrect message type in message slot",
+                        field=key,
+                        value=value,
+                    )
+                return result
+
+            result = []
+            for m in value:
+                if m is None:
+                    if not slot.allow_none:
+                        raise exceptions.FieldError(
+                            "Disallowed None in message list slot",
+                            field=key,
+                            value=value,
+                        )
+                    result.append(None)
+                else:
+                    try:
+                        result.append(slot.klass.deserialize(
+                            m,
+                            decrypt_func=None,
+                            check_time=False,
+                        ))
+                    except Exception as e:
+                        raise exceptions.FieldError(
+                            "Invalid value for message slot",
+                            field=key,
+                            value=value,
+                        ) from e
+                    if not isinstance(result[-1], slot.klass):
+                        raise exceptions.FieldError(
+                            "Incorrect message type in message list slot",
+                            field=key,
+                            value=value,
+                        )
+            return result
+
         return value
 
     @classmethod
@@ -588,6 +570,13 @@ class Message():
 
     def _fake_sign(self):
         self.sig = b'\0' * Message.SIG_LEN
+
+
+class MessageSlot:  # pylint: disable=too-few-public-methods
+    def __init__(self, klass, allow_none=False, is_list=False):
+        self.klass = klass
+        self.allow_none = allow_none
+        self.is_list = is_list
 
 
 class AbstractReasonMessage(Message):

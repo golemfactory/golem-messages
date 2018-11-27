@@ -147,66 +147,6 @@ class DeserializeVerifyBaseTest(unittest.TestCase):
 # pylint:enable=not-callable
 
 
-class DeserializeVerifyTest(DeserializeVerifyBaseTest):
-    def setUp(self):
-        self.func = message.base.deserialize_verify
-
-    def test_expected_value(self):
-        self._test_expected_value(
-            self.expected_class(),
-        )
-
-    def test_different_key(self):
-        self._test_different_key(
-            message.tasks.WantToComputeTask()
-        )
-
-    def test_fail(self):
-        other_class = message.tasks.WantToComputeTask()
-        self._test_fail(other_class)
-
-    def test_none(self):
-        self._test_none(None)
-
-    def test_none_allowed(self):
-        self._test_none_allowed(None)
-
-
-class DeserializeVerifyListTest(DeserializeVerifyBaseTest):
-    def setUp(self):
-        self.func = message.base.deserialize_verify_list
-
-    def test_expected_value(self):
-        self._test_expected_value(
-            [self.expected_class()],
-        )
-
-    def test_different_key(self):
-        self._test_different_key(
-            message.tasks.WantToComputeTask()
-        )
-
-    def test_fail(self):
-        other_class = message.tasks.WantToComputeTask()
-        self._test_fail([other_class])
-
-    def test_none(self):
-        self._test_none([None])
-
-    def test_none_allowed(self):
-        self._test_none_allowed([None])
-
-    def test_non_iterable(self):
-        value = self.expected_class()
-        with self.assertRaises(exceptions.FieldError):
-            self.func(
-                key='ping',
-                verify_key='ping',
-                value=value,
-                verify_class=self.expected_class,
-            )
-
-
 class BasicTestCase(unittest.TestCase):
     def setUp(self):
         self.ecc = golem_messages.ECCx(None)
@@ -328,24 +268,6 @@ class BasicTestCase(unittest.TestCase):
 
         with self.assertRaises(exceptions.SignatureAlreadyExists):
             golem_messages.dump(msg, self.ecc.raw_privkey, self.ecc.raw_pubkey)
-
-    def test_deserialize_verify_sender(self):
-        msg = message.Hello()
-        data = golem_messages.dump(msg, self.ecc.raw_privkey, None)
-
-        msg_deserialized = message.base.Message.deserialize(
-            data, lambda d: d, sender_public_key=self.ecc.raw_pubkey)
-
-        self.assertEqual(msg, msg_deserialized)
-
-    def test_deserialize_verify_sender_fails(self):
-        ecc2 = golem_messages.ECCx(None)
-        msg = message.Hello()
-        data = golem_messages.dump(msg, self.ecc.raw_privkey, None)
-
-        with self.assertRaises(exceptions.InvalidSignature):
-            message.base.Message.deserialize(
-                data, lambda d: d, sender_public_key=ecc2.raw_pubkey)
 
 
 class MessageSignatureTest(unittest.TestCase):
@@ -568,9 +490,8 @@ class NestedMessageTestCase(unittest.TestCase):
                 "There’s so much to learn when you’re slinging"
                 "paint and pencil"
             )
-            s = msg.serialize()
             with self.assertRaises(exceptions.FieldError):
-                message.Message.deserialize(s, decrypt_func=None)
+                msg.serialize()
 
     def test_reject_report_computed_task_with_cannot_compute_task(self):
         invalid_deadline = ("You call it madness, "

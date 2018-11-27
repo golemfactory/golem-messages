@@ -164,7 +164,6 @@ class RemoveTaskContainer(base.Message):
     uses this container to propagate information about tasks cancellation.
     """
     __slots__ = ['remove_tasks'] + base.Message.__slots__
-
-    @base.verify_slot_list('remove_tasks', RemoveTask)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
+    MSG_SLOTS = {
+        'remove_tasks': base.MessageSlot(RemoveTask, is_list=True),
+    }

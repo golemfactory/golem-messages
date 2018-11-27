@@ -120,7 +120,7 @@ class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
 
     def test_report_computed_task_correct(self):
         msg = message.tasks.SubtaskResultsAccepted(slots=(
-            ('report_computed_task', factories.tasks.ReportComputedTaskFactory()),
+            ('report_computed_task', factories.tasks.ReportComputedTaskFactory().serialize()),
         ))
         self.assertIsInstance(msg.report_computed_task, message.tasks.ReportComputedTask)
 
@@ -146,7 +146,7 @@ class SubtaskResultsRejectedTest(mixins.RegisteredMessageTestMixin,
             reason=reason,
         )
         expected = [
-            ['report_computed_task', rct],
+            ['report_computed_task', rct.serialize()],
             ['reason', reason.value],
         ]
 

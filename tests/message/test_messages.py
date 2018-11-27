@@ -275,7 +275,7 @@ class MessagesTestCase(unittest.TestCase):
 
         msg = message.TaskFailure(task_to_compute=ttc, err=err)
         expected = sorted([
-            ['task_to_compute', ttc],
+            ['task_to_compute', ttc.serialize()],
             ['err', err],
         ])
         self.assertEqual(expected, sorted(msg.slots()))
@@ -296,7 +296,7 @@ class MessagesTestCase(unittest.TestCase):
         )
         msg = message.CannotComputeTask(task_to_compute=ttc, reason=reason)
         expected = sorted([
-            ['task_to_compute', ttc],
+            ['task_to_compute', ttc.serialize()],
             ['reason', reason],
         ])
         self.assertEqual(expected, sorted(msg.slots()))
@@ -344,7 +344,7 @@ class MessagesTestCase(unittest.TestCase):
         msg_l = shortcuts.load(serialized, None, None)
 
         expected = [
-            ['remove_tasks', remove_tasks]
+            ['remove_tasks', [m.serialize() for m in remove_tasks]]
         ]
         self.assertEqual(expected, msg_l.slots())
         self.assertEqual(len(msg_l.remove_tasks), test_cases)

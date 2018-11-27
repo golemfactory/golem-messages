@@ -24,6 +24,10 @@ class ServiceRefused(tasks.TaskMessage, base.AbstractReasonMessage):
     """
     TASK_ID_PROVIDERS = ('task_to_compute', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
+    MSG_SLOTS = {
+        'task_to_compute':
+            base.MessageSlot(tasks.TaskToCompute, allow_none=True),
+    }
 
     @enum.unique
     class REASON(enum.Enum):
@@ -41,10 +45,6 @@ class ServiceRefused(tasks.TaskMessage, base.AbstractReasonMessage):
         'task_to_compute',
     ] + base.AbstractReasonMessage.__slots__
 
-    @base.verify_slot('task_to_compute', tasks.TaskToCompute, allow_none=True)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
-
 
 @library.register(CONCENT_MSG_BASE + 1)
 class ForceReportComputedTask(tasks.TaskMessage):
@@ -58,15 +58,14 @@ class ForceReportComputedTask(tasks.TaskMessage):
     TASK_ID_PROVIDERS = ('report_computed_task', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.provider,
                        tasks.TaskMessage.OWNER_CHOICES.concent)
+    MSG_SLOTS = {
+        'report_computed_task': base.MessageSlot(tasks.ReportComputedTask),
+    }
 
     __slots__ = [
         'report_computed_task',
         'result_hash',
     ] + base.Message.__slots__
-
-    @base.verify_slot('report_computed_task', tasks.ReportComputedTask)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
 
 
 @library.register(CONCENT_MSG_BASE + 4)
@@ -83,16 +82,16 @@ class VerdictReportComputedTask(tasks.TaskMessage):
     TASK_ID_PROVIDERS = ('force_report_computed_task',
                          'ack_report_computed_task', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
+    MSG_SLOTS = {
+        'force_report_computed_task': base.MessageSlot(ForceReportComputedTask),
+        'ack_report_computed_task':
+            base.MessageSlot(tasks.AckReportComputedTask),
+    }
 
     __slots__ = [
         'force_report_computed_task',
         'ack_report_computed_task',
     ] + base.Message.__slots__
-
-    @base.verify_slot('force_report_computed_task', ForceReportComputedTask)
-    @base.verify_slot('ack_report_computed_task', tasks.AckReportComputedTask)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
 
     def is_valid(self):
         ttcs_tuple = (
@@ -208,14 +207,14 @@ class SubtaskResultsVerify(tasks.TaskMessage):
     """
     TASK_ID_PROVIDERS = ('subtask_results_rejected', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.provider, )
+    MSG_SLOTS = {
+        'subtask_results_rejected':
+            base.MessageSlot(tasks.SubtaskResultsRejected),
+    }
 
     __slots__ = [
         'subtask_results_rejected',
     ] + base.Message.__slots__
-
-    @base.verify_slot('subtask_results_rejected', tasks.SubtaskResultsRejected)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
 
 
 @library.register(CONCENT_MSG_BASE + 7)
@@ -228,16 +227,15 @@ class AckSubtaskResultsVerify(tasks.TaskMessage):
     """
     TASK_ID_PROVIDERS = ('subtask_results_verify', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
+    MSG_SLOTS = {
+        'subtask_results_verify': base.MessageSlot(SubtaskResultsVerify),
+        'file_transfer_token': base.MessageSlot(FileTransferToken),
+    }
 
     __slots__ = [
         'subtask_results_verify',
         'file_transfer_token',
     ] + base.Message.__slots__
-
-    @base.verify_slot('subtask_results_verify', SubtaskResultsVerify)
-    @base.verify_slot('file_transfer_token', FileTransferToken)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
 
 
 @library.register(CONCENT_MSG_BASE + 8)
@@ -266,15 +264,14 @@ class SubtaskResultsSettled(tasks.TaskMessage):
     ENUM_SLOTS = {
         'origin': Origin,
     }
+    MSG_SLOTS = {
+        'task_to_compute': base.MessageSlot(tasks.TaskToCompute),
+    }
 
     __slots__ = [
         'origin',
         'task_to_compute',
     ] + base.Message.__slots__
-
-    @base.verify_slot('task_to_compute', tasks.TaskToCompute)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
 
 
 @library.register(CONCENT_MSG_BASE + 9)
@@ -290,9 +287,9 @@ class ForceGetTaskResult(tasks.TaskMessage):
         'report_computed_task',
     ] + base.Message.__slots__
 
-    @base.verify_slot('report_computed_task', tasks.ReportComputedTask)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
+    MSG_SLOTS = {
+        'report_computed_task': base.MessageSlot(tasks.ReportComputedTask),
+    }
 
 
 @library.register(CONCENT_MSG_BASE + 10)
@@ -308,9 +305,9 @@ class AckForceGetTaskResult(tasks.TaskMessage):
         'force_get_task_result',
     ] + base.Message.__slots__
 
-    @base.verify_slot('force_get_task_result', ForceGetTaskResult)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
+    MSG_SLOTS = {
+        'force_get_task_result': base.MessageSlot(ForceGetTaskResult),
+    }
 
 
 @library.register(CONCENT_MSG_BASE + 11)
@@ -330,9 +327,9 @@ class ForceGetTaskResultFailed(tasks.TaskMessage):
         'task_to_compute',
     ] + base.Message.__slots__
 
-    @base.verify_slot('task_to_compute', tasks.TaskToCompute)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
+    MSG_SLOTS = {
+        'task_to_compute': base.MessageSlot(tasks.TaskToCompute),
+    }
 
 
 @library.register(CONCENT_MSG_BASE + 12)
@@ -344,6 +341,9 @@ class ForceGetTaskResultRejected(tasks.TaskMessage,
     """
     TASK_ID_PROVIDERS = ('force_get_task_result', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
+    MSG_SLOTS = {
+        'force_get_task_result': base.MessageSlot(ForceGetTaskResult),
+    }
 
     __slots__ = [
         'force_get_task_result',
@@ -351,10 +351,6 @@ class ForceGetTaskResultRejected(tasks.TaskMessage,
 
     class REASON(enum.Enum):
         AcceptanceTimeLimitExceeded = 'acceptance_time_limit_exceeded'
-
-    @base.verify_slot('force_get_task_result', ForceGetTaskResult)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
 
 
 @library.register(CONCENT_MSG_BASE + 13)
@@ -365,16 +361,15 @@ class ForceGetTaskResultUpload(tasks.TaskMessage):
     """
     TASK_ID_PROVIDERS = ('force_get_task_result', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
+    MSG_SLOTS = {
+        'force_get_task_result': base.MessageSlot(ForceGetTaskResult),
+        'file_transfer_token': base.MessageSlot(FileTransferToken),
+    }
 
     __slots__ = [
         'force_get_task_result',
         'file_transfer_token',
     ] + base.Message.__slots__
-
-    @base.verify_slot('force_get_task_result', ForceGetTaskResult)
-    @base.verify_slot('file_transfer_token', FileTransferToken)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
 
 
 @library.register(CONCENT_MSG_BASE + 14)
@@ -385,16 +380,15 @@ class ForceGetTaskResultDownload(tasks.TaskMessage):
     """
     TASK_ID_PROVIDERS = ('force_get_task_result', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
+    MSG_SLOTS = {
+        'force_get_task_result': base.MessageSlot(ForceGetTaskResult),
+        'file_transfer_token': base.MessageSlot(FileTransferToken),
+    }
 
     __slots__ = [
         'force_get_task_result',
         'file_transfer_token',
     ] + base.Message.__slots__
-
-    @base.verify_slot('force_get_task_result', ForceGetTaskResult)
-    @base.verify_slot('file_transfer_token', FileTransferToken)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
 
 
 @library.register(CONCENT_MSG_BASE + 15)
@@ -414,14 +408,14 @@ class ForceSubtaskResults(tasks.TaskMessage):
         tasks.TaskMessage.OWNER_CHOICES.provider,
         tasks.TaskMessage.OWNER_CHOICES.concent,
     )
+    MSG_SLOTS = {
+        'ack_report_computed_task':
+            base.MessageSlot(tasks.AckReportComputedTask),
+    }
 
     __slots__ = [
         'ack_report_computed_task',
     ] + base.Message.__slots__
-
-    @base.verify_slot('ack_report_computed_task', tasks.AckReportComputedTask)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
 
 
 @library.register(CONCENT_MSG_BASE + 16)
@@ -438,24 +432,17 @@ class ForceSubtaskResultsResponse(tasks.TaskMessage):
     TASK_ID_PROVIDERS = ('subtask_results_accepted',
                          'subtask_results_rejected', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
+    MSG_SLOTS = {
+        'subtask_results_accepted':
+            base.MessageSlot(tasks.SubtaskResultsAccepted, allow_none=True),
+        'subtask_results_rejected':
+            base.MessageSlot(tasks.SubtaskResultsRejected, allow_none=True),
+    }
 
     __slots__ = [
         'subtask_results_accepted',
         'subtask_results_rejected',
     ] + base.Message.__slots__
-
-    @base.verify_slot(
-        'subtask_results_accepted',
-        tasks.SubtaskResultsAccepted,
-        allow_none=True,
-    )
-    @base.verify_slot(
-        'subtask_results_rejected',
-        tasks.SubtaskResultsRejected,
-        allow_none=True,
-    )
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
 
 
 @library.register(CONCENT_MSG_BASE + 17)
@@ -469,6 +456,9 @@ class ForceSubtaskResultsRejected(tasks.TaskMessage,
 
     TASK_ID_PROVIDERS = ('force_subtask_results', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
+    MSG_SLOTS = {
+        'force_subtask_results': base.MessageSlot(ForceSubtaskResults),
+    }
 
     __slots__ = [
         'force_subtask_results'
@@ -477,10 +467,6 @@ class ForceSubtaskResultsRejected(tasks.TaskMessage,
     class REASON(enum.Enum):
         RequestPremature = 'premature: still within the verification timeout'
         RequestTooLate = 'too late: past the forced communication timeout'
-
-    @base.verify_slot('force_subtask_results', ForceSubtaskResults)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
 
 
 @library.register(CONCENT_MSG_BASE + 18)
@@ -495,11 +481,14 @@ class ForcePayment(base.Message):
     __slots__ = [
         'subtask_results_accepted_list'
     ] + base.Message.__slots__
-
-    @base.verify_slot_list('subtask_results_accepted_list',
-                           tasks.SubtaskResultsAccepted)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
+    MSG_SLOTS = {
+        'subtask_results_accepted_list':
+            base.MessageSlot(
+                tasks.SubtaskResultsAccepted,
+                is_list=True,
+                allow_none=True,
+            )
+    }
 
 
 @library.register(CONCENT_MSG_BASE + 19)
@@ -555,10 +544,9 @@ class ForcePaymentRejected(base.AbstractReasonMessage):
     __slots__ = [
         'force_payment'
     ] + base.AbstractReasonMessage.__slots__
-
-    @base.verify_slot('force_payment', ForcePayment)
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
+    MSG_SLOTS = {
+        'force_payment': base.MessageSlot(ForcePayment),
+    }
 
 
 @library.register(CONCENT_MSG_BASE + 21)
@@ -589,19 +577,12 @@ class ForceReportComputedTaskResponse(tasks.TaskMessage,
         # RejectReportComputedTask sent from Requestor to Concent
         'reject_report_computed_task',
     ]
-
-    @base.verify_slot(
-        'ack_report_computed_task',
-        tasks.AckReportComputedTask,
-        allow_none=True,
-    )
-    @base.verify_slot(
-        'reject_report_computed_task',
-        tasks.RejectReportComputedTask,
-        allow_none=True,
-    )
-    def deserialize_slot(self, key, value):
-        return super().deserialize_slot(key, value)
+    MSG_SLOTS = {
+        'ack_report_computed_task':
+            base.MessageSlot(tasks.AckReportComputedTask, allow_none=True),
+        'reject_report_computed_task':
+            base.MessageSlot(tasks.RejectReportComputedTask, allow_none=True),
+    }
 
 
 @library.register(CONCENT_MSG_BASE + 22)

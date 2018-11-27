@@ -16,14 +16,14 @@ class MessageTestCase(unittest.TestCase):
 
     def test_message(self):
         m = message.Ping()
-        self.equal_after_processing(m)
+        self.equal_after_processing(m.serialize())
 
     def test_message_list(self):
-        aList = [message.Ping()]
+        aList = [message.Ping().serialize()]
         self.equal_after_processing(aList)
 
     def test_message_dict(self):
-        d = {'m': message.Ping()}
+        d = {'m': message.Ping().serialize()}
         self.equal_after_processing(d)
 
     def test_message_sig(self):

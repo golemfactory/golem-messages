@@ -35,7 +35,7 @@ setup(
     python_requires='>=3.5',
     install_requires=[
         'bitcoin',
-        'cbor2==3.0.4',
+        'cbor==1.0.0',
         'coincurve>=7.1.0',
         'eth-utils==1.0.3',
         'ethereum==1.6.1',
