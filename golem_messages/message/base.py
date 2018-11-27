@@ -279,7 +279,7 @@ class Message():
             return value.serialize()
         return value
 
-    def deserialize_slot(self, key, value):
+    def deserialize_slot(self, key, value):  # pylint:disable=too-many-branches
         if (key in self.ENUM_SLOTS) and (value is not None):
             try:
                 return self.ENUM_SLOTS[key](value)
@@ -305,37 +305,57 @@ class Message():
                     field=key,
                     value=value,
                 )
-            try:
-                if not isinstance(value, list):
+            if not isinstance(value, list):
+                try:
                     result = slot.klass.deserialize(
                         value,
                         decrypt_func=None,
                         check_time=False,
                     )
-                    if not isinstance(result, slot.klass):
-                        raise
-                    return result
-                result = []
-                for m in value:
-                    if m is None:
-                        if not slot.allow_none:
-                            raise
-                        result.append(None)
-                    else:
+                except Exception as e:
+                    raise exceptions.FieldError(
+                        "Invalid value for message slot",
+                        field=key,
+                        value=value,
+                    ) from e
+                if not isinstance(result, slot.klass):
+                    raise exceptions.FieldError(
+                        "Incorrect message type in message slot",
+                        field=key,
+                        value=value,
+                    )
+                return result
+
+            result = []
+            for m in value:
+                if m is None:
+                    if not slot.allow_none:
+                        raise exceptions.FieldError(
+                            "Disallowed None in message list slot",
+                            field=key,
+                            value=value,
+                        )
+                    result.append(None)
+                else:
+                    try:
                         result.append(slot.klass.deserialize(
                             m,
                             decrypt_func=None,
                             check_time=False,
                         ))
-                        if not isinstance(result[-1], slot.klass):
-                            raise
-                return result
-            except Exception as e:
-                raise exceptions.FieldError(
-                    "Invalid value for message slot",
-                    field=key,
-                    value=value,
-                ) from e
+                    except Exception as e:
+                        raise exceptions.FieldError(
+                            "Invalid value for message slot",
+                            field=key,
+                            value=value,
+                        ) from e
+                    if not isinstance(result[-1], slot.klass):
+                        raise exceptions.FieldError(
+                            "Incorrect message type in message list slot",
+                            field=key,
+                            value=value,
+                        )
+            return result
 
         return value
 
