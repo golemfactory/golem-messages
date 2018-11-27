@@ -432,10 +432,6 @@ class ReportComputedTask(TaskMessage):
     of the assigned subtask (attached as `task_to_compute`)
     """
     # FIXME this message should be simpler
-    RESULT_TYPE = {
-        'DATA': 0,
-        'FILES': 1,
-    }
 
     TASK_ID_PROVIDERS = ('task_to_compute', )
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.provider, )
@@ -444,8 +440,6 @@ class ReportComputedTask(TaskMessage):
     }
 
     __slots__ = [
-        # TODO why do we need the type here?
-        'result_type',
         'node_name',
         'address',
         'node_info',
