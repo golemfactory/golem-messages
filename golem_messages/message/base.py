@@ -307,18 +307,28 @@ class Message():
                 )
             try:
                 if not isinstance(value, list):
-                    return slot.klass.deserialize(
+                    result = slot.klass.deserialize(
                         value,
                         decrypt_func=None,
                         check_time=False,
                     )
+                    if not isinstance(result, slot.klass):
+                        raise
+                    return result
                 result = []
                 for m in value:
-                    result.append(slot.klass.deserialize(
-                        m,
-                        decrypt_func=None,
-                        check_time=False,
-                    ))
+                    if m is None:
+                        if not slot.allow_none:
+                            raise
+                        result.append(None)
+                    else:
+                        result.append(slot.klass.deserialize(
+                            m,
+                            decrypt_func=None,
+                            check_time=False,
+                        ))
+                        if not isinstance(result[-1], slot.klass):
+                            raise
                 return result
             except Exception as e:
                 raise exceptions.FieldError(
