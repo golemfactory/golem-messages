@@ -32,7 +32,7 @@ setup(
             'RELEASE-VERSION',
         ],
     },
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     install_requires=[
         'bitcoin',
         'cbor==1.0.0',
