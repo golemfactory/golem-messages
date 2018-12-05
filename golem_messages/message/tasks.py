@@ -483,6 +483,19 @@ class SubtaskResultsAccepted(TaskMessage):
         'report_computed_task': base.MessageSlot(ReportComputedTask),
     }
 
+    @classmethod
+    def deserialize_with_header(cls, header, data, *args, **kwargs):  # noqa pylint: disable=arguments-differ
+        instance: SubtaskResultsAccepted = super().deserialize_with_header(
+            header, data, *args, **kwargs
+        )
+        instance.is_valid()
+        return instance
+
+    def is_valid(self) -> bool:
+        if self.payment_ts > self.header.timestamp:
+            raise exceptions.ValidationError("Payment timestamp cannot be from the future!")
+        return True
+
 
 @library.register(TASK_MSG_BASE + 11)
 class SubtaskResultsRejected(TaskMessage, base.AbstractReasonMessage):
