@@ -2,6 +2,8 @@ import collections
 import copy
 import enum
 
+from golem_messages import exceptions
+
 MessageHeader = collections.namedtuple(
     "MessageHeader",
     ["type_", "timestamp", "encrypted"],
@@ -83,3 +85,70 @@ class StringEnum(str, enum.Enum):
         return name
 
     # pylint: enable=no-self-argument
+
+
+class Container:
+    __slots__ = {}
+    REQUIRED = ()
+
+    def __init__(self, **kwargs):
+        try:
+            self.load_slots(**kwargs)
+        except exceptions.FieldError:
+            raise
+        except Exception as e:
+            raise exceptions.MessageError('Header load slots failed') from e
+
+    def load_slots(self, **kwargs):
+        for key in self.__slots__:
+            try:
+                value = kwargs.pop(key)
+            except KeyError:
+                if key in self.REQUIRED:
+                    raise exceptions.FieldError(
+                        'Field required',
+                        field=key,
+                        value=None,
+                    )
+
+                value = None
+            else:
+                value = self.deserialize_slot(key, value)
+            setattr(self, key, value)
+        for key in kwargs:
+            raise exceptions.FieldError(
+                'Unknown slots',
+                field_name=key,
+                value=kwargs[key],
+            )
+
+    def deserialize_slot(self, key, value):
+        if value is None and (key not in self.REQUIRED):
+            # Skip validation
+            return value
+        validators_ = self.__slots__[key]
+        for validator in validators_:
+            validator(
+                field_name=key,
+                value=value,
+            )
+        try:
+            value = getattr(self, f'deserialize_{key}')(value)
+        except AttributeError:
+            pass
+        return value
+
+    def to_dict(self):
+        """ Nullifies the properties not required for signature verification
+        and sorts the task dict representation in order to have the same
+        resulting binary blob after serialization.
+        """
+        dictionary = {}
+        for key in self.__slots__:
+            value = getattr(self, key, None)
+            try:
+                value = getattr(self, f'serialize_{key}')(value)
+            except AttributeError:
+                pass
+            dictionary[key] = value
+        return dictionary

@@ -1,3 +1,5 @@
+from golem_messages import exceptions
+from golem_messages.datastructures import tasks as dt_tasks
 from golem_messages.register import library
 
 from . import base
@@ -60,6 +62,45 @@ class Tasks(base.Message):
         """
         super().__init__(**kwargs)
         self.tasks = self.tasks or []
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key=key, value=value)
+        if key == 'tasks':
+            value = self.deserialize_tasks(value)
+        return value
+
+    @classmethod
+    def deserialize_tasks(cls, value):
+        if not isinstance(value, list):
+            raise exceptions.FieldError(
+                "Should be a list not {}".format(type(value)),
+                field="tasks",
+                value=value,
+            )
+        parsed = []
+        for header_dict in value:
+            if not isinstance(header_dict, dict):
+                raise exceptions.FieldError(
+                    "dict is expected not {}".format(
+                        type(header_dict),
+                    ),
+                    field="tasks",
+                    value=header_dict,
+                )
+            parsed.append(dt_tasks.TaskHeader(**header_dict))
+        return parsed
+
+    def serialize_slot(self, key, value):
+        value = super().serialize_slot(key=key, value=value)
+        if key == "tasks":
+            if not isinstance(value, list):
+                raise exceptions.FieldError(
+                    "Should be a list not {}".format(type(value)),
+                    field="tasks",
+                    value=value,
+                )
+            value = [task_header.to_dict() for task_header in value]
+        return value
 
 
 @library.register(P2P_MESSAGE_BASE + 7)

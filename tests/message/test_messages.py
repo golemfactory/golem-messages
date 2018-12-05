@@ -10,6 +10,7 @@ from golem_messages import datastructures
 from golem_messages import factories
 from golem_messages import message
 from golem_messages import shortcuts
+from golem_messages.factories.datastructures import tasks as dt_tasks_factories
 from golem_messages.utils import encode_hex
 
 
@@ -161,11 +162,12 @@ class MessagesTestCase(unittest.TestCase):
             self.assertEqual(expected, msg.slots())
 
     def test_list_messages(self):
-        for message_class, key in (
-                (message.Peers, 'peers'),
-                (message.Tasks, 'tasks'),
-                (message.ResourcePeers, 'resource_peers'),
-                (message.Gossip, 'gossip'), ):
+        obj_factory = lambda: object()  # pylint: disable=unnecessary-lambda
+        for message_class, key, factory in (
+                (message.Peers, 'peers', obj_factory),
+                (message.Tasks, 'tasks', dt_tasks_factories.TaskHeader),
+                (message.ResourcePeers, 'resource_peers', obj_factory),
+                (message.Gossip, 'gossip', obj_factory), ):
             msg = message_class()
             value = []
             expected = [
@@ -173,13 +175,14 @@ class MessagesTestCase(unittest.TestCase):
             ]
             self.assertEqual(expected, msg.slots())
 
-            value = [object()]
+            value = [factory()]
             msg_kwarg = message_class(**{key: value})
+            serialized_value = msg_kwarg.serialize_slot(key, value)
             expected = [
-                [key, value]
+                [key, serialized_value]
             ]
             self.assertEqual(expected, msg_kwarg.slots())
-            msg_slots = message_class(slots=[(key, value)])
+            msg_slots = message_class(slots=[(key, serialized_value)])
             self.assertEqual(expected, msg_slots.slots())
 
     def test_int_messages(self):
