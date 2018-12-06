@@ -83,6 +83,14 @@ def fake_golem_uuid(node_id: str) -> str:
     return str(id_)
 
 
+def fake_version() -> str:
+    return "{major}.{minor}.{patch}".format(
+        major=fake.random_int(min=0),
+        minor=fake.random_int(min=0),
+        patch=fake.random_int(min=0),
+    )
+
+
 class MessageFactory(factory.Factory):
 
     @staticmethod

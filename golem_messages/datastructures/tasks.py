@@ -95,6 +95,7 @@ class TaskHeader(datastructures.Container):
         'task_id',
         'task_owner',
         'subtasks_count',
+        'min_version',
     ))
 
     def __repr__(self):
