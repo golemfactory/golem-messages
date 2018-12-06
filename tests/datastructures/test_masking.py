@@ -2,8 +2,6 @@ from random import Random
 from unittest import TestCase
 from unittest.mock import patch
 
-import pytest
-
 from golem_messages.datastructures.masking import Mask
 
 
@@ -105,7 +103,6 @@ class TestMask(TestCase):
         _check(80, 4)    # 1024 / 2**3 > 80 > 1024 / 2**4
         _check(5000, 0)  # 5000 > 1024 / 2 ** 0
 
-    @pytest.mark.slow
     @patch('golem_messages.datastructures.masking.random', new=Random(__name__))
     def test_matches(self):
         def _check(num_bits, exp_num_nodes):
