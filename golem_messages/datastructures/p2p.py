@@ -35,31 +35,6 @@ class Node(datastructures.Container):
         'node_name',
     )
 
-    def collect_network_info(self, seed_host=None, use_ipv6=False):
-        from golem.core import hostaddress
-        # pylint: disable=attribute-defined-outside-init
-        self.prv_addresses = hostaddress.get_host_addresses(use_ipv6)
-
-        if not self.pub_addr:
-            self.pub_addr, _ = hostaddress.get_external_address()
-
-        if not self.prv_addr:
-            if self.pub_addr in self.prv_addresses:
-                self.prv_addr = self.pub_addr
-            else:
-                self.prv_addr = hostaddress.get_host_address(
-                    seed_host,
-                    use_ipv6,
-                )
-
-        if self.prv_addr not in self.prv_addresses:
-            logger.warning(
-                "Specified node address %s is not among detected "
-                "network addresses: %s",
-                self.prv_addr,
-                self.prv_addresses,
-            )
-
     def update_public_info(self) -> None:
         # pylint: disable=attribute-defined-outside-init
         if self.pub_addr is None:
