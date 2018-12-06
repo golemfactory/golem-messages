@@ -2,10 +2,12 @@ import datetime
 import time
 import unittest
 
+from golem_messages import cryptography
 from golem_messages import idgenerator
 from golem_messages import utils
 from golem_messages import exceptions
 from golem_messages.datastructures import tasks as dt_tasks
+from golem_messages.factories.datastructures import tasks as dt_tasks_factories
 
 
 class TestTaskHeader(unittest.TestCase):
@@ -112,3 +114,23 @@ class TestTaskHeader(unittest.TestCase):
             msg="Subtasks count is less than 1 [subtasks_count:-1]"
         ):
             dt_tasks.TaskHeader(**self.th_dict_repr)
+
+
+class TestTaskHeaderSignature(unittest.TestCase):
+    def setUp(self):
+        self.task_header = dt_tasks_factories.TaskHeader()
+        self.keys = cryptography.ECCx(None)
+
+    def test_signature(self):
+        self.assertIsNone(self.task_header.signature)
+        self.task_header.sign(private_key=self.keys.raw_privkey)
+        self.assertIsInstance(self.task_header.signature, bytes)
+
+    def test_verify_ok(self):
+        self.task_header.sign(private_key=self.keys.raw_privkey)
+        self.task_header.verify(public_key=self.keys.raw_pubkey)
+
+    def test_verify_fail(self):
+        self.task_header.signature = 'sp00f'
+        with self.assertRaises(exceptions.InvalidSignature):
+            self.task_header.verify(public_key=self.keys.raw_pubkey)
