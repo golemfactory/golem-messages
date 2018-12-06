@@ -199,7 +199,7 @@ class TaskMessage(base.Message):
 
     @classmethod
     def deserialize_with_header(cls, header, data, *args, **kwargs):  # noqa pylint: disable=arguments-differ
-        instance: SubtaskResultsAccepted = super().deserialize_with_header(
+        instance: TaskMessage = super().deserialize_with_header(
             header, data, *args, **kwargs
         )
         instance.is_valid()
