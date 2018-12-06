@@ -197,6 +197,14 @@ class TaskMessage(base.Message):
         self.validate_ownership_chain(concent_public_key=concent_public_key)
         return True
 
+    @classmethod
+    def deserialize_with_header(cls, header, data, *args, **kwargs):  # noqa pylint: disable=arguments-differ
+        instance: SubtaskResultsAccepted = super().deserialize_with_header(
+            header, data, *args, **kwargs
+        )
+        instance.is_valid()
+        return instance
+
     def is_valid(self):  # noqa pylint:disable=no-self-use
         """
         checks whether the message is semantically valid with respect to
@@ -482,14 +490,6 @@ class SubtaskResultsAccepted(TaskMessage):
     MSG_SLOTS = {
         'report_computed_task': base.MessageSlot(ReportComputedTask),
     }
-
-    @classmethod
-    def deserialize_with_header(cls, header, data, *args, **kwargs):  # noqa pylint: disable=arguments-differ
-        instance: SubtaskResultsAccepted = super().deserialize_with_header(
-            header, data, *args, **kwargs
-        )
-        instance.is_valid()
-        return instance
 
     def is_valid(self) -> bool:
         if self.payment_ts > self.header.timestamp:
