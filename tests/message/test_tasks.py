@@ -10,12 +10,14 @@ from ethereum.utils import sha3
 import factory
 
 from golem_messages import cryptography
+from golem_messages import dump
 from golem_messages import exceptions
 from golem_messages import factories
+from golem_messages import load
 from golem_messages import message
 from golem_messages import shortcuts
+from golem_messages.factories.helpers import override_timestamp
 from golem_messages.utils import encode_hex, decode_hex
-
 from tests.message import mixins, helpers
 
 
@@ -123,6 +125,25 @@ class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
             ('report_computed_task', factories.tasks.ReportComputedTaskFactory().serialize()),
         ))
         self.assertIsInstance(msg.report_computed_task, message.tasks.ReportComputedTask)
+
+    def test_payment_ts_validation_raises(self):
+        serialized_sra = self._get_serialized_sra(payment_ts_offset=1)
+        with self.assertRaises(exceptions.ValidationError):
+            load(serialized_sra, None, None)
+
+    def test_payment_ts_validation_ok(self):
+        serialized_sra = self._get_serialized_sra()
+        try:
+            load(serialized_sra, None, None)
+        except Exception:   # pylint: disable=broad-except
+            self.fail("Should pass validation, but didn't")
+
+    def _get_serialized_sra(self, payment_ts_offset=0):
+        timestamp = calendar.timegm(time.gmtime())
+        payment_ts = timestamp + payment_ts_offset
+        sra = self.FACTORY(payment_ts=payment_ts)
+        override_timestamp(sra, timestamp)
+        return dump(sra, None, None)
 
 
 class SubtaskResultsRejectedTest(mixins.RegisteredMessageTestMixin,
