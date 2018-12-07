@@ -88,8 +88,10 @@ class StringEnum(str, enum.Enum):
 
 
 class Container:
+    """If you insist on using classes instead of dicts, use this one"""
     __slots__ = {}
     REQUIRED = ()
+    DEFAULTS = {}
 
     def __init__(self, **kwargs):
         try:
@@ -111,7 +113,7 @@ class Container:
                         value=None,
                     )
 
-                value = None
+                value = self.DEFAULTS.get(key, lambda: None)()
             else:
                 value = self.deserialize_slot(key, value)
             setattr(self, key, value)

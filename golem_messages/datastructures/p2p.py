@@ -35,6 +35,12 @@ class Node(datastructures.Container):
         'node_name',
     )
 
+    DEFAULTS = {
+        'prv_addresses': lambda: [],
+        'port_statuses': lambda: {},
+        'nat_type': lambda: [],
+    }
+
     def update_public_info(self) -> None:
         # pylint: disable=attribute-defined-outside-init
         if self.pub_addr is None:
