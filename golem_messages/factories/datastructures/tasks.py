@@ -17,3 +17,4 @@ class TaskHeader(factory.Factory):
     subtasks_count = factory.Faker('random_int', min=1)
     min_version = factory.LazyFunction(helpers.fake_version)
     mask = factory.Faker('binary', length=masking.Mask.MASK_BYTES)
+    environment = "DEFAULT"
