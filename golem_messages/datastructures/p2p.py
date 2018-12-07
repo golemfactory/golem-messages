@@ -51,8 +51,8 @@ class Node(datastructures.Container):
             return False
         return self.pub_addr == self.prv_addr
 
-    def __str__(self) -> str:
-        return "Node {}, (key: {})".format(self.node_name, self.key)
+    def __repr__(self) -> str:
+        return "<Node {!r}, (key: {!r})>".format(self.node_name, self.key)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Node):
