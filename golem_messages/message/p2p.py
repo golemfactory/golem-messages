@@ -165,5 +165,5 @@ class RemoveTaskContainer(base.Message):
     """
     __slots__ = ['remove_tasks'] + base.Message.__slots__
     MSG_SLOTS = {
-        'remove_tasks': base.MessageSlot(RemoveTask, is_list=True),
+        'remove_tasks': base.MessageSlotDefinition(RemoveTask, is_list=True),
     }

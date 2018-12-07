@@ -1,4 +1,5 @@
 import calendar
+import collections
 import datetime
 import enum
 import hashlib
@@ -249,37 +250,45 @@ class Message():
             self.encrypted,
         )
 
-    def serialize_slot(self, key, value):  # noqa pylint: disable=unused-argument, no-self-use
+    def serialize_slot(self, key, value):
         if isinstance(value, enum.Enum):
             return value.value
         if key in self.MSG_SLOTS:
-            slot = self.MSG_SLOTS[key]
-            if value is None and slot.allow_none:
-                return None
-            if slot.is_list:
-                if not isinstance(value, list):
-                    raise exceptions.FieldError(
-                        "Invalid non list value for message slot",
-                        field=key,
-                        value=value,
-                    )
-                if not all([isinstance(v, slot.klass) for v in value]):
-                    raise exceptions.FieldError(
-                        "Invalid list values for message slot",
-                        field=key,
-                        value=value,
-                    )
-                return [v.serialize() for v in value]
-            if not isinstance(value, slot.klass):
+            return self.serialize_message(key, value)
+        return value
+
+    def serialize_message(self, key, value):
+        slot_definition: MessageSlotDefinition = self.MSG_SLOTS[key]
+        if value is None:
+            if not slot_definition.allow_none:
                 raise exceptions.FieldError(
-                    "Invalid value for message slot",
+                    "Disallowed None for message slot",
                     field=key,
                     value=value,
                 )
-            return value.serialize()
-        return value
+            return None
 
-    def deserialize_slot(self, key, value):  # pylint:disable=too-many-branches
+        if not isinstance(value, list):
+            return self.serialize_message_single(key, value)
+        if not slot_definition.is_list:
+            raise exceptions.FieldError(
+                "Invalid non list value for message slot",
+                field=key,
+                value=value,
+            )
+        return [self.serialize_message_single(key, msg) for msg in value]
+
+    def serialize_message_single(self, key, value):
+        slot_definition = self.MSG_SLOTS[key]
+        if not isinstance(value, slot_definition.klass):
+            raise exceptions.FieldError(
+                "Should be instance of {}".format(slot_definition.klass),
+                field=key,
+                value=value,
+            )
+        return value.serialize()
+
+    def deserialize_slot(self, key, value):
         if (key in self.ENUM_SLOTS) and (value is not None):
             try:
                 return self.ENUM_SLOTS[key](value)
@@ -290,74 +299,64 @@ class Message():
                     value=value,
                 ) from e
         if key in self.MSG_SLOTS:
-            slot = self.MSG_SLOTS[key]
-            if value is None:
-                if not slot.allow_none:
-                    raise exceptions.FieldError(
-                        "Disallowed None for message slot",
-                        field=key,
-                        value=value,
-                    )
-                return None
-            if isinstance(value, list) != slot.is_list:
+            return self.deserialize_message(key, value)
+        return value
+
+    def deserialize_message(self, key, value):
+        slot_definition: MessageSlotDefinition = self.MSG_SLOTS[key]
+
+        if not isinstance(value, list):
+            if value and slot_definition.is_list:
                 raise exceptions.FieldError(
-                    "Disallowed list for message slot",
+                    "Should be List[{}]".format(slot_definition.klass),
                     field=key,
                     value=value,
                 )
-            if not isinstance(value, list):
-                try:
-                    result = slot.klass.deserialize(
-                        value,
-                        decrypt_func=None,
-                        check_time=False,
-                    )
-                except Exception as e:
-                    raise exceptions.FieldError(
-                        "Invalid value for message slot",
-                        field=key,
-                        value=value,
-                    ) from e
-                if not isinstance(result, slot.klass):
-                    raise exceptions.FieldError(
-                        "Incorrect message type in message slot",
-                        field=key,
-                        value=value,
-                    )
-                return result
+            return self.deserialize_message_single(key, value)
 
-            result = []
-            for m in value:
-                if m is None:
-                    if not slot.allow_none:
-                        raise exceptions.FieldError(
-                            "Disallowed None in message list slot",
-                            field=key,
-                            value=value,
-                        )
-                    result.append(None)
-                else:
-                    try:
-                        result.append(slot.klass.deserialize(
-                            m,
-                            decrypt_func=None,
-                            check_time=False,
-                        ))
-                    except Exception as e:
-                        raise exceptions.FieldError(
-                            "Invalid value for message slot",
-                            field=key,
-                            value=value,
-                        ) from e
-                    if not isinstance(result[-1], slot.klass):
-                        raise exceptions.FieldError(
-                            "Incorrect message type in message list slot",
-                            field=key,
-                            value=value,
-                        )
-            return result
+        if not slot_definition.is_list:
+            raise exceptions.FieldError(
+                "Disallowed list for message slot",
+                field=key,
+                value=value,
+            )
 
-        return value
+        result = [
+            self.deserialize_message_single(key, serialized_msg)
+            for serialized_msg
+            in value
+        ]
+        return result
+
+    def deserialize_message_single(self, key, value):
+        slot_definition: MessageSlotDefinition = self.MSG_SLOTS[key]
+        if value is None:
+            if not slot_definition.allow_none:
+                raise exceptions.FieldError(
+                    "Disallowed None for message slot",
+                    field=key,
+                    value=value,
+                )
+            return None
+        try:
+            result = self.deserialize(
+                value,
+                decrypt_func=None,
+                check_time=False,
+            )
+        except Exception as e:
+            raise exceptions.FieldError(
+                "Invalid value for message slot",
+                field=key,
+                value=value,
+            ) from e
+        if not isinstance(result, slot_definition.klass):
+            raise exceptions.FieldError(
+                "Incorrect message type in message slot",
+                field=key,
+                value=value,
+            )
+        return result
 
     @classmethod
     def unpack_header(cls, data: bytes) -> datastructures.MessageHeader:
@@ -572,11 +571,17 @@ class Message():
         self.sig = b'\0' * Message.SIG_LEN
 
 
-class MessageSlot:  # pylint: disable=too-few-public-methods
-    def __init__(self, klass, allow_none=False, is_list=False):
-        self.klass = klass
-        self.allow_none = allow_none
-        self.is_list = is_list
+MessageSlotDefinition_ = collections.namedtuple(
+    "MessageSlotDefinition",
+    ["klass", "allow_none", "is_list"],
+    # defaults added in python3.7
+    # defaults=[False, False],
+)
+
+
+def MessageSlotDefinition(klass, allow_none=False, is_list=False):
+    # Overcome python3.6 limitation and set default values
+    return MessageSlotDefinition_(klass, allow_none, is_list)
 
 
 class AbstractReasonMessage(Message):

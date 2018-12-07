@@ -26,7 +26,7 @@ class ServiceRefused(tasks.TaskMessage, base.AbstractReasonMessage):
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
     MSG_SLOTS = {
         'task_to_compute':
-            base.MessageSlot(tasks.TaskToCompute, allow_none=True),
+            base.MessageSlotDefinition(tasks.TaskToCompute, allow_none=True),
     }
 
     @enum.unique
@@ -59,7 +59,7 @@ class ForceReportComputedTask(tasks.TaskMessage):
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.provider,
                        tasks.TaskMessage.OWNER_CHOICES.concent)
     MSG_SLOTS = {
-        'report_computed_task': base.MessageSlot(tasks.ReportComputedTask),
+        'report_computed_task': base.MessageSlotDefinition(tasks.ReportComputedTask),
     }
 
     __slots__ = [
@@ -83,9 +83,9 @@ class VerdictReportComputedTask(tasks.TaskMessage):
                          'ack_report_computed_task', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
     MSG_SLOTS = {
-        'force_report_computed_task': base.MessageSlot(ForceReportComputedTask),
+        'force_report_computed_task': base.MessageSlotDefinition(ForceReportComputedTask),
         'ack_report_computed_task':
-            base.MessageSlot(tasks.AckReportComputedTask),
+            base.MessageSlotDefinition(tasks.AckReportComputedTask),
     }
 
     __slots__ = [
@@ -209,7 +209,7 @@ class SubtaskResultsVerify(tasks.TaskMessage):
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.provider, )
     MSG_SLOTS = {
         'subtask_results_rejected':
-            base.MessageSlot(tasks.SubtaskResultsRejected),
+            base.MessageSlotDefinition(tasks.SubtaskResultsRejected),
     }
 
     __slots__ = [
@@ -228,8 +228,8 @@ class AckSubtaskResultsVerify(tasks.TaskMessage):
     TASK_ID_PROVIDERS = ('subtask_results_verify', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
     MSG_SLOTS = {
-        'subtask_results_verify': base.MessageSlot(SubtaskResultsVerify),
-        'file_transfer_token': base.MessageSlot(FileTransferToken),
+        'subtask_results_verify': base.MessageSlotDefinition(SubtaskResultsVerify),
+        'file_transfer_token': base.MessageSlotDefinition(FileTransferToken),
     }
 
     __slots__ = [
@@ -265,7 +265,7 @@ class SubtaskResultsSettled(tasks.TaskMessage):
         'origin': Origin,
     }
     MSG_SLOTS = {
-        'task_to_compute': base.MessageSlot(tasks.TaskToCompute),
+        'task_to_compute': base.MessageSlotDefinition(tasks.TaskToCompute),
     }
 
     __slots__ = [
@@ -288,7 +288,7 @@ class ForceGetTaskResult(tasks.TaskMessage):
     ] + base.Message.__slots__
 
     MSG_SLOTS = {
-        'report_computed_task': base.MessageSlot(tasks.ReportComputedTask),
+        'report_computed_task': base.MessageSlotDefinition(tasks.ReportComputedTask),
     }
 
 
@@ -306,7 +306,7 @@ class AckForceGetTaskResult(tasks.TaskMessage):
     ] + base.Message.__slots__
 
     MSG_SLOTS = {
-        'force_get_task_result': base.MessageSlot(ForceGetTaskResult),
+        'force_get_task_result': base.MessageSlotDefinition(ForceGetTaskResult),
     }
 
 
@@ -328,7 +328,7 @@ class ForceGetTaskResultFailed(tasks.TaskMessage):
     ] + base.Message.__slots__
 
     MSG_SLOTS = {
-        'task_to_compute': base.MessageSlot(tasks.TaskToCompute),
+        'task_to_compute': base.MessageSlotDefinition(tasks.TaskToCompute),
     }
 
 
@@ -342,7 +342,7 @@ class ForceGetTaskResultRejected(tasks.TaskMessage,
     TASK_ID_PROVIDERS = ('force_get_task_result', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
     MSG_SLOTS = {
-        'force_get_task_result': base.MessageSlot(ForceGetTaskResult),
+        'force_get_task_result': base.MessageSlotDefinition(ForceGetTaskResult),
     }
 
     __slots__ = [
@@ -362,8 +362,8 @@ class ForceGetTaskResultUpload(tasks.TaskMessage):
     TASK_ID_PROVIDERS = ('force_get_task_result', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
     MSG_SLOTS = {
-        'force_get_task_result': base.MessageSlot(ForceGetTaskResult),
-        'file_transfer_token': base.MessageSlot(FileTransferToken),
+        'force_get_task_result': base.MessageSlotDefinition(ForceGetTaskResult),
+        'file_transfer_token': base.MessageSlotDefinition(FileTransferToken),
     }
 
     __slots__ = [
@@ -381,8 +381,8 @@ class ForceGetTaskResultDownload(tasks.TaskMessage):
     TASK_ID_PROVIDERS = ('force_get_task_result', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
     MSG_SLOTS = {
-        'force_get_task_result': base.MessageSlot(ForceGetTaskResult),
-        'file_transfer_token': base.MessageSlot(FileTransferToken),
+        'force_get_task_result': base.MessageSlotDefinition(ForceGetTaskResult),
+        'file_transfer_token': base.MessageSlotDefinition(FileTransferToken),
     }
 
     __slots__ = [
@@ -410,7 +410,7 @@ class ForceSubtaskResults(tasks.TaskMessage):
     )
     MSG_SLOTS = {
         'ack_report_computed_task':
-            base.MessageSlot(tasks.AckReportComputedTask),
+            base.MessageSlotDefinition(tasks.AckReportComputedTask),
     }
 
     __slots__ = [
@@ -434,9 +434,9 @@ class ForceSubtaskResultsResponse(tasks.TaskMessage):
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
     MSG_SLOTS = {
         'subtask_results_accepted':
-            base.MessageSlot(tasks.SubtaskResultsAccepted, allow_none=True),
+            base.MessageSlotDefinition(tasks.SubtaskResultsAccepted, allow_none=True),
         'subtask_results_rejected':
-            base.MessageSlot(tasks.SubtaskResultsRejected, allow_none=True),
+            base.MessageSlotDefinition(tasks.SubtaskResultsRejected, allow_none=True),
     }
 
     __slots__ = [
@@ -457,7 +457,7 @@ class ForceSubtaskResultsRejected(tasks.TaskMessage,
     TASK_ID_PROVIDERS = ('force_subtask_results', )
     EXPECTED_OWNERS = (tasks.TaskMessage.OWNER_CHOICES.concent, )
     MSG_SLOTS = {
-        'force_subtask_results': base.MessageSlot(ForceSubtaskResults),
+        'force_subtask_results': base.MessageSlotDefinition(ForceSubtaskResults),
     }
 
     __slots__ = [
@@ -483,7 +483,7 @@ class ForcePayment(base.Message):
     ] + base.Message.__slots__
     MSG_SLOTS = {
         'subtask_results_accepted_list':
-            base.MessageSlot(
+            base.MessageSlotDefinition(
                 tasks.SubtaskResultsAccepted,
                 is_list=True,
                 allow_none=True,
@@ -545,7 +545,7 @@ class ForcePaymentRejected(base.AbstractReasonMessage):
         'force_payment'
     ] + base.AbstractReasonMessage.__slots__
     MSG_SLOTS = {
-        'force_payment': base.MessageSlot(ForcePayment),
+        'force_payment': base.MessageSlotDefinition(ForcePayment),
     }
 
 
@@ -579,9 +579,9 @@ class ForceReportComputedTaskResponse(tasks.TaskMessage,
     ]
     MSG_SLOTS = {
         'ack_report_computed_task':
-            base.MessageSlot(tasks.AckReportComputedTask, allow_none=True),
+            base.MessageSlotDefinition(tasks.AckReportComputedTask, allow_none=True),
         'reject_report_computed_task':
-            base.MessageSlot(tasks.RejectReportComputedTask, allow_none=True),
+            base.MessageSlotDefinition(tasks.RejectReportComputedTask, allow_none=True),
     }
 
 
