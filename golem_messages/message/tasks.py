@@ -267,7 +267,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
     ETHSIG_LENGTH = struct.calcsize(ETHSIG_FORMAT)
 
     MSG_SLOTS = {
-        'want_to_compute_task': base.MessageSlot(WantToComputeTask),
+        'want_to_compute_task': base.MessageSlotDefinition(WantToComputeTask),
     }
 
     __slots__ = [
@@ -443,7 +443,7 @@ class ReportComputedTask(TaskMessage):
     TASK_ID_PROVIDERS = ('task_to_compute', )
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.provider, )
     MSG_SLOTS = {
-        'task_to_compute': base.MessageSlot(TaskToCompute),
+        'task_to_compute': base.MessageSlotDefinition(TaskToCompute),
     }
 
     __slots__ = [
@@ -488,7 +488,7 @@ class SubtaskResultsAccepted(TaskMessage):
         'report_computed_task',
     ] + base.Message.__slots__
     MSG_SLOTS = {
-        'report_computed_task': base.MessageSlot(ReportComputedTask),
+        'report_computed_task': base.MessageSlotDefinition(ReportComputedTask),
     }
 
     def is_valid(self) -> bool:
@@ -518,7 +518,7 @@ class SubtaskResultsRejected(TaskMessage, base.AbstractReasonMessage):
         'report_computed_task',
     ] + base.AbstractReasonMessage.__slots__
     MSG_SLOTS = {
-        'report_computed_task': base.MessageSlot(ReportComputedTask),
+        'report_computed_task': base.MessageSlotDefinition(ReportComputedTask),
     }
 
     @enum.unique
@@ -538,7 +538,7 @@ class TaskFailure(TaskMessage):
     TASK_ID_PROVIDERS = ('task_to_compute', )
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.provider, )
     MSG_SLOTS = {
-        'task_to_compute': base.MessageSlot(TaskToCompute),
+        'task_to_compute': base.MessageSlotDefinition(TaskToCompute),
     }
 
     __slots__ = [
@@ -570,7 +570,7 @@ class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
     TASK_ID_PROVIDERS = ('task_to_compute', )
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.provider, )
     MSG_SLOTS = {
-        'task_to_compute': base.MessageSlot(TaskToCompute),
+        'task_to_compute': base.MessageSlotDefinition(TaskToCompute),
     }
 
     __slots__ = [
@@ -643,7 +643,7 @@ class AckReportComputedTask(TaskMessage):
         'report_computed_task',
     ] + base.Message.__slots__
     MSG_SLOTS = {
-        'report_computed_task': base.MessageSlot(ReportComputedTask),
+        'report_computed_task': base.MessageSlotDefinition(ReportComputedTask),
     }
 
 
@@ -660,11 +660,13 @@ class RejectReportComputedTask(TaskMessage, base.AbstractReasonMessage):
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor,
                        TaskMessage.OWNER_CHOICES.concent)
     MSG_SLOTS = {
-        'attached_task_to_compute':
-            base.MessageSlot(TaskToCompute, allow_none=True),
-        'task_failure': base.MessageSlot(TaskFailure, allow_none=True),
+        'attached_task_to_compute': base.MessageSlotDefinition(
+            TaskToCompute,
+            allow_none=True,
+        ),
+        'task_failure': base.MessageSlotDefinition(TaskFailure, allow_none=True),
         'cannot_compute_task':
-            base.MessageSlot(CannotComputeTask, allow_none=True),
+            base.MessageSlotDefinition(CannotComputeTask, allow_none=True),
     }
 
     @enum.unique

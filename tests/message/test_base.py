@@ -41,7 +41,7 @@ class VerifySlotParent(base.Message):
         'child'
     ] + base.Message.__slots__
     MSG_SLOTS = {
-        'child': base.MessageSlot(VerifySlotChild),
+        'child': base.MessageSlotDefinition(VerifySlotChild),
     }
 
 
@@ -51,7 +51,7 @@ class VerifySlotListParent(base.Message):
         'child_list'
     ] + base.Message.__slots__
     MSG_SLOTS = {
-        'child_list': base.MessageSlot(VerifySlotChild, is_list=True),
+        'child_list': base.MessageSlotDefinition(VerifySlotChild, is_list=True),
     }
 
 
@@ -61,7 +61,7 @@ class VerifySlotParentAllowNone(base.Message):
         'child'
     ] + base.Message.__slots__
     MSG_SLOTS = {
-        'child': base.MessageSlot(VerifySlotChild, allow_none=True),
+        'child': base.MessageSlotDefinition(VerifySlotChild, allow_none=True),
     }
 
 
@@ -71,7 +71,7 @@ class VerifySlotListParentAllowNone(base.Message):
         'child_list'
     ] + base.Message.__slots__
     MSG_SLOTS = {
-        'child_list': base.MessageSlot(
+        'child_list': base.MessageSlotDefinition(
             VerifySlotChild,
             is_list=True,
             allow_none=True,

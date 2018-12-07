@@ -1,4 +1,5 @@
 import calendar
+import collections
 import datetime
 import enum
 import hashlib
@@ -257,12 +258,19 @@ class Message():
         return value
 
     def serialize_message(self, key, value):
-        slot = self.MSG_SLOTS[key]
-        if value is None and slot.allow_none:
+        slot_definition: MessageSlotDefinition = self.MSG_SLOTS[key]
+        if value is None:
+            if not slot_definition.allow_none:
+                raise exceptions.FieldError(
+                    "Disallowed None for message slot",
+                    field=key,
+                    value=value,
+                )
             return None
+
         if not isinstance(value, list):
             return self.serialize_message_single(key, value)
-        if not slot.is_list:
+        if not slot_definition.is_list:
             raise exceptions.FieldError(
                 "Invalid non list value for message slot",
                 field=key,
@@ -271,10 +279,10 @@ class Message():
         return [self.serialize_message_single(key, msg) for msg in value]
 
     def serialize_message_single(self, key, value):
-        slot = self.MSG_SLOTS[key]
-        if not isinstance(value, slot.klass):
+        slot_definition = self.MSG_SLOTS[key]
+        if not isinstance(value, slot_definition.klass):
             raise exceptions.FieldError(
-                "Invalid value for message slot",
+                "Should be instance of {}".format(slot_definition.klass),
                 field=key,
                 value=value,
             )
@@ -295,12 +303,18 @@ class Message():
         return value
 
     def deserialize_message(self, key, value):
-        slot = self.MSG_SLOTS[key]
+        slot_definition: MessageSlotDefinition = self.MSG_SLOTS[key]
 
         if not isinstance(value, list):
-            return self.deserialize_message_single(slot, value)
+            if value and slot_definition.is_list:
+                raise exceptions.FieldError(
+                    "Should be List[{}]".format(slot_definition.klass),
+                    field=key,
+                    value=value,
+                )
+            return self.deserialize_message_single(key, value)
 
-        if not slot.is_list:
+        if not slot_definition.is_list:
             raise exceptions.FieldError(
                 "Disallowed list for message slot",
                 field=key,
@@ -315,9 +329,9 @@ class Message():
         return result
 
     def deserialize_message_single(self, key, value):
-        slot = self.MSG_SLOTS[key]
+        slot_definition: MessageSlotDefinition = self.MSG_SLOTS[key]
         if value is None:
-            if not slot.allow_none:
+            if not slot_definition.allow_none:
                 raise exceptions.FieldError(
                     "Disallowed None for message slot",
                     field=key,
@@ -336,7 +350,7 @@ class Message():
                 field=key,
                 value=value,
             ) from e
-        if not isinstance(result, slot.klass):
+        if not isinstance(result, slot_definition.klass):
             raise exceptions.FieldError(
                 "Incorrect message type in message slot",
                 field=key,
@@ -557,11 +571,17 @@ class Message():
         self.sig = b'\0' * Message.SIG_LEN
 
 
-class MessageSlot:  # pylint: disable=too-few-public-methods
-    def __init__(self, klass, allow_none=False, is_list=False):
-        self.klass = klass
-        self.allow_none = allow_none
-        self.is_list = is_list
+MessageSlotDefinition_ = collections.namedtuple(
+    "MessageSlotDefinition",
+    ["klass", "allow_none", "is_list"],
+    # defaults added in python3.7
+    # defaults=[False, False],
+)
+
+
+def MessageSlotDefinition(klass, allow_none=False, is_list=False):
+    # Overcome python3.6 limitation and set default values
+    return MessageSlotDefinition_(klass, allow_none, is_list)
 
 
 class AbstractReasonMessage(Message):
