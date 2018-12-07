@@ -260,15 +260,15 @@ class Message():
         slot = self.MSG_SLOTS[key]
         if value is None and slot.allow_none:
             return None
-        if isinstance(value, list):
-            if not slot.is_list:
-                raise exceptions.FieldError(
-                    "Invalid non list value for message slot",
-                    field=key,
-                    value=value,
-                )
-            return [self.serialize_message_single(key, msg) for msg in value]
-        return self.serialize_message_single(key, value)
+        if not isinstance(value, list):
+            return self.serialize_message_single(key, value)
+        if not slot.is_list:
+            raise exceptions.FieldError(
+                "Invalid non list value for message slot",
+                field=key,
+                value=value,
+            )
+        return [self.serialize_message_single(key, msg) for msg in value]
 
     def serialize_message_single(self, key, value):
         slot = self.MSG_SLOTS[key]
@@ -325,7 +325,7 @@ class Message():
                 )
             return None
         try:
-            result = slot.klass.deserialize(
+            result = self.deserialize(
                 value,
                 decrypt_func=None,
                 check_time=False,
