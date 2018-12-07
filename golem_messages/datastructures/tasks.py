@@ -9,7 +9,7 @@ from golem_messages import exceptions
 from golem_messages import serializer
 from golem_messages import validators
 from golem_messages.datastructures import masking
-from golem_messages.datastructures import p2p as p2p_datastructures
+from golem_messages.datastructures import p2p as dt_p2p
 
 
 logger = logging.getLogger(__name__)
@@ -52,8 +52,8 @@ class TaskHeader(datastructures.Container):
         'task_owner': (
             functools.partial(
                 _fail_if,
-                check=lambda x: isinstance(x, dict),
-                fail_msg="Should be a dict",
+                check=lambda x: isinstance(x, (dict, dt_p2p.Node)),
+                fail_msg="Should be a dict or Node",
             ),
         ),
         'deadline': (
@@ -103,7 +103,9 @@ class TaskHeader(datastructures.Container):
 
     @classmethod
     def deserialize_task_owner(cls, value):
-        return p2p_datastructures.Node(**value)
+        if isinstance(value, dt_p2p.Node):
+            return value
+        return dt_p2p.Node(**value)
 
     @classmethod
     def deserialize_mask(cls, value):
