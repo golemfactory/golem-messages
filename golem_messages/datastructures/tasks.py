@@ -39,7 +39,7 @@ class TaskHeader(datastructures.Container):
             ),
         ),
         'timestamp': (
-            validators.validate_float,
+            validators.validate_integer,
         ),
         'signature': (
             functools.partial(
@@ -57,7 +57,7 @@ class TaskHeader(datastructures.Container):
             ),
         ),
         'deadline': (
-            validators.validate_float,
+            validators.validate_integer,
             functools.partial(
                 _fail_if,
                 check=lambda x: x > time.time(),
@@ -65,7 +65,7 @@ class TaskHeader(datastructures.Container):
             ),
         ),
         'subtask_timeout': (
-            validators.validate_float,
+            validators.validate_integer,
             functools.partial(
                 _fail_if,
                 check=lambda x: x >= 0,

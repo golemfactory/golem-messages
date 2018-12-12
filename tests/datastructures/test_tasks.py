@@ -23,8 +23,8 @@ class TestTaskHeader(unittest.TestCase):
                 "pub_port": 10101
             },
             "environment": "DEFAULT",
-            "deadline": time.time() + 1201,
-            "subtask_timeout": 120.0,
+            "deadline": int(time.time() + 1201),
+            "subtask_timeout": 120,
             "subtasks_count": 21,
             "max_price": 10,
             "min_version": "0.19.0",
@@ -39,12 +39,12 @@ class TestTaskHeader(unittest.TestCase):
         self.th_dict_repr['deadline'] = datetime.datetime.now()
         with self.assertRaisesRegex(
             exceptions.FieldError,
-            r"^Should be a float \[deadline:datetime\.datetime\(.+\)\]$"
+            r"^Should be an integer \[deadline:datetime\.datetime\(.+\)\]$"
         ):
             dt_tasks.TaskHeader(**self.th_dict_repr)
 
     def test_validate_deadline_passed(self):
-        self.th_dict_repr['deadline'] = time.time() - 10
+        self.th_dict_repr['deadline'] = int(time.time() - 10)
         with self.assertRaisesRegex(
             exceptions.FieldError,
             "Deadline already passed"
@@ -55,12 +55,12 @@ class TestTaskHeader(unittest.TestCase):
         self.th_dict_repr['subtask_timeout'] = "abc"
         with self.assertRaisesRegex(
             exceptions.FieldError,
-            r"Should be a float \[subtask_timeout:'abc'\]"
+            r"Should be an integer \[subtask_timeout:'abc'\]"
         ):
             dt_tasks.TaskHeader(**self.th_dict_repr)
 
     def test_validate_negative_timeout(self):
-        self.th_dict_repr['subtask_timeout'] = -131.0
+        self.th_dict_repr['subtask_timeout'] = -131
         with self.assertRaisesRegex(
             exceptions.FieldError,
             "Subtask timeout is less than 0",

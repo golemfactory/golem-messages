@@ -31,15 +31,6 @@ def validate_integer(field_name, value):
         )
 
 
-def validate_float(field_name, value):
-    if not isinstance(value, float):
-        raise exceptions.FieldError(
-            "Should be a float",
-            field=field_name,
-            value=value,
-        )
-
-
 def validate_boolean(field_name, value):
     if not isinstance(value, bool):
         raise exceptions.FieldError(
