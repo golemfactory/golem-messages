@@ -156,11 +156,15 @@ class Message():
         )
 
     def __repr__(self):
-        return "{name}(header={header}, sig={sig}, slots={slots})".format(
+        try:
+            slots_ = self.slots()
+        except exceptions.FieldError:
+            slots_ = '<unserializable>'
+        return "{name!r}(header={header!r}, sig={sig!r}, slots={slots!r})".format(
             name=self.__class__.__name__,
             header=getattr(self, 'header', None),
             sig=getattr(self, 'sig', None),
-            slots=self.slots(),
+            slots=slots_,
         )
 
     @property
