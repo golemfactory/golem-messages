@@ -1,6 +1,7 @@
 import collections
 import copy
 import enum
+import typing
 
 from golem_messages import exceptions
 
@@ -88,10 +89,15 @@ class StringEnum(str, enum.Enum):
 
 
 class Container:
-    """If you insist on using classes instead of dicts, use this one"""
-    __slots__ = {}
-    REQUIRED = ()
-    DEFAULTS = {}
+    """Container implementation supporting serialization and deserialization"""
+    # Values in __slots__ are iterables of validators.
+    # Each validator is called with (field_name, value)
+    # See: deserialize_slot()
+    __slots__: typing.Dict[str, typing.callable] = {}
+    # List of required slot names
+    REQUIRED: typing.FozenSet[str] = frozenset()
+    # Default values for slots. See: load_slots
+    DEFAULTS: typing.Dict[str, typing.ANY] = {}
 
     def __init__(self, **kwargs):
         try:
