@@ -95,7 +95,7 @@ class Container:
     # See: deserialize_slot()
     __slots__: typing.Dict[str, typing.Callable[[str, typing.Any], None]] = {}
     # List of required slot names
-    REQUIRED: typing.FozenSet[str] = frozenset()
+    REQUIRED: typing.FrozenSet[str] = frozenset()
     # factories of default values for slots. See: load_slots
     DEFAULTS: typing.Dict[str, typing.Callable[[], typing.Any]] = {}
 
