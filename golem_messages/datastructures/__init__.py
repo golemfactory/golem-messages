@@ -97,7 +97,7 @@ class Container:
     # List of required slot names
     REQUIRED: typing.FozenSet[str] = frozenset()
     # factories of default values for slots. See: load_slots
-    DEFAULTS: typing.Dict[str, typing.Callable[[], typing.Any] = {}
+    DEFAULTS: typing.Dict[str, typing.Callable[[], typing.Any]] = {}
 
     def __init__(self, **kwargs):
         try:
