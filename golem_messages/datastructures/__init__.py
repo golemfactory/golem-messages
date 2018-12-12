@@ -93,7 +93,7 @@ class Container:
     # Values in __slots__ are iterables of validators.
     # Each validator is called with (field_name, value)
     # See: deserialize_slot()
-    __slots__: typing.Dict[str, typing.callable] = {}
+    __slots__: typing.Dict[str, typing.Callable[[str, typing.Any], None]] = {}
     # List of required slot names
     REQUIRED: typing.FozenSet[str] = frozenset()
     # Default values for slots. See: load_slots
