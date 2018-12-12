@@ -19,8 +19,8 @@ class SetItemDict(dict):
         super().__init__()
         if args:
             if isinstance(args[0], dict):
-                for key in args[0]:
-                    self[key] = args[0][key]
+                for key, value in args[0].items():
+                    self[key] = value
             else:
                 for key, value in args[0]:
                     self[key] = value
