@@ -2,7 +2,6 @@ import functools
 import logging
 
 import cbor
-import pytz
 
 from . import exceptions
 
@@ -28,14 +27,5 @@ def wrap_error(wrap_with):
 
 # Public functions
 
-dumps = wrap_error(exceptions.SerializationError)(functools.partial(
-    cbor.dumps,
-    datetime_as_timestamp=True,
-    timezone=pytz.utc,
-    value_sharing=False,
-))
-
-
-loads = wrap_error(exceptions.SerializationError)(functools.partial(
-    cbor.loads,
-))
+dumps = wrap_error(exceptions.SerializationError)(cbor.dumps)
+loads = wrap_error(exceptions.SerializationError)(cbor.loads)
