@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 import unittest
 
 from golem_messages import exceptions
@@ -6,6 +7,7 @@ from golem_messages import message
 from golem_messages import factories
 from golem_messages.message import concents
 
+from tests.message import helpers
 from tests.message import mixins
 
 
@@ -107,7 +109,7 @@ class SubtaskResultsVerifyTest(mixins.RegisteredMessageTestMixin,
             subtask_results_rejected=srr,
         )
         expected = [
-            ['subtask_results_rejected', srr.serialize()]
+            ['subtask_results_rejected', helpers.single_nested(srr)]
         ]
 
         self.assertEqual(expected, msg.slots())
@@ -140,8 +142,8 @@ class AckSubtaskResultsVerifyTest(mixins.RegisteredMessageTestMixin,
             file_transfer_token=ftt,
         )
         expected = [
-            ['subtask_results_verify', srv.serialize()],
-            ['file_transfer_token', ftt.serialize()]
+            ['subtask_results_verify', helpers.single_nested(srv)],
+            ['file_transfer_token', helpers.single_nested(ftt)]
         ]
 
         self.assertEqual(expected, msg.slots())
@@ -175,7 +177,7 @@ class SubtaskResultsSettledTest(mixins.RegisteredMessageTestMixin,
             ['origin',
              concents.SubtaskResultsSettled.Origin.ResultsAcceptedTimeout
              .value],
-            ['task_to_compute', ttc.serialize()]
+            ['task_to_compute', helpers.single_nested(ttc)]
         ]
 
         self.assertEqual(expected, msg.slots())
@@ -188,7 +190,7 @@ class SubtaskResultsSettledTest(mixins.RegisteredMessageTestMixin,
         expected = [
             ['origin',
              concents.SubtaskResultsSettled.Origin.ResultsRejected.value],
-            ['task_to_compute', ttc.serialize()]
+            ['task_to_compute', helpers.single_nested(ttc)]
         ]
 
         self.assertEqual(expected, msg.slots())
@@ -209,7 +211,7 @@ class ForceGetTaskResultTest(mixins.RegisteredMessageTestMixin,
             report_computed_task=rct,
         )
         expected = [
-            ['report_computed_task', rct.serialize()],
+            ['report_computed_task', helpers.single_nested(rct)],
         ]
 
         self.assertEqual(expected, msg.slots())
@@ -231,7 +233,7 @@ class AckForceGetTaskResultTest(mixins.RegisteredMessageTestMixin,
             force_get_task_result=fgtr
         )
         expected = [
-            ['force_get_task_result', fgtr.serialize()]
+            ['force_get_task_result', helpers.single_nested(fgtr)]
         ]
 
         self.assertEqual(expected, msg.slots())
@@ -253,7 +255,7 @@ class ForceGetTaskResultFailedTest(mixins.RegisteredMessageTestMixin,
             task_to_compute=ttc
         )
         expected = [
-            ['task_to_compute', ttc.serialize()]
+            ['task_to_compute', helpers.single_nested(ttc)]
         ]
 
         self.assertEqual(expected, msg.slots())
@@ -274,7 +276,7 @@ class ForceGetTaskResultRejectedTest(mixins.RegisteredMessageTestMixin,
             force_get_task_result=fgtr
         )
         expected = [
-            ['force_get_task_result', fgtr.serialize()],
+            ['force_get_task_result', helpers.single_nested(fgtr)],
             ['reason', None]
         ]
 
@@ -299,8 +301,8 @@ class ForceGetTaskResultUploadTest(mixins.RegisteredMessageTestMixin,
             file_transfer_token=ftt
         )
         expected = [
-            ['force_get_task_result', fgtr.serialize()],
-            ['file_transfer_token', ftt.serialize()]
+            ['force_get_task_result', helpers.single_nested(fgtr)],
+            ['file_transfer_token', helpers.single_nested(ftt)]
         ]
 
         self.assertEqual(expected, msg.slots())
@@ -326,8 +328,8 @@ class ForceGetTaskResultDownloadTest(mixins.RegisteredMessageTestMixin,
             file_transfer_token=ftt
         )
         expected = [
-            ['force_get_task_result', fgtr.serialize()],
-            ['file_transfer_token', ftt.serialize()]
+            ['force_get_task_result', helpers.single_nested(fgtr)],
+            ['file_transfer_token', helpers.single_nested(ftt)]
         ]
 
         self.assertEqual(expected, msg.slots())
@@ -353,7 +355,7 @@ class ForceSubtaskResultsTest(mixins.RegisteredMessageTestMixin,
         )
 
         expected = [
-            ['ack_report_computed_task', ack_rct.serialize()]
+            ['ack_report_computed_task', helpers.single_nested(ack_rct)]
         ]
 
         self.assertEqual(expected, msg.slots())
@@ -374,8 +376,8 @@ class ForceSubtaskResultsResponseTest(mixins.RegisteredMessageTestMixin,
             subtask_results_accepted=subtask_results_accepted
         )
         expected = [
-            ['subtask_results_accepted', subtask_results_accepted.serialize()],
-            ['subtask_results_rejected', None],
+            ['subtask_results_accepted', helpers.single_nested(subtask_results_accepted)],
+            ['subtask_results_rejected', (False, None)],
         ]
         self.assertEqual(expected, msg.slots())
         self.assertIsInstance(
@@ -398,8 +400,8 @@ class ForceSubtaskResultsResponseTest(mixins.RegisteredMessageTestMixin,
             subtask_results_rejected=subtask_results_rejected
         )
         expected = [
-            ['subtask_results_accepted', None],
-            ['subtask_results_rejected', subtask_results_rejected.serialize()],
+            ['subtask_results_accepted', (False, None)],
+            ['subtask_results_rejected', helpers.single_nested(subtask_results_rejected)],
         ]
         self.assertEqual(expected, msg.slots())
         self.assertIsInstance(
@@ -419,7 +421,7 @@ class ForceSubtaskResultsResponseTest(mixins.RegisteredMessageTestMixin,
         subtask_results_accepted = \
             factories.tasks.SubtaskResultsAcceptedFactory()
         msg = concents.ForceSubtaskResultsResponse(slots=(
-            ('subtask_results_accepted', subtask_results_accepted.serialize()),
+            ('subtask_results_accepted', helpers.single_nested(subtask_results_accepted)),
         ))
         self.assertIsInstance(
             msg.subtask_results_accepted,
@@ -436,7 +438,7 @@ class ForceSubtaskResultsResponseTest(mixins.RegisteredMessageTestMixin,
         subtask_results_rejected = \
             factories.tasks.SubtaskResultsRejectedFactory()
         msg = concents.ForceSubtaskResultsResponse(slots=(
-            ('subtask_results_rejected', subtask_results_rejected.serialize()),
+            ('subtask_results_rejected', helpers.single_nested(subtask_results_rejected)),
         ))
         self.assertIsInstance(
             msg.subtask_results_rejected,
@@ -519,18 +521,13 @@ class ForcePaymentTest(mixins.RegisteredMessageTestMixin, unittest.TestCase):
 
     def test_sra_list_verify(self):
         msg = concents.ForcePayment(slots=[
-            ('subtask_results_accepted_list', [
-                factories.concents.SubtaskResultsAcceptedFactory().serialize()
-            ]),
+            (
+                'subtask_results_accepted_list',
+                helpers.list_nested([factories.concents.SubtaskResultsAcceptedFactory()]),
+            ),
         ])
         self.assertIsInstance(msg.subtask_results_accepted_list[0],
                               message.tasks.SubtaskResultsAccepted)
-
-    def test_sra_list_wrong_class(self):
-        with self.assertRaises(exceptions.FieldError):
-            concents.ForcePayment(slots=[
-                ('subtask_results_accepted_list', [message.base.RandVal()]),
-            ])
 
 
 class ForcePaymentCommittedTest(mixins.RegisteredMessageTestMixin,
@@ -562,7 +559,7 @@ class ForcePaymentRejectedTest(mixins.RegisteredMessageTestMixin,
 
     def test_force_payment(self):
         msg = concents.ForcePaymentRejected(slots=[
-            ('force_payment', factories.concents.ForcePaymentFactory().serialize())
+            ('force_payment', helpers.single_nested(factories.concents.ForcePaymentFactory()))
         ])
         self.assertIsInstance(msg.force_payment, concents.ForcePayment)
 

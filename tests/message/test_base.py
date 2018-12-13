@@ -7,6 +7,8 @@ from golem_messages import exceptions
 from golem_messages.message import base
 from golem_messages.register import library
 
+from tests.message import helpers
+
 
 class MessageTestCase(unittest.TestCase):
     def test_decryptions_fails(self):
@@ -84,40 +86,41 @@ class VerifySlotTest(unittest.TestCase):
         self.child = VerifySlotChild()
 
     def test_verify_slot(self):
-        msg = VerifySlotParent(slots=[('child', self.child.serialize()), ])
+        msg = VerifySlotParent(slots=[
+            ('child', helpers.single_nested(self.child)),
+        ])
         self.assertIsInstance(msg.child, VerifySlotChild)
-
-    def test_verify_slot_not_expected_class(self):
-        with self.assertRaises(exceptions.FieldError):
-            VerifySlotParent(slots=[('child', base.RandVal().serialize()), ])
 
     def test_verify_slot_none_disallowed(self):
         with self.assertRaises(exceptions.FieldError):
-            VerifySlotParent(slots=[('child', None), ])
+            VerifySlotParent(slots=[('child', [False, None]),])
 
     def test_verify_slot_list(self):
         msg = VerifySlotListParent(
-            slots=[('child_list', [self.child.serialize(), ]), ])
+            slots=[
+                (
+                    'child_list',
+                    helpers.list_nested([self.child]),
+                ),
+            ])
         self.assertIsInstance(msg.child_list[0], VerifySlotChild)
 
     def test_verify_slot_list_not_list(self):
         with self.assertRaises(exceptions.FieldError):
-            VerifySlotListParent(
-                slots=[('child_list', self.child.serialize()), ])
-
-    def test_verify_slot_list_not_expected_class(self):
-        with self.assertRaises(exceptions.FieldError):
-            VerifySlotListParent(
-                slots=[('child_list', [base.RandVal().serialize(), ]), ])
+            helpers.dump_and_load(VerifySlotListParent(
+                slots=[
+                    ('child_list', helpers.single_nested(self.child)),
+                ],
+            ))
 
     def test_verify_slot_list_none_disallowed(self):
         with self.assertRaises(exceptions.FieldError):
-            VerifySlotListParent(slots=[('child_list', [None])])
+            VerifySlotListParent(slots=[('child_list', [False, None])])
 
     def test_verify_slot_none_allowed(self):
-        msg = VerifySlotParentAllowNone(slots=[('child', None), ])
+        msg = VerifySlotParentAllowNone(slots=[('child', [False, None]), ])
         self.assertIsNone(msg.child)
 
     def test_verify_slot_list_none_allowed(self):
-        msg = VerifySlotListParentAllowNone(slots=[('child_list', [None])])
+        msg = VerifySlotListParentAllowNone(slots=[('child_list', [True, [None]])])
         self.assertIsNone(msg.child_list[0])

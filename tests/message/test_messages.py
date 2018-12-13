@@ -13,6 +13,8 @@ from golem_messages import shortcuts
 from golem_messages.factories.datastructures import tasks as dt_tasks_factories
 from golem_messages.utils import encode_hex
 
+from tests.message import helpers
+
 
 class InitializationTestCase(unittest.TestCase):
     def test_default_slots(self):
@@ -278,7 +280,7 @@ class MessagesTestCase(unittest.TestCase):
 
         msg = message.TaskFailure(task_to_compute=ttc, err=err)
         expected = sorted([
-            ['task_to_compute', ttc.serialize()],
+            ['task_to_compute', helpers.single_nested(ttc)],
             ['err', err],
         ])
         self.assertEqual(expected, sorted(msg.slots()))
@@ -299,7 +301,7 @@ class MessagesTestCase(unittest.TestCase):
         )
         msg = message.CannotComputeTask(task_to_compute=ttc, reason=reason)
         expected = sorted([
-            ['task_to_compute', ttc.serialize()],
+            ['task_to_compute', helpers.single_nested(ttc)],
             ['reason', reason],
         ])
         self.assertEqual(expected, sorted(msg.slots()))
@@ -347,7 +349,7 @@ class MessagesTestCase(unittest.TestCase):
         msg_l = shortcuts.load(serialized, None, None)
 
         expected = [
-            ['remove_tasks', [m.serialize() for m in remove_tasks]]
+            ['remove_tasks', helpers.list_nested(remove_tasks)]
         ]
         self.assertEqual(expected, msg_l.slots())
         self.assertEqual(len(msg_l.remove_tasks), test_cases)
