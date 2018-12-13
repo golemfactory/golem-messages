@@ -8,6 +8,12 @@ MessageHeader = collections.namedtuple(
 )
 
 
+NestedMessage = collections.namedtuple(
+    "NestedMessage",
+    ["header", "sig", "slots"],
+)
+
+
 class SetItemDict(dict):
     """
     Mimics dict initialization but always uses __setitem__

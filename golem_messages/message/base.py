@@ -266,17 +266,11 @@ class Message():
                     field=key,
                     value=value,
                 )
-            return None
+            return False, None
 
         if not isinstance(value, list):
-            return self.serialize_message_single(key, value)
-        if not slot_definition.is_list:
-            raise exceptions.FieldError(
-                "Invalid non list value for message slot",
-                field=key,
-                value=value,
-            )
-        return [self.serialize_message_single(key, msg) for msg in value]
+            return False, self.serialize_message_single(key, value)
+        return True, [self.serialize_message_single(key, msg) for msg in value]
 
     def serialize_message_single(self, key, value):
         slot_definition = self.MSG_SLOTS[key]
@@ -286,7 +280,7 @@ class Message():
                 field=key,
                 value=value,
             )
-        return value.serialize()
+        return value.header, value.sig, value.slots()
 
     def deserialize_slot(self, key, value):
         if (key in self.ENUM_SLOTS) and (value is not None):
@@ -304,29 +298,36 @@ class Message():
 
     def deserialize_message(self, key, value):
         slot_definition: MessageSlotDefinition = self.MSG_SLOTS[key]
+        try:
+            is_list, value = value
+        except (TypeError, ValueError):
+            raise exceptions.FieldError(
+                "Invalid nested message format",
+                field=key,
+                value=value,
+            )
 
-        if not isinstance(value, list):
-            if value and slot_definition.is_list:
+        if value and (is_list != slot_definition.is_list):
+            raise exceptions.FieldError(
+                "Invalid nested message format (is_list: {})".format(slot_definition.is_list),
+                field=key,
+                value=value,
+            )
+        if value and is_list:
+            if not isinstance(value, list):
                 raise exceptions.FieldError(
                     "Should be List[{}]".format(slot_definition.klass),
                     field=key,
                     value=value,
                 )
-            return self.deserialize_message_single(key, value)
+            result = [
+                self.deserialize_message_single(key, serialized_msg)
+                for serialized_msg
+                in value
+            ]
+            return result
 
-        if not slot_definition.is_list:
-            raise exceptions.FieldError(
-                "Disallowed list for message slot",
-                field=key,
-                value=value,
-            )
-
-        result = [
-            self.deserialize_message_single(key, serialized_msg)
-            for serialized_msg
-            in value
-        ]
-        return result
+        return self.deserialize_message_single(key, value)
 
     def deserialize_message_single(self, key, value):
         slot_definition: MessageSlotDefinition = self.MSG_SLOTS[key]
@@ -339,23 +340,27 @@ class Message():
                 )
             return None
         try:
-            result = self.deserialize(
-                value,
-                decrypt_func=None,
-                check_time=False,
+            nested = datastructures.NestedMessage(*value)
+        except TypeError:
+            raise exceptions.FieldError(
+                "Invalid nested message format",
+                field=key,
+                value=value,
             )
+        try:
+            result = slot_definition.klass(
+                header=datastructures.MessageHeader(*nested.header),
+                sig=nested.sig,
+                slots=nested.slots,
+            )
+        except exceptions.FieldError:
+            raise
         except Exception as e:
             raise exceptions.FieldError(
                 "Invalid value for message slot",
                 field=key,
                 value=value,
             ) from e
-        if not isinstance(result, slot_definition.klass):
-            raise exceptions.FieldError(
-                "Incorrect message type in message slot",
-                field=key,
-                value=value,
-            )
         return result
 
     @classmethod
