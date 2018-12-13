@@ -1,16 +1,8 @@
 import functools
-import logging
 
 import cbor
 
 from . import exceptions
-
-
-logger = logging.getLogger('golem.core.simpleserializer')
-
-
-OBJECT_TAG = 239  # unused, old protocol
-MESSAGE_TAG = 1000
 
 
 def wrap_error(wrap_with):
