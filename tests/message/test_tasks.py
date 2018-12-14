@@ -697,22 +697,19 @@ class TaskMessageVerificationTest(unittest.TestCase):
 
     def test_verify_owners_provider_mismatch(self):
         rtc = self.get_signed_rtc()
-        with self.assertRaises(exceptions.OwnershipMismatch) as e:
+        with self.assertRaisesRegex(exceptions.OwnershipMismatch, 'provider'):
             rtc.verify_owners(
                 provider_public_key=self.other_keys.raw_pubkey,
                 requestor_public_key=self.requestor_keys.raw_pubkey,
             )
 
-        self.assertIn('provider', str(e.exception))
-
     def test_verify_owners_requestor_mismatch(self):
         rtc = self.get_signed_rtc()
-        with self.assertRaises(exceptions.OwnershipMismatch) as e:
+        with self.assertRaisesRegex(exceptions.OwnershipMismatch, 'requestor'):
             rtc.verify_owners(
                 provider_public_key=self.provider_keys.raw_pubkey,
                 requestor_public_key=self.other_keys.raw_pubkey,
             )
-        self.assertIn('requestor', str(e.exception))
 
 
 class CannotComputeTaskTest(

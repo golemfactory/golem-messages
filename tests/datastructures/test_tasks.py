@@ -69,49 +69,49 @@ class TestTaskHeader(unittest.TestCase):
 
     def test_validate_no_task_id(self):
         del self.th_dict_repr['task_id']
-        with self.assertRaises(
+        with self.assertRaisesRegex(
             exceptions.FieldError,
-            msg='Field required [task_id:None]',
+            r'^Field required \[task_id:None\]$',
         ):
             dt_tasks.TaskHeader(**self.th_dict_repr)
 
     def test_validate_no_task_owner(self):
         del self.th_dict_repr['task_owner']
-        with self.assertRaises(
+        with self.assertRaisesRegex(
             exceptions.FieldError,
-            msg="Field required [task_owner:None]",
+            r"^Field required \[task_owner:None\]$",
         ):
             dt_tasks.TaskHeader(**self.th_dict_repr)
 
     def test_validate_no_task_owner_node_name(self):
         del self.th_dict_repr['task_owner']['node_name']
-        with self.assertRaises(
+        with self.assertRaisesRegex(
             exceptions.FieldError,
-            msg="Field required [node_name:None]",
+            r"^Field required \[node_name:None\]$",
         ):
             dt_tasks.TaskHeader(**self.th_dict_repr)
 
     def test_validate_no_subtasks_count(self):
         del self.th_dict_repr['subtasks_count']
-        with self.assertRaises(
+        with self.assertRaisesRegex(
             exceptions.FieldError,
-            msg="Field required [subtasks_count:None]"
+            r"^Field required \[subtasks_count:None\]$"
         ):
             dt_tasks.TaskHeader(**self.th_dict_repr)
 
     def test_validate_subtasks_count_invalid_type(self):
         self.th_dict_repr['subtasks_count'] = None
-        with self.assertRaises(
+        with self.assertRaisesRegex(
             exceptions.FieldError,
-            msg="Should be an integer [subtasks_count:None]",
+            r"^Should be an integer \[subtasks_count:None\]$",
         ):
             dt_tasks.TaskHeader(**self.th_dict_repr)
 
     def test_validate_subtasks_count_too_low(self):
         self.th_dict_repr['subtasks_count'] = -1
-        with self.assertRaises(
+        with self.assertRaisesRegex(
             exceptions.FieldError,
-            msg="Subtasks count is less than 1 [subtasks_count:-1]"
+            r"^Subtasks count is less than 1 \[subtasks_count:-1\]$"
         ):
             dt_tasks.TaskHeader(**self.th_dict_repr)
 
