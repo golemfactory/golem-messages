@@ -83,14 +83,6 @@ class TestTaskHeader(unittest.TestCase):
         ):
             dt_tasks.TaskHeader(**self.th_dict_repr)
 
-    def test_validate_no_task_owner_node_name(self):
-        del self.th_dict_repr['task_owner']['node_name']
-        with self.assertRaisesRegex(
-            exceptions.FieldError,
-            r"^Field required \[node_name:None\]$",
-        ):
-            dt_tasks.TaskHeader(**self.th_dict_repr)
-
     def test_validate_no_subtasks_count(self):
         del self.th_dict_repr['subtasks_count']
         with self.assertRaisesRegex(

@@ -9,6 +9,6 @@ class Node(factory.Factory):
     class Meta:
         model = dt_p2p.Node
 
-    node_name = factory.Faker('name')
+    #node_name = factory.Faker('name')
     # considered as difficult by `keysauth.is_pubkey_difficult` with level 10
     key = '00adbeef' + 'deadbeef' * 15
