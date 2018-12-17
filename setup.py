@@ -6,7 +6,7 @@ from setuptools import setup
 try:
     from version import get_version
 except ImportError:
-    def get_version(cwd, **kwargs):
+    def get_version(cwd, **_kwargs):
         p = pathlib.Path(cwd) / 'RELEASE-VERSION'
         with p.open('r') as f:
             return f.read()
@@ -24,6 +24,7 @@ setup(
     maintainer_email='tech@golem.network',
     packages=[
         'golem_messages',
+        'golem_messages.datastructures',
         'golem_messages.message',
         'golem_messages.factories',
     ],

@@ -161,7 +161,7 @@ class BasicTestCase(unittest.TestCase):
     @mock.patch('golem_messages.serializer.dumps', wraps=serializer.dumps)
     def test_slots_reselialization_optimization(self, dumps_mock):
         """Don't reserialize message slots immediately after deserialization"""
-        msg = message.p2p.Tasks()  # Choose msg type with SIGN = True
+        msg = message.p2p.Tasks(tasks=[])  # Choose msg type with SIGN = True
         payload = golem_messages.dump(msg, self.ecc.raw_privkey,
                                       self.ecc.raw_pubkey)
         # One call for slots and second for hash_header

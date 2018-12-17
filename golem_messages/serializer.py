@@ -1,17 +1,8 @@
 import functools
-import logging
 
 import cbor
-import pytz
 
 from . import exceptions
-
-
-logger = logging.getLogger('golem.core.simpleserializer')
-
-
-OBJECT_TAG = 239  # unused, old protocol
-MESSAGE_TAG = 1000
 
 
 def wrap_error(wrap_with):
@@ -28,14 +19,5 @@ def wrap_error(wrap_with):
 
 # Public functions
 
-dumps = wrap_error(exceptions.SerializationError)(functools.partial(
-    cbor.dumps,
-    datetime_as_timestamp=True,
-    timezone=pytz.utc,
-    value_sharing=False,
-))
-
-
-loads = wrap_error(exceptions.SerializationError)(functools.partial(
-    cbor.loads,
-))
+dumps = wrap_error(exceptions.SerializationError)(cbor.dumps)
+loads = wrap_error(exceptions.SerializationError)(cbor.loads)
