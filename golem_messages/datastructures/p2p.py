@@ -31,10 +31,6 @@ class Node(datastructures.Container):
         'nat_type': (),  # List[str]
     }
 
-    REQUIRED = (
-        'node_name',
-    )
-
     DEFAULTS = {
         'prv_addresses': lambda: [],
         'port_statuses': lambda: {},
