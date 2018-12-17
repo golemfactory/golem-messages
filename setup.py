@@ -27,6 +27,7 @@ setup(
         'golem_messages.datastructures',
         'golem_messages.message',
         'golem_messages.factories',
+        'golem_messages.factories.datastructures',
     ],
     package_data={
         'golem_messages': [
