@@ -5,6 +5,7 @@ from golem_messages import exceptions
 from golem_messages import message
 
 from golem_messages import factories
+from golem_messages import shortcuts
 from golem_messages.message import concents
 
 from tests.message import helpers
@@ -528,6 +529,17 @@ class ForcePaymentTest(mixins.RegisteredMessageTestMixin, unittest.TestCase):
         ])
         self.assertIsInstance(msg.subtask_results_accepted_list[0],
                               message.tasks.SubtaskResultsAccepted)
+    def test_without_sra_list(self):
+        msg = concents.ForcePayment()
+
+        with self.assertRaises(exceptions.FieldError):
+            shortcuts.dump(msg, None, None)
+
+    def test_empty_sra_list(self):
+        msg = concents.ForcePayment(subtask_results_accepted_list=[])
+
+        with self.assertRaises(exceptions.FieldError):
+            shortcuts.load(shortcuts.dump(msg, None, None), None, None)
 
 
 class ForcePaymentCommittedTest(mixins.RegisteredMessageTestMixin,
@@ -559,9 +571,17 @@ class ForcePaymentRejectedTest(mixins.RegisteredMessageTestMixin,
 
     def test_force_payment(self):
         msg = concents.ForcePaymentRejected(slots=[
-            ('force_payment', helpers.single_nested(factories.concents.ForcePaymentFactory()))
+            ('force_payment', helpers.single_nested(
+                factories.concents.ForcePaymentFactory.with_accepted_tasks()
+            ))
         ])
         self.assertIsInstance(msg.force_payment, concents.ForcePayment)
+
+    def test_force_payment_without_sra_list(self):
+        with self.assertRaises(exceptions.FieldError):
+            concents.ForcePaymentRejected(slots=[
+                ('force_payment', helpers.single_nested(factories.concents.ForcePaymentFactory()))
+            ])
 
     def test_force_payment_wrong_class(self):
         with self.assertRaises(exceptions.FieldError):

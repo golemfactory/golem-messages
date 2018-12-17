@@ -486,7 +486,7 @@ class ForcePayment(base.Message):
             base.MessageSlotDefinition(
                 tasks.SubtaskResultsAccepted,
                 is_list=True,
-                allow_none=True,
+                allow_none=False,
             )
     }
 
