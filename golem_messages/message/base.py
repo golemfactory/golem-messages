@@ -160,7 +160,8 @@ class Message():
             slots_ = self.slots()
         except exceptions.FieldError:
             slots_ = '<unserializable>'
-        return "{name!r}(header={header!r}, sig={sig!r}, slots={slots!r})".format(
+        template = "{name!r}(header={header!r}, sig={sig!r}, slots={slots!r})"
+        return template.format(
             name=self.__class__.__name__,
             header=getattr(self, 'header', None),
             sig=getattr(self, 'sig', None),
@@ -313,7 +314,9 @@ class Message():
 
         if value and (is_list != slot_definition.is_list):
             raise exceptions.FieldError(
-                "Invalid nested message format (is_list: {})".format(slot_definition.is_list),
+                "Invalid nested message format (is_list: {})".format(
+                    slot_definition.is_list,
+                ),
                 field=key,
                 value=value,
             )
