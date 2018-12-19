@@ -49,3 +49,14 @@ def validate_version(field_name, value):
             field=field_name,
             value=value,
         ) from e
+
+
+def validate_dict(field_name, value):
+    if not isinstance(value, dict):
+        raise exceptions.FieldError(
+            "dict is expected not {}".format(
+                type(value),
+            ),
+            field=field_name,
+            value=value,
+        )

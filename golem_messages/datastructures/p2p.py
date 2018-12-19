@@ -62,3 +62,27 @@ class Node(datastructures.Container):
                 "Mismatched types: expected Node, got {}".format(type(other))
             )
         return self.to_dict() == other.to_dict()
+
+
+class NodeSlotMixin:
+    __slots__ = ()
+
+    def serialize_slot(self, key, value):
+        if key in self.NODE_SLOTS:
+            return self.serialize_node(value)
+        return super().serialize_slot(key, value)
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key=key, value=value)
+        if key in self.NODE_SLOTS:
+            return self.deserialize_node(key, value)
+        return value
+
+    @classmethod
+    def serialize_node(cls, value: Node) -> dict:
+        return value.to_dict()
+
+    @classmethod
+    def deserialize_node(cls, key, value: dict) -> Node:
+        validators.validate_dict(key, value)
+        return Node(**value)

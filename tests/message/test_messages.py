@@ -10,7 +10,8 @@ from golem_messages import datastructures
 from golem_messages import factories
 from golem_messages import message
 from golem_messages import shortcuts
-from golem_messages.factories.datastructures import tasks as dt_tasks_factories
+from golem_messages.factories.datastructures import p2p as dt_p2p_factory
+from golem_messages.factories.datastructures import tasks as dt_tasks_factory
 from golem_messages.utils import encode_hex
 
 from tests.message import helpers
@@ -164,10 +165,10 @@ class MessagesTestCase(unittest.TestCase):
             self.assertEqual(expected, msg.slots())
 
     def test_list_messages(self):
-        obj_factory = lambda: object()  # pylint: disable=unnecessary-lambda
+        obj_factory = lambda: object()  # noqa pylint: disable=unnecessary-lambda
         for message_class, key, factory in (
-                (message.Peers, 'peers', obj_factory),
-                (message.Tasks, 'tasks', dt_tasks_factories.TaskHeader),
+                (message.Peers, 'peers', dt_p2p_factory.Node),
+                (message.Tasks, 'tasks', dt_tasks_factory.TaskHeader),
                 (message.ResourcePeers, 'resource_peers', obj_factory),
                 (message.Gossip, 'gossip', obj_factory), ):
             msg = message_class()
