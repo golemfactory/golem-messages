@@ -1,4 +1,8 @@
+import typing
+
 from golem_messages import exceptions
+from golem_messages import validators
+from golem_messages.datastructures import p2p as dt_p2p
 from golem_messages.datastructures import tasks as dt_tasks
 from golem_messages.register import library
 
@@ -42,6 +46,33 @@ class Peers(base.Message):
         super().__init__(**kwargs)
         self.peers = self.peers or []
 
+    def serialize_slot(self, key, value):
+        if key == 'peers':
+            return self.serialize_peer_list(value)
+        return super().serialize_slot(key, value)
+
+    @classmethod
+    def serialize_peer_list(cls, value) -> typing.List[dict]:
+        return [p.serialize() for p in value]
+
+    def deserialize_slot(self, key, value):
+        value = super().deserialize_slot(key, value)
+        if key == 'peers':
+            return self.deserialize_peer_list(key, value)
+        return value
+
+    @classmethod
+    def deserialize_peer_list(cls, key, value) -> typing.List[dt_p2p.Peer]:
+        if not isinstance(value, list):
+            raise exceptions.FieldError(
+                "list is expected not {}".format(
+                    type(value),
+                ),
+                field=key,
+                value=value,
+            )
+        return [dt_p2p.Peer(d) for d in value]
+
 
 @library.register(P2P_MESSAGE_BASE + 5)
 class GetTasks(base.Message):
@@ -79,14 +110,7 @@ class Tasks(base.Message):
             )
         parsed = []
         for header_dict in value:
-            if not isinstance(header_dict, dict):
-                raise exceptions.FieldError(
-                    "dict is expected not {}".format(
-                        type(header_dict),
-                    ),
-                    field="tasks",
-                    value=header_dict,
-                )
+            validators.validate_dict("tasks", header_dict)
             parsed.append(dt_tasks.TaskHeader(**header_dict))
         return parsed
 
@@ -180,7 +204,12 @@ class FindNode(base.Message):
 
 
 @library.register(P2P_MESSAGE_BASE + 15)
-class WantToStartTaskSession(base.Message):
+class WantToStartTaskSession(base.Message, dt_p2p.NodeSlotMixin):
+    NODE_SLOTS = (
+        'node_info',
+        'super_node_info',
+    )
+
     __slots__ = [
         'node_info',
         'conn_id',
@@ -189,7 +218,11 @@ class WantToStartTaskSession(base.Message):
 
 
 @library.register(P2P_MESSAGE_BASE + 16)
-class SetTaskSession(base.Message):
+class SetTaskSession(base.Message, dt_p2p.NodeSlotMixin):
+    NODE_SLOTS = (
+        'node_info',
+        'super_node_info',
+    )
     __slots__ = [
         'key_id',
         'node_info',

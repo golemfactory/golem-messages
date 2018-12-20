@@ -10,7 +10,8 @@ from golem_messages import datastructures
 from golem_messages import factories
 from golem_messages import message
 from golem_messages import shortcuts
-from golem_messages.factories.datastructures import tasks as dt_tasks_factories
+from golem_messages.factories.datastructures import p2p as dt_p2p_factory
+from golem_messages.factories.datastructures import tasks as dt_tasks_factory
 from golem_messages.utils import encode_hex
 
 from tests.message import helpers
@@ -167,8 +168,8 @@ class MessagesTestCase(unittest.TestCase):
         def obj_factory():
             return object()
         for message_class, key, factory in (
-                (message.Peers, 'peers', obj_factory),
-                (message.Tasks, 'tasks', dt_tasks_factories.TaskHeader),
+                (message.Peers, 'peers', dt_p2p_factory.Peer),
+                (message.Tasks, 'tasks', dt_tasks_factory.TaskHeader),
                 (message.ResourcePeers, 'resource_peers', obj_factory),
                 (message.Gossip, 'gossip', obj_factory), ):
             msg = message_class()

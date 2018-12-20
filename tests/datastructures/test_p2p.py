@@ -1,7 +1,12 @@
 import unittest
 
+import faker
 
+from golem_messages import exceptions
 from golem_messages.factories.datastructures import p2p as dt_p2p_factory
+
+
+fake = faker.Faker()
 
 
 class TestNode(unittest.TestCase):
@@ -53,3 +58,36 @@ class TestNode(unittest.TestCase):
         self.assertEqual(node.pub_port, node.pub_port)
         self.assertEqual(node.p2p_pub_port, node.p2p_pub_port)
         self.assertEqual(node.hyperdrive_pub_port, node.hyperdrive_pub_port)
+
+
+class TestPeer(unittest.TestCase):
+    def setUp(self):
+        self.peer = dt_p2p_factory.Peer()
+
+    def test_low_port(self):
+        with self.assertRaises(exceptions.FieldError):
+            self.peer['port'] = 0
+
+    def test_high_port(self):
+        with self.assertRaises(exceptions.FieldError):
+            self.peer['port'] = 2**16
+
+    def test_node_str(self):
+        with self.assertRaises(exceptions.FieldError):
+            self.peer['node'] = '<Node>'
+
+    def test_node_dict(self):
+        node = dt_p2p_factory.Node()
+        self.peer['node'] = node.to_dict()
+        self.assertEqual(
+            self.peer['node'].node_name,
+            node.node_name,
+        )
+
+    def test_address_ipv6(self):
+        # Should not raise
+        self.peer['address'] = fake.ipv6()
+
+    def test_address_none(self):
+        with self.assertRaises(exceptions.FieldError):
+            self.peer['address'] = None

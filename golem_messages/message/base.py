@@ -18,6 +18,7 @@ from golem_messages import datastructures
 from golem_messages import exceptions
 from golem_messages import serializer
 from golem_messages import settings
+from golem_messages.datastructures import p2p as dt_p2p
 from golem_messages.register import library
 
 logger = logging.getLogger('golem.network.transport.message')
@@ -614,10 +615,13 @@ class AbstractReasonMessage(Message):
 
 
 @library.register(0)
-class Hello(Message):
+class Hello(Message, dt_p2p.NodeSlotMixin):
     ENCRYPT = False
     VERSION_FORMAT = '!32p'
     VERSION_LENGTH = struct.calcsize(VERSION_FORMAT)
+    NODE_SLOTS = (
+        'node_info',
+    )
 
     __slots__ = [
         'rand_val',
