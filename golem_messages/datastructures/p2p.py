@@ -1,7 +1,9 @@
+import copy
 import functools
 import logging
 
 from golem_messages import datastructures
+from golem_messages import exceptions
 from golem_messages import validators
 
 logger = logging.getLogger(__name__)
@@ -16,12 +18,12 @@ class Node(datastructures.Container):
             ),
         ),
         'key': (validators.validate_varchar128, ),
-        'prv_port': (validators.validate_integer, ),
-        'pub_port': (validators.validate_integer, ),
-        'p2p_prv_port': (validators.validate_integer, ),
-        'p2p_pub_port': (validators.validate_integer, ),
-        'prv_addr': (),  # str
-        'pub_addr': (),  # str
+        'prv_port': (validators.validate_port, ),
+        'pub_port': (validators.validate_port, ),
+        'p2p_prv_port': (validators.validate_port, ),
+        'p2p_pub_port': (validators.validate_port, ),
+        'prv_addr': (validators.validate_ipaddress, ),
+        'pub_addr': (validators.validate_ipaddress, ),
         'prv_addresses': (),  # List[str]
         'hyperdrive_prv_port': (validators.validate_integer, ),
         'hyperdrive_pub_port': (validators.validate_integer, ),
@@ -86,3 +88,43 @@ class NodeSlotMixin:
     def deserialize_node(cls, key, value: dict) -> Node:
         validators.validate_dict(key, value)
         return Node(**value)
+
+
+class Peer(datastructures.ValidatingDict, datastructures.FrozenDict):
+    ITEMS = {
+        'address': None,
+        'port': None,
+        'node': None,
+    }
+
+    def __setitem__(self, key, value):
+        if key == 'node':
+            if isinstance(value, dict):
+                value = Node(**value)
+        super().__setitem__(key, value)
+
+    validate_address = functools.partial(
+        validators.validate_ipaddress,
+        "address",
+    )
+
+    validate_port = functools.partial(
+        validators.validate_port,
+        "port",
+    )
+
+    @classmethod
+    def validate_node(cls, value):
+        if not isinstance(value, Node):
+            raise exceptions.FieldError(
+                "Node is expected not {}".format(
+                    type(value),
+                ),
+                field="node",
+                value=value,
+            )
+
+    def serialize(self) -> dict:
+        serialized = copy.deepcopy(self)
+        serialized['node'] = serialized['node'].to_dict()
+        return serialized

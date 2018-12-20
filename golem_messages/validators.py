@@ -1,4 +1,5 @@
 import functools
+import ipaddress
 
 import semantic_version
 
@@ -26,6 +27,27 @@ def validate_integer(field_name, value):
     if not isinstance(value, int):
         raise exceptions.FieldError(
             "Should be an integer",
+            field=field_name,
+            value=value,
+        )
+
+
+def validate_port(field_name, value):
+    validate_integer(field_name, value)
+    if not 0 < value < (2**16-1):
+        raise exceptions.FieldError(
+            "Port not in range 1, 2**16-1",
+            field=field_name,
+            value=value,
+        )
+
+
+def validate_ipaddress(field_name, value):
+    try:
+        ipaddress.ip_address(value)
+    except ValueError as e:
+        raise exceptions.FieldError(
+            str(e),
             field=field_name,
             value=value,
         )

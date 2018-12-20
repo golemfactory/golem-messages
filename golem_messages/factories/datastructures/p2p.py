@@ -11,3 +11,12 @@ class Node(factory.Factory):
 
     # considered as difficult by `keysauth.is_pubkey_difficult` with level 10
     key = '00adbeef' + 'deadbeef' * 15
+
+
+class Peer(factory.DictFactory):
+    class Meta:
+        model = dt_p2p.Peer
+
+    address = factory.Faker('ipv4')
+    port = factory.Faker('random_int', min=1, max=2**16-1)
+    node = factory.SubFactory(Node)

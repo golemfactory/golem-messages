@@ -1,3 +1,5 @@
+import typing
+
 from golem_messages import exceptions
 from golem_messages import validators
 from golem_messages.datastructures import p2p as dt_p2p
@@ -35,7 +37,7 @@ class GetPeers(base.Message):
 
 
 @library.register(P2P_MESSAGE_BASE + 4)
-class Peers(base.Message, dt_p2p.NodeSlotMixin):
+class Peers(base.Message):
     SIGN = False
 
     __slots__ = ['peers'] + base.Message.__slots__
@@ -46,19 +48,21 @@ class Peers(base.Message, dt_p2p.NodeSlotMixin):
 
     def serialize_slot(self, key, value):
         if key == 'peers':
-            return self.serialize_node_list(value)
+            return self.serialize_peer_list(value)
         return super().serialize_slot(key, value)
 
-    def serialize_node_list(self, value):
-        return [self.serialize_node(n) for n in value]
+    @classmethod
+    def serialize_peer_list(cls, value) -> typing.List[dict]:
+        return [p.serialize() for p in value]
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
         if key == 'peers':
-            return self.deserialize_node_list(key, value)
+            return self.deserialize_peer_list(key, value)
         return value
 
-    def deserialize_node_list(self, key, value):
+    @classmethod
+    def deserialize_peer_list(cls, key, value) -> typing.List[dt_p2p.Peer]:
         if not isinstance(value, list):
             raise exceptions.FieldError(
                 "list is expected not {}".format(
@@ -67,7 +71,7 @@ class Peers(base.Message, dt_p2p.NodeSlotMixin):
                 field=key,
                 value=value,
             )
-        return [self.deserialize_node(key, d) for d in value]
+        return [dt_p2p.Peer(d) for d in value]
 
 
 @library.register(P2P_MESSAGE_BASE + 5)

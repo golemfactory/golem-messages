@@ -167,7 +167,7 @@ class MessagesTestCase(unittest.TestCase):
     def test_list_messages(self):
         obj_factory = lambda: object()  # noqa pylint: disable=unnecessary-lambda
         for message_class, key, factory in (
-                (message.Peers, 'peers', dt_p2p_factory.Node),
+                (message.Peers, 'peers', dt_p2p_factory.Peer),
                 (message.Tasks, 'tasks', dt_tasks_factory.TaskHeader),
                 (message.ResourcePeers, 'resource_peers', obj_factory),
                 (message.Gossip, 'gossip', obj_factory), ):
