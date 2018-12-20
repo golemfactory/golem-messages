@@ -12,7 +12,9 @@ class TaskHeader(factory.Factory):
     class Meta:
         model = dt_tasks.TaskHeader
 
-    task_id = factory.LazyFunction(lambda: helpers.fake_golem_uuid('00adbeef' + 'deadbeef' * 15))
+    task_id = factory.LazyFunction(
+        lambda: helpers.fake_golem_uuid('00adbeef' + 'deadbeef' * 15),
+    )
     task_owner = factory.LazyFunction(lambda: dt_p2p_factories.Node().to_dict())
     subtasks_count = factory.Faker('random_int', min=1)
     min_version = factory.LazyFunction(helpers.fake_version)

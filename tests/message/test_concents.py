@@ -72,9 +72,10 @@ class FileTransferTokenTest(mixins.SerializationMixin,
         self.assertEqual(fi.get('category'), cat)
 
     def test_get_file_info(self):
-        fi = concents.FileTransferToken.FileInfo(
-            {'category':
-                 concents.FileTransferToken.FileInfo.Category.resources})
+        file_info = concents.FileTransferToken.FileInfo
+        fi = file_info(
+            {'category': file_info.Category.resources, },
+        )
 
         ftt = concents.FileTransferToken(files=[fi])
         self.assertEqual(
@@ -84,9 +85,10 @@ class FileTransferTokenTest(mixins.SerializationMixin,
         )
 
     def test_get_file_info_negative(self):
-        fi = concents.FileTransferToken.FileInfo(
-            {'category':
-                 concents.FileTransferToken.FileInfo.Category.resources})
+        file_info = concents.FileTransferToken.FileInfo
+        fi = file_info(
+            {'category': file_info.Category.resources, },
+        )
         ftt = concents.FileTransferToken(files=[fi])
         self.assertIsNone(
             ftt.get_file_info(
@@ -377,7 +379,9 @@ class ForceSubtaskResultsResponseTest(mixins.RegisteredMessageTestMixin,
             subtask_results_accepted=subtask_results_accepted
         )
         expected = [
-            ['subtask_results_accepted', helpers.single_nested(subtask_results_accepted)],
+            ['subtask_results_accepted', helpers.single_nested(
+                subtask_results_accepted,
+            )],
             ['subtask_results_rejected', (False, None)],
         ]
         self.assertEqual(expected, msg.slots())
@@ -402,7 +406,9 @@ class ForceSubtaskResultsResponseTest(mixins.RegisteredMessageTestMixin,
         )
         expected = [
             ['subtask_results_accepted', (False, None)],
-            ['subtask_results_rejected', helpers.single_nested(subtask_results_rejected)],
+            ['subtask_results_rejected', helpers.single_nested(
+                subtask_results_rejected,
+            )],
         ]
         self.assertEqual(expected, msg.slots())
         self.assertIsInstance(
@@ -422,7 +428,9 @@ class ForceSubtaskResultsResponseTest(mixins.RegisteredMessageTestMixin,
         subtask_results_accepted = \
             factories.tasks.SubtaskResultsAcceptedFactory()
         msg = concents.ForceSubtaskResultsResponse(slots=(
-            ('subtask_results_accepted', helpers.single_nested(subtask_results_accepted)),
+            ('subtask_results_accepted', helpers.single_nested(
+                subtask_results_accepted,
+            )),
         ))
         self.assertIsInstance(
             msg.subtask_results_accepted,
@@ -439,7 +447,9 @@ class ForceSubtaskResultsResponseTest(mixins.RegisteredMessageTestMixin,
         subtask_results_rejected = \
             factories.tasks.SubtaskResultsRejectedFactory()
         msg = concents.ForceSubtaskResultsResponse(slots=(
-            ('subtask_results_rejected', helpers.single_nested(subtask_results_rejected)),
+            ('subtask_results_rejected', helpers.single_nested(
+                subtask_results_rejected,
+            )),
         ))
         self.assertIsInstance(
             msg.subtask_results_rejected,
@@ -524,11 +534,14 @@ class ForcePaymentTest(mixins.RegisteredMessageTestMixin, unittest.TestCase):
         msg = concents.ForcePayment(slots=[
             (
                 'subtask_results_accepted_list',
-                helpers.list_nested([factories.concents.SubtaskResultsAcceptedFactory()]),
+                helpers.list_nested([
+                    factories.concents.SubtaskResultsAcceptedFactory(),
+                ]),
             ),
         ])
         self.assertIsInstance(msg.subtask_results_accepted_list[0],
                               message.tasks.SubtaskResultsAccepted)
+
     def test_without_sra_list(self):
         msg = concents.ForcePayment()
 
@@ -580,7 +593,9 @@ class ForcePaymentRejectedTest(mixins.RegisteredMessageTestMixin,
     def test_force_payment_without_sra_list(self):
         with self.assertRaises(exceptions.FieldError):
             concents.ForcePaymentRejected(slots=[
-                ('force_payment', helpers.single_nested(factories.concents.ForcePaymentFactory()))
+                ('force_payment', helpers.single_nested(
+                    factories.concents.ForcePaymentFactory(),
+                ))
             ])
 
     def test_force_payment_wrong_class(self):
@@ -656,6 +671,7 @@ class VerdictReportComputeTaskTestCase(
             factories.tasks.TaskToComputeFactory()
         with self.assertRaises(exceptions.ValidationError):
             self.msg.is_valid()
+
 
 class ClientAuthorizationTestCase(
         mixins.RegisteredMessageTestMixin,

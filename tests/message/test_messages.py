@@ -164,7 +164,8 @@ class MessagesTestCase(unittest.TestCase):
             self.assertEqual(expected, msg.slots())
 
     def test_list_messages(self):
-        obj_factory = lambda: object()  # pylint: disable=unnecessary-lambda
+        def obj_factory():
+            return object()
         for message_class, key, factory in (
                 (message.Peers, 'peers', obj_factory),
                 (message.Tasks, 'tasks', dt_tasks_factories.TaskHeader),

@@ -93,7 +93,9 @@ class VerifySlotTest(unittest.TestCase):
 
     def test_verify_slot_none_disallowed(self):
         with self.assertRaises(exceptions.FieldError):
-            VerifySlotParent(slots=[('child', [False, None]),])
+            VerifySlotParent(slots=[
+                ('child', [False, None]),
+            ])
 
     def test_verify_slot_list(self):
         msg = VerifySlotListParent(
@@ -122,5 +124,7 @@ class VerifySlotTest(unittest.TestCase):
         self.assertIsNone(msg.child)
 
     def test_verify_slot_list_none_allowed(self):
-        msg = VerifySlotListParentAllowNone(slots=[('child_list', [True, [None]])])
+        msg = VerifySlotListParentAllowNone(slots=[
+            ('child_list', [True, [None]]),
+        ])
         self.assertIsNone(msg.child_list[0])
