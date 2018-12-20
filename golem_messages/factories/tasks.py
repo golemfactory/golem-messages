@@ -67,7 +67,8 @@ class TaskToComputeFactory(helpers.MessageFactory):
     requestor_id = factory.SelfAttribute(
         'requestor_public_key')
     provider_id = factory.LazyAttribute(
-        lambda task_to_compute: task_to_compute.want_to_compute_task.provider_public_key
+        lambda task_to_compute: task_to_compute.want_to_compute_task
+        .provider_public_key
     )
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
     requestor_public_key = factory.LazyFunction(

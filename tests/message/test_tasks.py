@@ -35,7 +35,6 @@ class WantToComputeTaskTest(unittest.TestCase):
         wtct = message.tasks.WantToComputeTask(concent_enabled=True)
         self.assertTrue(wtct.concent_enabled)
 
-
     def test_extra_data(self):
         extra_data_content = {'some': 'content'}
         wtct = message.tasks.WantToComputeTask(extra_data=extra_data_content)
@@ -124,10 +123,15 @@ class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
         msg = message.tasks.SubtaskResultsAccepted(slots=(
             (
                 'report_computed_task',
-                helpers.single_nested(factories.tasks.ReportComputedTaskFactory()),
+                helpers.single_nested(
+                    factories.tasks.ReportComputedTaskFactory(),
+                ),
             ),
         ))
-        self.assertIsInstance(msg.report_computed_task, message.tasks.ReportComputedTask)
+        self.assertIsInstance(
+            msg.report_computed_task,
+            message.tasks.ReportComputedTask,
+        )
 
     def test_payment_ts_validation_raises(self):
         serialized_sra = self._get_serialized_sra(payment_ts_offset=1)

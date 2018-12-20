@@ -1,4 +1,3 @@
-import itertools
 import pathlib
 import unittest
 
@@ -16,14 +15,20 @@ class PEP8TestCase(unittest.TestCase):
         style = pycodestyle.StyleGuide(ignore=[], max_line_length=80)
         base_path = pathlib.Path(golem_messages.__file__).parent
         tests_path = pathlib.Path(__file__).parent
-        for filepath in itertools.chain(base_path.iterdir(),
-                                        tests_path.iterdir()):
-            if filepath.suffix != '.py':
-                continue
-            absolute_path = str(base_path / filepath)
-            result = style.check_files([absolute_path])
-            self.assertEqual(result.total_errors, 0,
-                             "Found code style errors (and warnings).")
+        files_to_test = []
+
+        def inner(parent):
+            for filepath in parent.iterdir():
+                if filepath.is_dir():
+                    inner(filepath)
+                if filepath.suffix != '.py':
+                    continue
+                files_to_test.append(str(filepath.absolute()))
+        inner(base_path)
+        inner(tests_path)
+        result = style.check_files(files_to_test)
+        self.assertEqual(result.total_errors, 0,
+                         "Found code style errors (and warnings).")
 
     def test_lint(self):
         base_path = pathlib.Path(golem_messages.__file__).parent
