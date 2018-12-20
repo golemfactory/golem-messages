@@ -404,7 +404,9 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         :raises: `exceptions.InvalidSignature` if the signature is corrupted
         """
         return self._verify_signature(
-            self._ethsig, decode_hex(self.requestor_ethereum_public_key), msg_hash
+            self._ethsig,
+            decode_hex(self.requestor_ethereum_public_key),
+            msg_hash
         )
 
     def validate_taskid(self) -> None:
@@ -493,7 +495,9 @@ class SubtaskResultsAccepted(TaskMessage):
 
     def is_valid(self) -> bool:
         if self.payment_ts > self.header.timestamp:
-            raise exceptions.ValidationError("Payment timestamp cannot be from the future!")
+            raise exceptions.ValidationError(
+                "Payment timestamp cannot be from the future!"
+            )
         return True
 
 
@@ -664,7 +668,10 @@ class RejectReportComputedTask(TaskMessage, base.AbstractReasonMessage):
             TaskToCompute,
             allow_none=True,
         ),
-        'task_failure': base.MessageSlotDefinition(TaskFailure, allow_none=True),
+        'task_failure': base.MessageSlotDefinition(
+            TaskFailure,
+            allow_none=True,
+        ),
         'cannot_compute_task':
             base.MessageSlotDefinition(CannotComputeTask, allow_none=True),
     }
