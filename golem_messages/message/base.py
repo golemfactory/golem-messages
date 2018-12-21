@@ -615,7 +615,7 @@ class AbstractReasonMessage(Message):
 
 
 @library.register(0)
-class Hello(Message, dt_p2p.NodeSlotMixin):
+class Hello(dt_p2p.NodeSlotMixin, Message):
     ENCRYPT = False
     VERSION_FORMAT = '!32p'
     VERSION_LENGTH = struct.calcsize(VERSION_FORMAT)

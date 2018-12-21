@@ -4,6 +4,8 @@ import unittest
 import unittest.mock as mock
 
 from golem_messages import exceptions
+from golem_messages import factories
+from golem_messages.factories.datastructures import p2p as dt_p2p_factory
 from golem_messages.message import base
 from golem_messages.register import library
 
@@ -128,3 +130,23 @@ class VerifySlotTest(unittest.TestCase):
             ('child_list', [True, [None]]),
         ])
         self.assertIsNone(msg.child_list[0])
+
+
+class TestHelloNodeInfo(unittest.TestCase):
+    def setUp(self):
+        self.msg = factories.base.HelloFactory()
+
+    def test_none(self):
+        self.msg.node_info = None
+        # Should not raise
+        helpers.dump_and_load(self.msg)
+
+    def test_invalid(self):
+        self.msg.node_info = {'node_name': 'Drukarka Linux'}
+        with self.assertRaises(exceptions.FieldError):
+            helpers.dump_and_load(self.msg)
+
+    def test_node(self):
+        self.msg.node_info = dt_p2p_factory.Node()
+        # Should not raise
+        helpers.dump_and_load(self.msg)

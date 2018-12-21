@@ -12,7 +12,7 @@ def wrap_error(wrap_with):
             try:
                 return f(*args, **kwargs)
             except Exception as e:
-                raise wrap_with from e
+                raise wrap_with(str(e)) from e
         return _curry
     return _inner
 
