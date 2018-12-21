@@ -499,7 +499,8 @@ class SubtaskResultsAccepted(TaskMessage):
             raise exceptions.ValidationError(
                 "Payment timestamp cannot be from the future!"
             )
-        if self.payment_ts + settings.PAYMENT_TIMESTAMP_TOLERANCE < \
+        if self.payment_ts + \
+                settings.PAYMENT_TIMESTAMP_TOLERANCE.total_seconds() < \
                 self.header.timestamp:
             raise exceptions.ValidationError(
                 "Payment timestamp is too far in the past."
