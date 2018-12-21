@@ -70,19 +70,28 @@ class NodeSlotMixin:
     __slots__ = ()
 
     def serialize_slot(self, key, value):
-        if key in self.NODE_SLOTS:
-            return self.serialize_node(value)
+        if value and key in self.NODE_SLOTS:
+            return self.serialize_node(key, value)
         return super().serialize_slot(key, value)
 
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key=key, value=value)
-        if key in self.NODE_SLOTS:
+        if value and key in self.NODE_SLOTS:
             return self.deserialize_node(key, value)
         return value
 
     @classmethod
-    def serialize_node(cls, value: Node) -> dict:
-        return value.to_dict()
+    def serialize_node(cls, key, value: Node) -> dict:
+        try:
+            return value.to_dict()
+        except exceptions.FieldError:
+            raise
+        except Exception:  # pylint: disable=broad-except
+            raise exceptions.FieldError(
+                "Can't serialize",
+                field=key,
+                value=value,
+            )
 
     @classmethod
     def deserialize_node(cls, key, value: dict) -> Node:
