@@ -1,6 +1,5 @@
 import enum
 import functools
-import struct
 import typing
 
 from eth_utils import to_checksum_address
@@ -263,8 +262,6 @@ class WantToComputeTask(ConcentEnabled, base.Message):
 @library.register(TASK_MSG_BASE + 2)
 class TaskToCompute(ConcentEnabled, TaskMessage):
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
-    ETHSIG_FORMAT = '66p'
-    ETHSIG_LENGTH = struct.calcsize(ETHSIG_FORMAT)
 
     MSG_SLOTS = {
         'want_to_compute_task': base.MessageSlotDefinition(WantToComputeTask),
@@ -281,8 +278,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         'size',  # the size of the resources zip file
         'concent_enabled',
         'price',  # total subtask price computed as `price * subtask_timeout`
-
-        '_ethsig'  # must be last
+        'ethsig'
     ] + base.Message.__slots__
 
     @property
@@ -330,33 +326,11 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
     def task_to_compute(self):
         return self
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not hasattr(self, '_ethsig'):
-            self._ethsig = None
-
-    def serialize(self, *args, **kwargs):  # pylint: disable=arguments-differ
-        serialized = super().serialize(*args, **kwargs)
-        sig_length = self.ETHSIG_LENGTH - 1
-        if self._ethsig and len(self._ethsig) != sig_length:
-            raise ValueError(
-                "'_ethsig' must be exactly %s bytes long (or None)"
-                % sig_length)
-        ethsig = struct.pack(
-            self.ETHSIG_FORMAT,
-            self._ethsig or b''
-        )
-        return serialized + ethsig
-
     @classmethod
     def deserialize_with_header(cls, header, data, *args, **kwargs):  # noqa pylint: disable=arguments-differ
-        ethsig_data, data = data[-cls.ETHSIG_LENGTH:], data[:-cls.ETHSIG_LENGTH]
         instance: TaskToCompute = super().deserialize_with_header(
             header, data, *args, **kwargs
         )
-        (ethsig, ) = struct.unpack(
-            cls.ETHSIG_FORMAT, ethsig_data)
-        instance._ethsig = ethsig or None  # noqa pylint: disable=protected-access,assigning-non-slot
         try:
             instance.verify_ethsig()
         except exceptions.InvalidSignature:
@@ -372,11 +346,13 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
     ) -> None:
         """
         Calculate and set message's ethereum signature
-        using the provided ethereum private key.
+        using the provided ethereum private key by signing nested
+        WantToComputeTask message.
 
         :param private_key: ethereum private key
         :param msg_hash: may be optionally provided to skip generation
-                         of the message hash while signing
+                         of the message hash while signing. If not provided,
+                         the hash is generated from nested WantToComputeTask.
         """
 
         if not self.requestor_ethereum_public_key:
@@ -388,7 +364,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
                 value=self.requestor_ethereum_public_key,
             )
 
-        self._ethsig = self._get_signature(private_key, msg_hash)
+        self.ethsig = self.want_to_compute_task._get_signature(private_key, msg_hash)  # noqa pylint: disable=attribute-defined-outside-init,protected-access
 
     def verify_ethsig(
             self, msg_hash: typing.Optional[bytes] = None
@@ -399,12 +375,12 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         associated with `requestor_ethereum_public_key`
 
         :param msg_hash: maybe optionally provided to skip generation
-                         of the message hash during the verification
+                         of the message hash during the verification.
         :return: `True` if the signature is correct.
         :raises: `exceptions.InvalidSignature` if the signature is corrupted
         """
-        return self._verify_signature(
-            self._ethsig,
+        return self.want_to_compute_task._verify_signature(  # noqa pylint: disable=protected-access
+            self.ethsig,
             decode_hex(self.requestor_ethereum_public_key),
             msg_hash
         )

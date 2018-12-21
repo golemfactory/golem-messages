@@ -315,24 +315,16 @@ class TaskToComputeEthsigTest(unittest.TestCase):
     def test_ethsig(self):
         msg: message.tasks.TaskToCompute = \
             factories.tasks.TaskToComputeFactory()
-        self.assertTrue(msg._ethsig)
+        self.assertTrue(msg.ethsig)
         msg2 = helpers.dump_and_load(msg)
-        self.assertEqual(msg2._ethsig, msg._ethsig)
-
-    def test_ethsig_toolong(self):
-        msg: message.tasks.TaskToCompute = \
-            factories.tasks.TaskToComputeFactory()
-        ethsig = bytes(range(0, 66))
-        msg._ethsig = ethsig
-        with self.assertRaises(ValueError):
-            msg.serialize(None, None)
+        self.assertEqual(msg2.ethsig, msg.ethsig)
 
     def test_ethsig_none(self):
         msg: message.tasks.TaskToCompute = \
             factories.tasks.TaskToComputeFactory(
                 requestor_ethereum_public_key=encode_hex(
                     cryptography.ECCx(None).raw_pubkey))
-        self.assertIsNone(msg._ethsig)
+        self.assertIsNone(msg.ethsig)
         with self.assertRaises(exceptions.InvalidSignature):
             helpers.dump_and_load(msg)
 
@@ -367,12 +359,12 @@ class TaskToComputeEthsigTest(unittest.TestCase):
         requestor_keys = cryptography.ECCx(None)
         requestor_eth_keys, msg = self._get_ethkeys_and_ttc()
         msg.generate_ethsig(requestor_eth_keys.raw_privkey)
-        self.assertTrue(msg._ethsig)
+        self.assertTrue(msg.ethsig)
         data = shortcuts.dump(
             msg, requestor_keys.raw_privkey, provider_keys.raw_pubkey)
         msg2: message.tasks.TaskToCompute = shortcuts.load(
             data, provider_keys.raw_privkey, requestor_keys.raw_pubkey)
-        self.assertTrue(msg2._ethsig)
+        self.assertTrue(msg2.ethsig)
         self.assertTrue(msg2.verify_ethsig())
 
 
@@ -425,7 +417,7 @@ class TaskToComputeEthsigFactory(unittest.TestCase):
                 requestor_eth_keys.raw_pubkey
             )
         )
-        self.assertIsNone(ttc._ethsig)  # noqa pylint:disable=protected-access
+        self.assertIsNone(ttc.ethsig)  # noqa pylint:disable=protected-access
         with self.assertRaises(exceptions.InvalidSignature):
             ttc.verify_ethsig()
 
