@@ -9,6 +9,7 @@ from ethereum.utils import sha3
 from golem_messages import datastructures
 from golem_messages import exceptions
 from golem_messages import idgenerator
+from golem_messages import settings
 from golem_messages import validators
 from golem_messages.register import library
 from golem_messages.utils import decode_hex
@@ -497,6 +498,11 @@ class SubtaskResultsAccepted(TaskMessage):
         if self.payment_ts > self.header.timestamp:
             raise exceptions.ValidationError(
                 "Payment timestamp cannot be from the future!"
+            )
+        if self.payment_ts + settings.PAYMENT_TIMESTAMP_TOLERANCE < \
+                self.header.timestamp:
+            raise exceptions.ValidationError(
+                "Payment timestamp is too far in the past."
             )
         return True
 

@@ -133,8 +133,13 @@ class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
             message.tasks.ReportComputedTask,
         )
 
-    def test_payment_ts_validation_raises(self):
+    def test_payment_ts_in_future_validation_raises(self):
         serialized_sra = self._get_serialized_sra(payment_ts_offset=1)
+        with self.assertRaises(exceptions.ValidationError):
+            load(serialized_sra, None, None)
+
+    def test_payment_ts_in_past_validation_raises(self):
+        serialized_sra = self._get_serialized_sra(payment_ts_offset=-901)
         with self.assertRaises(exceptions.ValidationError):
             load(serialized_sra, None, None)
 
