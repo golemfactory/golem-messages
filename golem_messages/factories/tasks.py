@@ -8,6 +8,7 @@ import factory.fuzzy
 import faker
 
 from golem_messages import cryptography
+from golem_messages.factories.datastructures.tasks import TaskHeaderFactory
 from golem_messages.utils import encode_hex as encode_key_id
 from golem_messages.message import tasks
 
@@ -30,6 +31,7 @@ class WantToComputeTaskFactory(helpers.MessageFactory):
     provider_ethereum_public_key = factory.SelfAttribute(
         'provider_public_key'
     )
+    task_header = factory.SubFactory(TaskHeaderFactory)
 
 
 class CTDBlenderExtraDataFactory(factory.DictFactory):

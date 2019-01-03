@@ -12,6 +12,7 @@ from golem_messages import message
 from golem_messages import shortcuts
 from golem_messages.factories.datastructures import p2p as dt_p2p_factory
 from golem_messages.factories.datastructures import tasks as dt_tasks_factory
+from golem_messages.factories.datastructures.tasks import TaskHeaderFactory
 from golem_messages.utils import encode_hex
 
 from tests.message import helpers
@@ -60,6 +61,7 @@ class MessagesTestCase(unittest.TestCase):
         concent_enabled = random.random() > 0.5
         provider_public_key = provider_ethereum_public_key = (
             encode_hex(cryptography.ECCx(None).raw_pubkey))
+        task_header = TaskHeaderFactory()
         msg = message.WantToComputeTask(
             node_name=node_id,
             task_id=task_id,
@@ -71,6 +73,7 @@ class MessagesTestCase(unittest.TestCase):
             concent_enabled=concent_enabled,
             provider_public_key=provider_public_key,
             provider_ethereum_public_key=provider_ethereum_public_key,
+            task_header=task_header,
         )
         expected = [
             ['node_name', node_id],
@@ -84,6 +87,7 @@ class MessagesTestCase(unittest.TestCase):
             ['extra_data', None],
             ['provider_public_key', provider_public_key],
             ['provider_ethereum_public_key', provider_ethereum_public_key],
+            ['task_header', task_header.to_dict()]
         ]
         self.assertEqual(expected, msg.slots())
 

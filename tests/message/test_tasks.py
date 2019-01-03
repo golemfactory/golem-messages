@@ -197,6 +197,7 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         serialized = shortcuts.dump(ttc, None, None)
         msg = shortcuts.load(serialized, None, None)
         self.assertIsInstance(msg, message.tasks.TaskToCompute)
+        self.assertEqual(msg, ttc)
 
     def test_concent_enabled_attribute(self):
         ttc = factories.tasks.TaskToComputeFactory(concent_enabled=True)
