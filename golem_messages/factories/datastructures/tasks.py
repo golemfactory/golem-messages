@@ -8,7 +8,7 @@ from golem_messages.factories import helpers
 from golem_messages.factories.datastructures import p2p as dt_p2p_factories
 
 
-class TaskHeader(factory.Factory):
+class TaskHeaderFactory(factory.Factory):
     class Meta:
         model = dt_tasks.TaskHeader
 

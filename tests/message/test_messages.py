@@ -169,7 +169,7 @@ class MessagesTestCase(unittest.TestCase):
             return object()
         for message_class, key, factory in (
                 (message.Peers, 'peers', dt_p2p_factory.Peer),
-                (message.Tasks, 'tasks', dt_tasks_factory.TaskHeader),
+                (message.Tasks, 'tasks', dt_tasks_factory.TaskHeaderFactory),
                 (message.ResourcePeers, 'resource_peers', obj_factory),
                 (message.Gossip, 'gossip', obj_factory), ):
             msg = message_class()

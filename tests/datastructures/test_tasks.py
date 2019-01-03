@@ -110,7 +110,7 @@ class TestTaskHeader(unittest.TestCase):
 
 class TestTaskHeaderSignature(unittest.TestCase):
     def setUp(self):
-        self.task_header = dt_tasks_factories.TaskHeader()
+        self.task_header = dt_tasks_factories.TaskHeaderFactory()
         self.keys = cryptography.ECCx(None)
 
     def test_signature(self):
