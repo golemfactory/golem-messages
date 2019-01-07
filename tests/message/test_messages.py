@@ -362,3 +362,11 @@ class MessagesTestCase(unittest.TestCase):
             )
         for i in range(test_cases):
             self.assertEqual(msg_l.remove_tasks[i].task_id, task_ids[i])
+
+    def test_peers_serialization(self):
+        peers = [dt_p2p_factory.Peer(), ]
+        msg = message.p2p.Peers(peers=peers)
+
+        serialized = msg.serialize()
+
+        self.assertIsInstance(serialized, bytes)

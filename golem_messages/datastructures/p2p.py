@@ -134,6 +134,8 @@ class Peer(datastructures.ValidatingDict, datastructures.FrozenDict):
             )
 
     def serialize(self) -> dict:
-        serialized = copy.deepcopy(self)
-        serialized['node'] = serialized['node'].to_dict()
-        return serialized
+        return {
+            'address': self['address'],
+            'port': self['port'],
+            'node': self['node'].to_dict()
+        }
