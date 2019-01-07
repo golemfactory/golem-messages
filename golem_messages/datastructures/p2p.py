@@ -133,8 +133,6 @@ class Peer(datastructures.ValidatingDict, datastructures.FrozenDict):
             )
 
     def serialize(self) -> dict:
-        return {
-            'address': self['address'],
-            'port': self['port'],
-            'node': self['node'].to_dict()
-        }
+        serialized = dict(self)
+        serialized['node'] = serialized['node'].to_dict()
+        return serialized
