@@ -94,7 +94,7 @@ class TestPeer(unittest.TestCase):
             self.peer['address'] = None
 
     def test_peers_serialization(self):
-        peers = [dt_p2p_factory.Peer()]
+        peers = [self.peer]
         msg = message.p2p.Peers(peers=peers)
 
         serialized = msg.serialize()
