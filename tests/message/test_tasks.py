@@ -289,7 +289,7 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         # Should not raise
         requestor_keys = cryptography.ECCx(None)
         task_header = TaskHeaderFactory()
-        task_header.sign(requestor_keys.raw_privkey)
+        task_header.sign_task(requestor_keys.raw_privkey)
 
         wtc = factories.tasks.WantToComputeTaskFactory(
             task_header=task_header
@@ -309,7 +309,7 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         requestor_keys = cryptography.ECCx(None)
         different_keys = cryptography.ECCx(None)
         task_header = TaskHeaderFactory()
-        task_header.sign(different_keys.raw_privkey)
+        task_header.sign_task(different_keys.raw_privkey)
 
         wtc = factories.tasks.WantToComputeTaskFactory(
             task_header=task_header
@@ -633,7 +633,7 @@ class TaskMessageVerificationTest(unittest.TestCase):
 
     def get_ttc(self, **kwargs):
         task_header = TaskHeaderFactory()
-        task_header.sign(self.requestor_keys.raw_privkey)
+        task_header.sign_task(self.requestor_keys.raw_privkey)
         return factories.tasks.TaskToComputeFactory(
             requestor_public_key=encode_hex(self.requestor_keys.raw_pubkey),
             want_to_compute_task=factories.tasks.WantToComputeTaskFactory(

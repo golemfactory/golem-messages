@@ -115,11 +115,11 @@ class TestTaskHeaderSignature(unittest.TestCase):
 
     def test_signature(self):
         self.assertIsNone(self.task_header.signature)
-        self.task_header.sign(private_key=self.keys.raw_privkey)
+        self.task_header.sign_task(private_key=self.keys.raw_privkey)
         self.assertIsInstance(self.task_header.signature, bytes)
 
     def test_verify_ok(self):
-        self.task_header.sign(private_key=self.keys.raw_privkey)
+        self.task_header.sign_task(private_key=self.keys.raw_privkey)
         self.task_header.verify(public_key=self.keys.raw_pubkey)
 
     def test_verify_fail(self):

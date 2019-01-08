@@ -111,7 +111,7 @@ class TaskHeader(datastructures.Container):
     def deserialize_mask(cls, value):
         return masking.Mask(byte_repr=value)
 
-    def sign(self, private_key: bytes) -> None:
+    def sign_task(self, private_key: bytes) -> None:
         self.signature = cryptography.ecdsa_sign(  # noqa pylint: disable=attribute-defined-outside-init
             privkey=private_key,
             msghash=self.get_hash(),
