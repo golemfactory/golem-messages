@@ -7,7 +7,6 @@ import uuid
 
 from golem_messages import cryptography
 from golem_messages import datastructures as dt
-from golem_messages.datastructures import p2p as dt_p2p
 from golem_messages import factories
 from golem_messages import message
 from golem_messages import shortcuts
