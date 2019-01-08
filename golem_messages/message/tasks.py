@@ -398,6 +398,12 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
                     value=value,
                 )
 
+    def validate_ownership(self, concent_public_key=None):
+        self.want_to_compute_task.task_header.verify(
+            decode_hex(self.requestor_public_key)
+        )
+        return super().validate_ownership(concent_public_key)
+
 
 @library.register(TASK_MSG_BASE + 3)
 class CannotAssignTask(base.AbstractReasonMessage):

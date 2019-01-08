@@ -16,6 +16,7 @@ from golem_messages import factories
 from golem_messages import load
 from golem_messages import message
 from golem_messages import shortcuts
+from golem_messages.factories.datastructures.tasks import TaskHeaderFactory
 from golem_messages.factories.helpers import override_timestamp
 from golem_messages.utils import encode_hex, decode_hex
 from tests.message import mixins, helpers
@@ -283,6 +284,46 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
     def test_no_compute_task_def(self):
         # Should not raise
         factories.tasks.TaskToComputeFactory(compute_task_def=None)
+
+    def test_validate_ownership_chain(self):
+        # Should not raise
+        requestor_keys = cryptography.ECCx(None)
+        task_header = TaskHeaderFactory()
+        task_header.sign(requestor_keys.raw_privkey)
+
+        wtc = factories.tasks.WantToComputeTaskFactory(
+            task_header=task_header
+        )
+
+        ttc: message.tasks.TaskToCompute = factories.tasks.TaskToComputeFactory(
+            requestor_public_key=encode_hex(
+                requestor_keys.raw_pubkey,
+            ),
+            want_to_compute_task=wtc,
+        )
+        ttc.sign_message(requestor_keys.raw_privkey)  # noqa pylint: disable=no-value-for-parameter
+
+        ttc.validate_ownership_chain()
+
+    def test_validate_ownership_chain_rasie_when_invalid(self):
+        requestor_keys = cryptography.ECCx(None)
+        different_keys = cryptography.ECCx(None)
+        task_header = TaskHeaderFactory()
+        task_header.sign(different_keys.raw_privkey)
+
+        wtc = factories.tasks.WantToComputeTaskFactory(
+            task_header=task_header
+        )
+
+        ttc: message.tasks.TaskToCompute = factories.tasks.TaskToComputeFactory(
+            requestor_public_key=encode_hex(
+                requestor_keys.raw_pubkey,
+            ),
+            want_to_compute_task=wtc,
+        )
+        ttc.sign_message(requestor_keys.raw_privkey)  # noqa pylint: disable=no-value-for-parameter
+        with self.assertRaises(exceptions.InvalidSignature):
+            ttc.validate_ownership_chain()
 
     def test_past_deadline(self):
         now = calendar.timegm(time.gmtime())
@@ -591,10 +632,13 @@ class TaskMessageVerificationTest(unittest.TestCase):
         self.other_keys = self._fake_keys()
 
     def get_ttc(self, **kwargs):
+        task_header = TaskHeaderFactory()
+        task_header.sign(self.requestor_keys.raw_privkey)
         return factories.tasks.TaskToComputeFactory(
             requestor_public_key=encode_hex(self.requestor_keys.raw_pubkey),
             want_to_compute_task=factories.tasks.WantToComputeTaskFactory(
                 provider_public_key=encode_hex(self.provider_keys.raw_pubkey),
+                task_header=task_header,
             ),
             **kwargs,
         )
