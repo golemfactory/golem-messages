@@ -4,6 +4,7 @@ import faker
 
 from golem_messages import exceptions
 from golem_messages.factories.datastructures import p2p as dt_p2p_factory
+from golem_messages import message
 
 
 fake = faker.Faker()
@@ -91,3 +92,11 @@ class TestPeer(unittest.TestCase):
     def test_address_none(self):
         with self.assertRaises(exceptions.FieldError):
             self.peer['address'] = None
+
+    def test_peers_serialization(self):
+        peers = [dt_p2p_factory.Peer()]
+        msg = message.p2p.Peers(peers=peers)
+
+        serialized = msg.serialize()
+
+        self.assertIsInstance(serialized, bytes)
