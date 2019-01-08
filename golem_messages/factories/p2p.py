@@ -1,4 +1,3 @@
-import uuid
 import factory
 
 from golem_messages.factories.datastructures.p2p import Node
