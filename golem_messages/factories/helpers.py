@@ -11,7 +11,6 @@ from golem_messages import idgenerator
 if typing.TYPE_CHECKING:
     from golem_messages.message.base import Message  # noqa pylint:disable=unused-import
 
-
 fake = faker.Faker()
 
 

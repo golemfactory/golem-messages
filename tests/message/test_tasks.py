@@ -23,7 +23,9 @@ from golem_messages.utils import encode_hex, decode_hex
 from tests.message import mixins, helpers
 
 
-class WantToComputeTaskTest(unittest.TestCase):
+class WantToComputeTaskTest(unittest.TestCase, mixins.SerializationMixin):
+    FACTORY = factories.tasks.WantToComputeTaskFactory
+
     def test_concent_enabled_default_false(self):
         wtct = message.tasks.WantToComputeTask()
         self.assertFalse(wtct.concent_enabled)
@@ -44,12 +46,12 @@ class WantToComputeTaskTest(unittest.TestCase):
         self.assertEqual(wtct2.extra_data, extra_data_content)
 
     def test_provider_ethereum_address_checksum(self):
-        msg = factories.tasks.WantToComputeTaskFactory()
+        msg = self.FACTORY()
         self.assertTrue(msg.provider_ethereum_public_key)
         self.assertTrue(is_checksum_address(msg.provider_ethereum_address))
 
     def test_ethereum_address_provider(self):
-        msg = factories.tasks.WantToComputeTaskFactory()
+        msg = self.FACTORY()
         provider_public_key = decode_hex(msg.provider_ethereum_public_key)
 
         self.assertEqual(msg.provider_ethereum_address,
@@ -57,7 +59,7 @@ class WantToComputeTaskTest(unittest.TestCase):
                              '0x' + sha3(provider_public_key)[12:].hex()))
 
     def test_ethereum_address(self):
-        msg = factories.tasks.WantToComputeTaskFactory()
+        msg = self.FACTORY()
         serialized = shortcuts.dump(msg, None, None)
         msg_l = shortcuts.load(serialized, None, None)
         self.assertEqual(len(msg_l.provider_ethereum_address), 2 + (20*2))
@@ -194,13 +196,6 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
     def setUp(self):
         self.msg = self.FACTORY()
 
-    def test_task_to_compute_basic(self):
-        ttc = self.msg
-        serialized = shortcuts.dump(ttc, None, None)
-        msg = shortcuts.load(serialized, None, None)
-        self.assertIsInstance(msg, message.tasks.TaskToCompute)
-        self.assertEqual(msg, ttc)
-
     def test_concent_enabled_attribute(self):
         ttc = factories.tasks.TaskToComputeFactory(concent_enabled=True)
         self.assertTrue(ttc.concent_enabled)
@@ -306,7 +301,7 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
 
         ttc.validate_ownership_chain()
 
-    def test_validate_ownership_chain_raise_when_invalid(self):
+    def test_validate_ownership_chain_raises_when_invalid(self):
         requestor_keys = cryptography.ECCx(None)
         different_keys = cryptography.ECCx(None)
         task_header: TaskHeader = TaskHeaderFactory()

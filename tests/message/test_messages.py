@@ -5,15 +5,12 @@ import unittest
 import unittest.mock as mock
 import uuid
 
-from golem_messages import cryptography
-from golem_messages import datastructures
+from golem_messages import datastructures as dt
 from golem_messages import factories
 from golem_messages import message
 from golem_messages import shortcuts
 from golem_messages.factories.datastructures import p2p as dt_p2p_factory
 from golem_messages.factories.datastructures import tasks as dt_tasks_factory
-from golem_messages.factories.datastructures.tasks import TaskHeaderFactory
-from golem_messages.utils import encode_hex
 
 from tests.message import helpers
 
@@ -50,44 +47,6 @@ class InitializationTestCase(unittest.TestCase):
 
 
 class MessagesTestCase(unittest.TestCase):
-    def test_message_want_to_compute_task(self):
-        node_id = 'test-ni-{}'.format(uuid.uuid4())
-        perf_index = random.random() * 1000
-        price = random.random() * 1000
-        max_resource_size = random.randint(1, 2**10)
-        max_memory_size = random.randint(1, 2**10)
-        num_cores = random.randint(1, 2**5)
-        concent_enabled = random.random() > 0.5
-        provider_public_key = provider_ethereum_public_key = (
-            encode_hex(cryptography.ECCx(None).raw_pubkey))
-        task_header = TaskHeaderFactory()
-        msg = message.WantToComputeTask(
-            node_name=node_id,
-            perf_index=perf_index,
-            price=price,
-            max_resource_size=max_resource_size,
-            max_memory_size=max_memory_size,
-            num_cores=num_cores,
-            concent_enabled=concent_enabled,
-            provider_public_key=provider_public_key,
-            provider_ethereum_public_key=provider_ethereum_public_key,
-            task_header=task_header,
-        )
-        expected = [
-            ['node_name', node_id],
-            ['perf_index', perf_index],
-            ['max_resource_size', max_resource_size],
-            ['max_memory_size', max_memory_size],
-            ['num_cores', num_cores],
-            ['price', price],
-            ['concent_enabled', concent_enabled],
-            ['extra_data', None],
-            ['provider_public_key', provider_public_key],
-            ['provider_ethereum_public_key', provider_ethereum_public_key],
-            ['task_header', task_header.to_dict()]
-        ]
-        self.assertEqual(expected, msg.slots())
-
     @mock.patch('golem_messages.message.base.verify_time')
     def test_timestamp_and_timezones(self, *_):
         epoch_t = 1475238345
@@ -101,7 +60,7 @@ class MessagesTestCase(unittest.TestCase):
 
         set_tz('Europe/Warsaw')
         warsaw_time = time.localtime(epoch_t)
-        msg_pre = message.Hello(header=datastructures.MessageHeader(
+        msg_pre = message.Hello(header=dt.MessageHeader(
             0,
             epoch_t,
             False,
@@ -223,41 +182,6 @@ class MessagesTestCase(unittest.TestCase):
         expected = [
             ['node_id', node_id],
             ['loc_rank', loc_rank]
-        ]
-        self.assertEqual(expected, msg.slots())
-
-    def test_message_want_to_start_task_session(self):
-        node_info = 'test-ni-{}'.format(uuid.uuid4())
-        conn_id = 'test-ci-{}'.format(uuid.uuid4())
-        super_node_info = 'test-sni-{}'.format(uuid.uuid4())
-        msg = message.WantToStartTaskSession(
-            node_info=node_info,
-            conn_id=conn_id,
-            super_node_info=super_node_info
-        )
-        expected = [
-            ['node_info', node_info],
-            ['conn_id', conn_id],
-            ['super_node_info', super_node_info],
-        ]
-        self.assertEqual(expected, msg.slots())
-
-    def test_message_set_task_session(self):
-        key_id = 'test-ki-{}'.format(uuid.uuid4())
-        node_info = 'test-ni-{}'.format(uuid.uuid4())
-        conn_id = 'test-ci-{}'.format(uuid.uuid4())
-        super_node_info = 'test-sni-{}'.format(uuid.uuid4())
-        msg = message.SetTaskSession(
-            key_id=key_id,
-            node_info=node_info,
-            conn_id=conn_id,
-            super_node_info=super_node_info
-        )
-        expected = [
-            ['key_id', key_id],
-            ['node_info', node_info],
-            ['conn_id', conn_id],
-            ['super_node_info', super_node_info],
         ]
         self.assertEqual(expected, msg.slots())
 
