@@ -16,17 +16,17 @@ class TaskHeaderFactory(factory.Factory):
         exclude = ('requestor_public_key', )
 
     requestor_public_key = factory.LazyFunction(
-        lambda: cryptography.ECCx(None).raw_pubkey
+        lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey)
     )
 
     task_id = factory.LazyAttribute(
         lambda o: helpers.fake_golem_uuid(
-            encode_key_id(o.requestor_public_key)
+            o.requestor_public_key
         ),
     )
     task_owner = factory.LazyAttribute(
         lambda o: dt_p2p_factories.Node(
-            key=encode_key_id(o.requestor_public_key)
+            key=o.requestor_public_key
         ).to_dict()
     )
     subtasks_count = factory.Faker('random_int', min=1)
