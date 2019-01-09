@@ -5,7 +5,7 @@ import unittest
 import unittest.mock as mock
 import uuid
 
-from golem_messages import datastructures
+from golem_messages import datastructures as dt
 from golem_messages import factories
 from golem_messages import message
 from golem_messages import shortcuts
@@ -60,7 +60,7 @@ class MessagesTestCase(unittest.TestCase):
 
         set_tz('Europe/Warsaw')
         warsaw_time = time.localtime(epoch_t)
-        msg_pre = message.Hello(header=datastructures.MessageHeader(
+        msg_pre = message.Hello(header=dt.MessageHeader(
             0,
             epoch_t,
             False,
@@ -182,41 +182,6 @@ class MessagesTestCase(unittest.TestCase):
         expected = [
             ['node_id', node_id],
             ['loc_rank', loc_rank]
-        ]
-        self.assertEqual(expected, msg.slots())
-
-    def test_message_want_to_start_task_session(self):
-        node_info = 'test-ni-{}'.format(uuid.uuid4())
-        conn_id = 'test-ci-{}'.format(uuid.uuid4())
-        super_node_info = 'test-sni-{}'.format(uuid.uuid4())
-        msg = message.WantToStartTaskSession(
-            node_info=node_info,
-            conn_id=conn_id,
-            super_node_info=super_node_info
-        )
-        expected = [
-            ['node_info', node_info],
-            ['conn_id', conn_id],
-            ['super_node_info', super_node_info],
-        ]
-        self.assertEqual(expected, msg.slots())
-
-    def test_message_set_task_session(self):
-        key_id = 'test-ki-{}'.format(uuid.uuid4())
-        node_info = 'test-ni-{}'.format(uuid.uuid4())
-        conn_id = 'test-ci-{}'.format(uuid.uuid4())
-        super_node_info = 'test-sni-{}'.format(uuid.uuid4())
-        msg = message.SetTaskSession(
-            key_id=key_id,
-            node_info=node_info,
-            conn_id=conn_id,
-            super_node_info=super_node_info
-        )
-        expected = [
-            ['key_id', key_id],
-            ['node_info', node_info],
-            ['conn_id', conn_id],
-            ['super_node_info', super_node_info],
         ]
         self.assertEqual(expected, msg.slots())
 

@@ -1,4 +1,3 @@
-import copy
 import functools
 import logging
 
@@ -134,6 +133,6 @@ class Peer(datastructures.ValidatingDict, datastructures.FrozenDict):
             )
 
     def serialize(self) -> dict:
-        serialized = copy.deepcopy(self)
+        serialized = dict(self)
         serialized['node'] = serialized['node'].to_dict()
         return serialized
