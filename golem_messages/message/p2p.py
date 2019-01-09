@@ -218,7 +218,7 @@ class WantToStartTaskSession(dt_p2p.NodeSlotMixin, base.Message):
 
 
 @library.register(P2P_MESSAGE_BASE + 16)
-class SetTaskSession(base.Message, dt_p2p.NodeSlotMixin):
+class SetTaskSession(dt_p2p.NodeSlotMixin, base.Message):
     NODE_SLOTS = (
         'node_info',
         'super_node_info',

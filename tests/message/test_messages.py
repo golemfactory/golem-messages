@@ -7,12 +7,13 @@ import uuid
 
 from golem_messages import cryptography
 from golem_messages import datastructures as dt
+from golem_messages.datastructures import p2p as dt_p2p
 from golem_messages import factories
 from golem_messages import message
 from golem_messages import shortcuts
 from golem_messages.factories.datastructures import p2p as dt_p2p_factory
 from golem_messages.factories.datastructures import tasks as dt_tasks_factory
-from golem_messages.factories.p2p import WantToStartTaskSession
+from golem_messages.factories.p2p import WantToStartTaskSession, SetTaskSession
 from golem_messages.utils import encode_hex
 
 from tests.message import helpers
@@ -229,28 +230,35 @@ class MessagesTestCase(unittest.TestCase):
     def test_message_want_to_start_task_session(self):
         msg = WantToStartTaskSession()
 
-        serialized = msg.serialize()
+        expected = [
+            ('node_info', dt_p2p.Node),
+            ('conn_id', str),
+            ('super_node_info', dt_p2p.Node),
+        ]
 
+        for name, slot_type in expected:
+            attr = getattr(msg, name)
+            self.assertIsInstance(attr, slot_type)
+
+        serialized = msg.serialize()
         self.assertIsInstance(serialized, bytes)
 
     def test_message_set_task_session(self):
-        key_id = 'test-ki-{}'.format(uuid.uuid4())
-        node_info = 'test-ni-{}'.format(uuid.uuid4())
-        conn_id = 'test-ci-{}'.format(uuid.uuid4())
-        super_node_info = 'test-sni-{}'.format(uuid.uuid4())
-        msg = message.SetTaskSession(
-            key_id=key_id,
-            node_info=node_info,
-            conn_id=conn_id,
-            super_node_info=super_node_info
-        )
+        msg = SetTaskSession()
+
         expected = [
-            ['key_id', key_id],
-            ['node_info', node_info],
-            ['conn_id', conn_id],
-            ['super_node_info', super_node_info],
+            ('key_id', str),
+            ('node_info', dt_p2p.Node),
+            ('conn_id', str),
+            ('super_node_info', dt_p2p.Node),
         ]
-        self.assertEqual(expected, msg.slots())
+
+        for name, slot_type in expected:
+            attr = getattr(msg, name)
+            self.assertIsInstance(attr, slot_type)
+
+        serialized = msg.serialize()
+        self.assertIsInstance(serialized, bytes)
 
     def test_message_get_resource(self):
         task_id = 'test-ti-{}'.format(uuid.uuid4())
