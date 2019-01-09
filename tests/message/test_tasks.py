@@ -354,6 +354,8 @@ class TaskToComputeSignedChainFactory(unittest.TestCase):
         self.assertTrue(ttc.verify_signature(requestor_keys.raw_pubkey))
         self.assertTrue(wtct.verify_signature(provider_keys.raw_pubkey))
         self.assertTrue(th.verify(requestor_keys.raw_pubkey))
+        self.assertEqual(ttc.requestor_id, th.task_owner.key)
+        self.assertEqual(ttc.task_id, th.task_id)
 
 
 class TaskToComputeEthereumAddressChecksum(unittest.TestCase):

@@ -86,6 +86,11 @@ class TaskToComputeFactory(helpers.MessageFactory):
             provider_keys: cryptography.ECCx = None,
             **kwargs
     ):
+        """
+        Generate a TaskToCompute message with nested WantToComputeTask
+        and TaskHeader, all signed and consistent with each other
+        with regards to included node identities and task ids
+        """
         WTCT_TH_KEY = 'want_to_compute_task__task_header'  # noqa
         WTCT_KEY = 'want_to_compute_task'  # noqa
         if requestor_keys:
@@ -136,7 +141,7 @@ class TaskToComputeFactory(helpers.MessageFactory):
                 kwargs[WTCT_KEY + '__sign__privkey'] = \
                     provider_keys.raw_privkey
 
-        return super().create(*args, **kwargs)
+        return cls(*args, **kwargs)
 
     @classmethod
     def past_deadline(cls, *args, **kwargs):
