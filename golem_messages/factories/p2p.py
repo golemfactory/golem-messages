@@ -7,7 +7,7 @@ from golem_messages.message import p2p as dt_p2p
 from . import helpers
 
 
-class WantToStartTaskSession(helpers.MessageFactory):
+class WantToStartTaskSessionFactory(helpers.MessageFactory):
     class Meta:
         model = dt_p2p.WantToStartTaskSession
 
@@ -16,7 +16,7 @@ class WantToStartTaskSession(helpers.MessageFactory):
     super_node_info = factory.SubFactory(Node)
 
 
-class SetTaskSession(helpers.MessageFactory):
+class SetTaskSessionFactory(helpers.MessageFactory):
     class Meta:
         model = dt_p2p.SetTaskSession
 
