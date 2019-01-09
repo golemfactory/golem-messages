@@ -16,6 +16,7 @@ from golem_messages import factories
 from golem_messages import load
 from golem_messages import message
 from golem_messages import shortcuts
+from golem_messages.datastructures.tasks import TaskHeader
 from golem_messages.factories.datastructures.tasks import TaskHeaderFactory
 from golem_messages.factories.helpers import override_timestamp
 from golem_messages.utils import encode_hex, decode_hex
@@ -288,8 +289,8 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
     def test_validate_ownership_chain(self):
         # Should not raise
         requestor_keys = cryptography.ECCx(None)
-        task_header = TaskHeaderFactory()
-        task_header.sign(requestor_keys.raw_privkey)
+        task_header: TaskHeader = TaskHeaderFactory()
+        task_header.sign(requestor_keys.raw_privkey)  # noqa pylint: disable=no-value-for-parameter
 
         wtc = factories.tasks.WantToComputeTaskFactory(
             task_header=task_header
@@ -305,11 +306,11 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
 
         ttc.validate_ownership_chain()
 
-    def test_validate_ownership_chain_rasie_when_invalid(self):
+    def test_validate_ownership_chain_raise_when_invalid(self):
         requestor_keys = cryptography.ECCx(None)
         different_keys = cryptography.ECCx(None)
-        task_header = TaskHeaderFactory()
-        task_header.sign(different_keys.raw_privkey)
+        task_header: TaskHeader = TaskHeaderFactory()
+        task_header.sign(different_keys.raw_privkey)  # noqa pylint: disable=no-value-for-parameter
 
         wtc = factories.tasks.WantToComputeTaskFactory(
             task_header=task_header
@@ -340,6 +341,24 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         ttc = factories.tasks.TaskToComputeFactory(size=None)
         with self.assertRaises(exceptions.FieldError):
             helpers.dump_and_load(ttc)
+
+
+class TaskToComputeSignedChainFactory(unittest.TestCase):
+    def test_factory_with_signed_nested_messages(self):
+        requestor_keys = cryptography.ECCx(None)
+        provider_keys = cryptography.ECCx(None)
+
+        ttc: message.tasks.TaskToCompute = \
+            factories.tasks.TaskToComputeFactory.with_signed_nested_messages(
+                requestor_keys=requestor_keys,
+                provider_keys=provider_keys,
+            )
+        wtct: message.tasks.WantToComputeTask = ttc.want_to_compute_task
+        th: TaskHeader = wtct.task_header
+
+        self.assertTrue(ttc.verify_signature(requestor_keys.raw_pubkey))
+        self.assertTrue(wtct.verify_signature(provider_keys.raw_pubkey))
+        self.assertTrue(th.verify(requestor_keys.raw_pubkey))
 
 
 class TaskToComputeEthereumAddressChecksum(unittest.TestCase):
@@ -632,8 +651,8 @@ class TaskMessageVerificationTest(unittest.TestCase):
         self.other_keys = self._fake_keys()
 
     def get_ttc(self, **kwargs):
-        task_header = TaskHeaderFactory()
-        task_header.sign(self.requestor_keys.raw_privkey)
+        task_header: TaskHeader = TaskHeaderFactory()
+        task_header.sign(self.requestor_keys.raw_privkey)  # noqa pylint: disable=no-value-for-parameter
         return factories.tasks.TaskToComputeFactory(
             requestor_public_key=encode_hex(self.requestor_keys.raw_pubkey),
             want_to_compute_task=factories.tasks.WantToComputeTaskFactory(

@@ -52,7 +52,6 @@ class InitializationTestCase(unittest.TestCase):
 class MessagesTestCase(unittest.TestCase):
     def test_message_want_to_compute_task(self):
         node_id = 'test-ni-{}'.format(uuid.uuid4())
-        task_id = 'test-ti-{}'.format(uuid.uuid4())
         perf_index = random.random() * 1000
         price = random.random() * 1000
         max_resource_size = random.randint(1, 2**10)
@@ -64,7 +63,6 @@ class MessagesTestCase(unittest.TestCase):
         task_header = TaskHeaderFactory()
         msg = message.WantToComputeTask(
             node_name=node_id,
-            task_id=task_id,
             perf_index=perf_index,
             price=price,
             max_resource_size=max_resource_size,
@@ -77,7 +75,6 @@ class MessagesTestCase(unittest.TestCase):
         )
         expected = [
             ['node_name', node_id],
-            ['task_id', task_id],
             ['perf_index', perf_index],
             ['max_resource_size', max_resource_size],
             ['max_memory_size', max_memory_size],
