@@ -32,6 +32,7 @@ class ComputeTaskDef(datastructures.ValidatingDict, datastructures.FrozenDict):
         'short_description': '',
         'performance': 0,
         'docker_images': None,
+        'resources': [],
     }
 
     validate_task_id = functools.partial(

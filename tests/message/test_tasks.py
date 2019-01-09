@@ -101,6 +101,10 @@ class ComputeTaskDefTestCase(unittest.TestCase):
         self.assertTrue(extra_data['frames'])
         self.assertTrue(extra_data['output_format'])
 
+    def test_has_resources(self):
+        ctd = message.ComputeTaskDef()
+        self.assertIsInstance(ctd.resources, list)
+
 
 class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
                                  mixins.SerializationMixin,
