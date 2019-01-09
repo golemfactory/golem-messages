@@ -1,4 +1,5 @@
 # pylint: disable=too-few-public-methods
+import uuid
 import factory
 
 from golem_messages.factories.datastructures.p2p import Node
@@ -12,7 +13,7 @@ class WantToStartTaskSessionFactory(helpers.MessageFactory):
         model = dt_p2p.WantToStartTaskSession
 
     node_info = factory.SubFactory(Node)
-    conn_id = 'mockuuid-want-tost-artt-asksession'
+    conn_id = str(uuid.uuid4())
     super_node_info = factory.SubFactory(Node)
 
 
@@ -20,7 +21,7 @@ class SetTaskSessionFactory(helpers.MessageFactory):
     class Meta:
         model = dt_p2p.SetTaskSession
 
-    key_id = 'mockuuid-sett-asks-essi-onkey'
+    key_id = str(uuid.uuid4())
     node_info = factory.SubFactory(Node)
-    conn_id = 'mockuuid-sett-asks-essi-onkey'
+    conn_id = str(uuid.uuid4())
     super_node_info = factory.SubFactory(Node)

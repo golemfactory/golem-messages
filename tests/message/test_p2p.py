@@ -1,6 +1,8 @@
 import unittest
+
 from golem_messages.factories import p2p as p2p_factories
 from golem_messages.message import p2p
+
 from tests.message import mixins
 
 
