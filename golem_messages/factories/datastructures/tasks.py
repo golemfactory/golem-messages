@@ -6,9 +6,10 @@ from golem_messages.datastructures import masking
 from golem_messages.datastructures import tasks as dt_tasks
 from golem_messages.factories import helpers
 from golem_messages.factories.datastructures import p2p as dt_p2p_factories
+from golem_messages.factories.helpers import HeaderFactory
 
 
-class TaskHeaderFactory(factory.Factory):
+class TaskHeaderFactory(HeaderFactory):
     class Meta:
         model = dt_tasks.TaskHeader
 
