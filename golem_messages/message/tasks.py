@@ -234,7 +234,6 @@ class ConcentEnabled:  # noqa pylint:disable=too-few-public-methods
 class WantToComputeTask(ConcentEnabled, base.Message):
     __slots__ = [
         'node_name',
-        'task_id',
         'perf_index',
         'max_resource_size',
         'max_memory_size',
@@ -258,6 +257,10 @@ class WantToComputeTask(ConcentEnabled, base.Message):
         return to_checksum_address(
             sha3(decode_hex(self.provider_ethereum_public_key))[12:].hex(),
         )
+
+    @property
+    def task_id(self):
+        return self.task_header.task_id
 
 
 @library.register(TASK_MSG_BASE + 2)
