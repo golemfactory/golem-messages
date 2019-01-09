@@ -5,15 +5,12 @@ import unittest
 import unittest.mock as mock
 import uuid
 
-from golem_messages import cryptography
 from golem_messages import datastructures
 from golem_messages import factories
 from golem_messages import message
 from golem_messages import shortcuts
 from golem_messages.factories.datastructures import p2p as dt_p2p_factory
 from golem_messages.factories.datastructures import tasks as dt_tasks_factory
-from golem_messages.factories.datastructures.tasks import TaskHeaderFactory
-from golem_messages.utils import encode_hex
 
 from tests.message import helpers
 
@@ -50,47 +47,6 @@ class InitializationTestCase(unittest.TestCase):
 
 
 class MessagesTestCase(unittest.TestCase):
-    def test_message_want_to_compute_task(self):
-        node_id = 'test-ni-{}'.format(uuid.uuid4())
-        task_id = 'test-ti-{}'.format(uuid.uuid4())
-        perf_index = random.random() * 1000
-        price = random.random() * 1000
-        max_resource_size = random.randint(1, 2**10)
-        max_memory_size = random.randint(1, 2**10)
-        num_cores = random.randint(1, 2**5)
-        concent_enabled = random.random() > 0.5
-        provider_public_key = provider_ethereum_public_key = (
-            encode_hex(cryptography.ECCx(None).raw_pubkey))
-        task_header = TaskHeaderFactory()
-        msg = message.WantToComputeTask(
-            node_name=node_id,
-            task_id=task_id,
-            perf_index=perf_index,
-            price=price,
-            max_resource_size=max_resource_size,
-            max_memory_size=max_memory_size,
-            num_cores=num_cores,
-            concent_enabled=concent_enabled,
-            provider_public_key=provider_public_key,
-            provider_ethereum_public_key=provider_ethereum_public_key,
-            task_header=task_header,
-        )
-        expected = [
-            ['node_name', node_id],
-            ['task_id', task_id],
-            ['perf_index', perf_index],
-            ['max_resource_size', max_resource_size],
-            ['max_memory_size', max_memory_size],
-            ['num_cores', num_cores],
-            ['price', price],
-            ['concent_enabled', concent_enabled],
-            ['extra_data', None],
-            ['provider_public_key', provider_public_key],
-            ['provider_ethereum_public_key', provider_ethereum_public_key],
-            ['task_header', task_header.to_dict()]
-        ]
-        self.assertEqual(expected, msg.slots())
-
     @mock.patch('golem_messages.message.base.verify_time')
     def test_timestamp_and_timezones(self, *_):
         epoch_t = 1475238345
