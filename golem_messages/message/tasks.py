@@ -249,7 +249,7 @@ class WantToComputeTask(ConcentEnabled, base.Message):
                             # with regards to the contents of this field.
 
         'provider_public_key',  # key used for msg signing and encryption
-        'provider_ethereum_public_key',  # used for transactions on blockchain,
+        'provider_ethereum_public_key',  # used for transactions on blockchain
         'task_header',  # TaskHeader, should be signed by requestor
     ] + base.Message.__slots__
 

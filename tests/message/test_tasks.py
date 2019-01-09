@@ -305,7 +305,7 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
 
         ttc.validate_ownership_chain()
 
-    def test_validate_ownership_chain_rasie_when_invalid(self):
+    def test_validate_ownership_chain_raises_when_invalid(self):
         requestor_keys = cryptography.ECCx(None)
         different_keys = cryptography.ECCx(None)
         task_header = TaskHeaderFactory()
