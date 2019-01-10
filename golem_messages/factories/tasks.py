@@ -15,11 +15,6 @@ from golem_messages.message import tasks
 from . import helpers
 
 
-class TaskOwnerFactory(factory.DictFactory):  # is this class used anymore?
-    key = factory.Faker('binary', length=64)
-    node_name = factory.Faker('name')
-
-
 class WantToComputeTaskFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.WantToComputeTask
