@@ -111,16 +111,16 @@ class TaskHeader(datastructures.Container):
     def deserialize_mask(cls, value):
         return masking.Mask(byte_repr=value)
 
-    def sign_task(self, private_key: bytes) -> None:
+    def sign(self, private_key: bytes) -> None:
         self.signature = cryptography.ecdsa_sign(  # noqa pylint: disable=attribute-defined-outside-init
             privkey=private_key,
             msghash=self.get_hash(),
         )
 
-    def verify(self, public_key: bytes) -> None:
+    def verify(self, public_key: bytes) -> bool:
         if self.signature is None:
             raise exceptions.InvalidSignature("No signature")
-        cryptography.ecdsa_verify(
+        return cryptography.ecdsa_verify(
             pubkey=public_key,
             signature=self.signature,
             message=self.get_hash(),

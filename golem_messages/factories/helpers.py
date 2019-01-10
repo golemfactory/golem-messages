@@ -10,7 +10,6 @@ from golem_messages import idgenerator
 
 if typing.TYPE_CHECKING:
     from golem_messages.message.base import Message  # noqa pylint:disable=unused-import
-    from golem_messages.datastructures.tasks import TaskHeader  # noqa pylint:disable=unused-import
 
 fake = faker.Faker()
 
@@ -111,22 +110,3 @@ class MessageFactory(factory.Factory):
         MessageFactory.sign_message(msg, _, __, **kwargs)
 
     # pylint: enable=no-self-argument
-
-
-class HeaderFactory(factory.Factory):
-
-    @staticmethod
-    def sign_task_(task_header: 'TaskHeader', _, __, **kwargs):
-        privkey = kwargs.pop('privkey', None)
-
-        if kwargs:
-            raise factory.errors.InvalidDeclarationError(
-                "Unknown arguments encountered %s" % list(kwargs.keys()))
-
-        if privkey:
-            task_header.sign_task(privkey)
-
-    # pylint: disable=no-self-argument
-    @factory.post_generation
-    def sign(header: 'TaskHeader', _, __, **kwargs):
-        HeaderFactory.sign_task_(header, _, __, **kwargs)
