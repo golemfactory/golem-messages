@@ -9,6 +9,7 @@ from golem_messages import datastructures
 from golem_messages import exceptions
 from golem_messages import idgenerator
 from golem_messages import validators
+from golem_messages.datastructures.tasks import TaskHeader
 from golem_messages.register import library
 from golem_messages.utils import decode_hex
 
@@ -261,6 +262,11 @@ class WantToComputeTask(ConcentEnabled, base.Message):
     @property
     def task_id(self):
         return self.task_header.task_id
+
+    def serialize_slot(self, key, value):
+        if key == 'task_header' and isinstance(value, TaskHeader):
+            return value.to_dict()
+        return super().serialize_slot(key, value)
 
 
 @library.register(TASK_MSG_BASE + 2)

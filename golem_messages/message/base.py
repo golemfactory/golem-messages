@@ -262,8 +262,6 @@ class Message():
             return value.value
         if key in self.MSG_SLOTS:
             return self.serialize_message(key, value)
-        if isinstance(value, TaskHeader):
-            return value.to_dict()
         return value
 
     def serialize_message(self, key, value):
