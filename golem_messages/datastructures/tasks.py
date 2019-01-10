@@ -117,7 +117,7 @@ class TaskHeader(datastructures.Container):
             msghash=self.get_hash(),
         )
 
-    def verify(self, public_key: bytes) -> None:
+    def verify(self, public_key: bytes) -> bool:
         if self.signature is None:
             raise exceptions.InvalidSignature("No signature")
         return cryptography.ecdsa_verify(
