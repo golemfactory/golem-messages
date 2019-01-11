@@ -269,6 +269,11 @@ class WantToComputeTask(ConcentEnabled, base.Message):
             return value.to_dict()
         return super().serialize_slot(key, value)
 
+    def deserialize_slot(self, key, value):
+        if key == 'task_header' and value is not None:
+            return TaskHeader(**value)
+        return super().deserialize_slot(key, value)
+
 
 @library.register(TASK_MSG_BASE + 2)
 class TaskToCompute(ConcentEnabled, TaskMessage):

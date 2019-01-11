@@ -164,8 +164,6 @@ class TaskToComputeFactory(helpers.MessageFactory):
             if ttc.requestor_id == \
                     ttc.want_to_compute_task.task_header.task_owner.key:
                 _task_id = ttc.want_to_compute_task.task_header.task_id
-        # except AttributeError:
-        #     pass
 
         if extracted:
             _task_id = extracted

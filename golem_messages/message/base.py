@@ -19,7 +19,6 @@ from golem_messages import exceptions
 from golem_messages import serializer
 from golem_messages import settings
 from golem_messages.datastructures import p2p as dt_p2p
-from golem_messages.datastructures.tasks import TaskHeader
 from golem_messages.register import library
 
 logger = logging.getLogger('golem.network.transport.message')
@@ -301,8 +300,6 @@ class Message():
                 ) from e
         if key in self.MSG_SLOTS:
             return self.deserialize_message(key, value)
-        if key == 'task_header' and value is not None:
-            return TaskHeader(**value)
         return value
 
     def deserialize_message(self, key, value):
