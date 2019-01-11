@@ -280,6 +280,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         'size',  # the size of the resources zip file
         'concent_enabled',
         'price',  # total subtask price computed as `price * subtask_timeout`
+        'resources_options',
         'ethsig'
     ] + base.Message.__slots__
 

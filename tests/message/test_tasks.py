@@ -308,6 +308,10 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         with self.assertRaises(exceptions.FieldError):
             helpers.dump_and_load(ttc)
 
+    def test_resources_options(self):
+        ttc = factories.tasks.TaskToComputeFactory()
+        self.assertTrue(hasattr(ttc, 'resources_options'))
+
 
 class TaskToComputeEthereumAddressChecksum(unittest.TestCase):
     def test_requestor_ethereum_address_checksum(self):
