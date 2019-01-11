@@ -64,6 +64,10 @@ class WantToComputeTaskTest(unittest.TestCase, mixins.SerializationMixin):
         msg_l = shortcuts.load(serialized, None, None)
         self.assertEqual(len(msg_l.provider_ethereum_address), 2 + (20*2))
 
+    def test_task_id(self):
+        wtct = self.FACTORY()
+        self.assertEqual(wtct.task_id, wtct.task_header.task_id)
+
 
 class ComputeTaskDefTestCase(unittest.TestCase):
     @mock.patch('golem_messages.message.tasks.ComputeTaskDef.validate_task_id')
@@ -284,7 +288,9 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
 
     def test_no_compute_task_def(self):
         # Should not raise
-        factories.tasks.TaskToComputeFactory(compute_task_def=None)
+        ttc = factories.tasks.TaskToComputeFactory(compute_task_def=None)
+        self.assertEqual(ttc.task_id, None)
+        self.assertEqual(ttc.subtask_id, None)
 
     def test_validate_ownership_chain(self):
         # Should not raise

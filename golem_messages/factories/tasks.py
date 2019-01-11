@@ -1,5 +1,6 @@
 # pylint: disable=too-few-public-methods,unnecessary-lambda
 import calendar
+from contextlib import suppress
 import datetime
 import time
 import typing
@@ -159,12 +160,12 @@ class TaskToComputeFactory(helpers.MessageFactory):
             return
 
         _task_id = None
-        try:
+        with suppress(AttributeError):
             if ttc.requestor_id == \
                     ttc.want_to_compute_task.task_header.task_owner.key:
                 _task_id = ttc.want_to_compute_task.task_header.task_id
-        except AttributeError:
-            pass
+        # except AttributeError:
+        #     pass
 
         if extracted:
             _task_id = extracted
