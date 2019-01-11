@@ -54,17 +54,6 @@ class PullAnswer(base.Message):
     ] + base.Message.__slots__
 
 
-@library.register(RESOURCE_MSG_BASE + 7)
-class ResourceList(base.Message):
-    """Message with resource request
-    :param str resources: resource list
-    """
-    __slots__ = [
-        'resources',
-        'options'
-    ] + base.Message.__slots__
-
-
 @library.register(RESOURCE_MSG_BASE + 8)
 class ResourceHandshakeStart(base.Message):
     __slots__ = [

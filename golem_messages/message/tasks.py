@@ -443,15 +443,6 @@ class ReportComputedTask(TaskMessage):
     ] + base.Message.__slots__
 
 
-@library.register(TASK_MSG_BASE + 8)
-class GetResource(base.Message):
-    """Request a resource for a given task"""
-    __slots__ = [
-        'task_id',
-        'resource_header'
-    ] + base.Message.__slots__
-
-
 @library.register(TASK_MSG_BASE + 10)
 class SubtaskResultsAccepted(TaskMessage):
     """
