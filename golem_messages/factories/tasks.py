@@ -58,6 +58,7 @@ class ComputeTaskDefFactory(factory.DictFactory):
         int(datetime.timedelta(days=1).total_seconds()))
     src_code = factory.Faker('text')
     extra_data = factory.SubFactory(CTDBlenderExtraDataFactory)
+    resources = factory.List([factory.Faker('uuid4')])
 
 
 class TaskToComputeFactory(helpers.MessageFactory):

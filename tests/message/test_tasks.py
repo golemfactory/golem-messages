@@ -103,7 +103,7 @@ class ComputeTaskDefTestCase(unittest.TestCase):
 
     def test_has_resources(self):
         ctd = message.ComputeTaskDef()
-        self.assertIsInstance(ctd.resources, list)
+        self.assertIsInstance(ctd['resources'], list)
 
 
 class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
