@@ -118,6 +118,10 @@ class TaskHeader(datastructures.Container):
         )
 
     def verify(self, public_key: bytes) -> bool:
+        """
+        :return: `True` if the signature is correct.
+        :raises: `exceptions.InvalidSignature` if the signature is corrupted
+        """
         if self.signature is None:
             raise exceptions.InvalidSignature("No signature")
         return cryptography.ecdsa_verify(
