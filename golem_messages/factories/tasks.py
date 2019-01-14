@@ -1,5 +1,6 @@
 # pylint: disable=too-few-public-methods,unnecessary-lambda
 import calendar
+from contextlib import suppress
 import datetime
 import time
 import typing
@@ -8,15 +9,11 @@ import factory.fuzzy
 import faker
 
 from golem_messages import cryptography
+from golem_messages.factories.datastructures.tasks import TaskHeaderFactory
 from golem_messages.utils import encode_hex as encode_key_id
 from golem_messages.message import tasks
 
 from . import helpers
-
-
-class TaskOwnerFactory(factory.DictFactory):
-    key = factory.Faker('binary', length=64)
-    node_name = factory.Faker('name')
 
 
 class WantToComputeTaskFactory(helpers.MessageFactory):
@@ -24,12 +21,12 @@ class WantToComputeTaskFactory(helpers.MessageFactory):
         model = tasks.WantToComputeTask
 
     node_name = factory.Faker('name')
-    task_id = factory.Faker('uuid4')
     provider_public_key = factory.LazyFunction(
         lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey))
     provider_ethereum_public_key = factory.SelfAttribute(
         'provider_public_key'
     )
+    task_header = factory.SubFactory(TaskHeaderFactory)
 
 
 class CTDBlenderExtraDataFactory(factory.DictFactory):
@@ -67,17 +64,80 @@ class TaskToComputeFactory(helpers.MessageFactory):
     requestor_id = factory.SelfAttribute(
         'requestor_public_key')
     provider_id = factory.LazyAttribute(
-        lambda task_to_compute: task_to_compute.want_to_compute_task
-        .provider_public_key
+        lambda o: o.want_to_compute_task.provider_public_key
     )
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
     requestor_public_key = factory.LazyFunction(
         lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey))
-
     want_to_compute_task = factory.SubFactory(WantToComputeTaskFactory)
     package_hash = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
     size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
     price = factory.Faker('random_int', min=1 << 20, max=10 << 20)
+
+    @classmethod
+    def with_signed_nested_messages(
+            cls,
+            *args,
+            requestor_keys: cryptography.ECCx = None,
+            provider_keys: cryptography.ECCx = None,
+            **kwargs
+    ):
+        """
+        Generate a TaskToCompute message with nested WantToComputeTask
+        and TaskHeader, all signed and consistent with each other
+        with regards to included node identities and task ids
+        """
+        WTCT_TH_KEY = 'want_to_compute_task__task_header'  # noqa
+        WTCT_KEY = 'want_to_compute_task'  # noqa
+        if requestor_keys:
+            encoded_pubkey = encode_key_id(requestor_keys.raw_pubkey)
+            # initialize the TTC's requestor public key from the requestor pair
+            if 'requestor_public_key' not in kwargs:
+                kwargs['requestor_public_key'] = encoded_pubkey
+
+            # initialize the private key for the TTC signature from
+            # the requestor pair
+            if 'sign__privkey' not in kwargs:
+                kwargs['sign__privkey'] = requestor_keys.raw_privkey
+
+            # initialize the TaskHeader's requestor public key from
+            # the requestor pair
+            if (
+                    WTCT_TH_KEY not in kwargs and
+                    WTCT_TH_KEY + '__requestor_public_key' not in kwargs
+            ):
+                kwargs[WTCT_TH_KEY + '__requestor_public_key'] = \
+                    encoded_pubkey
+
+            # initialize the TaskHeader's signature private key from
+            # the requestor pair
+            if (
+                    WTCT_TH_KEY not in kwargs and
+                    WTCT_TH_KEY + '__sign__privkey' not in kwargs
+            ):
+                kwargs[WTCT_TH_KEY + '__sign__privkey'] = \
+                    requestor_keys.raw_privkey
+
+        if provider_keys:
+            # initialize the WantToComputeTask's provider public key from
+            # the provider key pair
+            if (
+                    WTCT_KEY not in kwargs and
+                    WTCT_KEY + '__provider_public_key' not in kwargs
+            ):
+                kwargs[WTCT_KEY + '__provider_public_key'] = \
+                    encode_key_id(provider_keys.raw_pubkey)
+
+            # initialize the WantToComputeTask's signature private key from
+            # the provider key pair
+            if (
+                    WTCT_KEY not in kwargs and
+                    WTCT_KEY + '__sign__privkey' not in kwargs
+            ):
+                kwargs[WTCT_KEY + '__sign__privkey'] = \
+                    provider_keys.raw_privkey
+
+        return cls(*args, **kwargs)
 
     @classmethod
     def past_deadline(cls, *args, **kwargs):
@@ -99,7 +159,16 @@ class TaskToComputeFactory(helpers.MessageFactory):
         if ttc.compute_task_def is None:
             return
 
-        ttc.compute_task_def['task_id'] = extracted or helpers.fake_golem_uuid(  # noqa pylint: disable=unsupported-assignment-operation
+        _task_id = None
+        with suppress(AttributeError):
+            if ttc.requestor_id == \
+                    ttc.want_to_compute_task.task_header.task_owner.key:
+                _task_id = ttc.want_to_compute_task.task_header.task_id
+
+        if extracted:
+            _task_id = extracted
+
+        ttc.compute_task_def['task_id'] = _task_id or helpers.fake_golem_uuid(  # noqa pylint: disable=unsupported-assignment-operation
             node_id=ttc.requestor_id,
         )
 

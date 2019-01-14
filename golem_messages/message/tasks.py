@@ -10,6 +10,7 @@ from golem_messages import exceptions
 from golem_messages import idgenerator
 from golem_messages import settings
 from golem_messages import validators
+from golem_messages.datastructures.tasks import TaskHeader
 from golem_messages.register import library
 from golem_messages.utils import decode_hex
 
@@ -235,7 +236,6 @@ class ConcentEnabled:  # noqa pylint:disable=too-few-public-methods
 class WantToComputeTask(ConcentEnabled, base.Message):
     __slots__ = [
         'node_name',
-        'task_id',
         'perf_index',
         'max_resource_size',
         'max_memory_size',
@@ -251,6 +251,7 @@ class WantToComputeTask(ConcentEnabled, base.Message):
 
         'provider_public_key',  # key used for msg signing and encryption
         'provider_ethereum_public_key',  # used for transactions on blockchain
+        'task_header',  # TaskHeader, should be signed by requestor
     ] + base.Message.__slots__
 
     @property
@@ -258,6 +259,20 @@ class WantToComputeTask(ConcentEnabled, base.Message):
         return to_checksum_address(
             sha3(decode_hex(self.provider_ethereum_public_key))[12:].hex(),
         )
+
+    @property
+    def task_id(self):
+        return self.task_header.task_id
+
+    def serialize_slot(self, key, value):
+        if key == 'task_header' and isinstance(value, TaskHeader):
+            return value.to_dict()
+        return super().serialize_slot(key, value)
+
+    def deserialize_slot(self, key, value):
+        if key == 'task_header' and value is not None:
+            return TaskHeader(**value)
+        return super().deserialize_slot(key, value)
 
 
 @library.register(TASK_MSG_BASE + 2)
@@ -397,6 +412,12 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
                     field=key,
                     value=value,
                 )
+
+    def validate_ownership(self, concent_public_key=None):
+        self.want_to_compute_task.task_header.verify(
+            decode_hex(self.requestor_public_key)
+        )
+        return super().validate_ownership(concent_public_key)
 
 
 @library.register(TASK_MSG_BASE + 3)
