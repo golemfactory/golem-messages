@@ -1,6 +1,7 @@
 # pylint: disable=too-few-public-methods
 
 import factory
+import time
 
 from golem_messages import cryptography
 from golem_messages.datastructures import masking
@@ -33,6 +34,7 @@ class TaskHeaderFactory(factory.Factory):
     min_version = factory.LazyFunction(helpers.fake_version)
     mask = factory.Faker('binary', length=masking.Mask.MASK_BYTES)
     environment = "DEFAULT"
+    timestamp = factory.LazyFunction(lambda: int(time.time()))
 
     @factory.post_generation
     def sign(th: dt_tasks.TaskHeader, _, __, **kwargs):  # noqa pylint: disable=no-self-argument

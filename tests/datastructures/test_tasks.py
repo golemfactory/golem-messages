@@ -30,6 +30,7 @@ class TestTaskHeader(unittest.TestCase):
             "min_version": "0.19.0",
             "resource_size": 0,
             "estimated_memory": 0,
+            "timestamp": int(time.time()),
         }
 
     def test_validate_ok(self):
