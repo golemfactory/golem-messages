@@ -30,7 +30,6 @@ class ComputeTaskDef(datastructures.ValidatingDict, datastructures.FrozenDict):
         'deadline': 0,
         'src_code': '',
         'extra_data': {},  # safe because of copy in parent.__missing__()
-        'short_description': '',
         'performance': 0,
         'docker_images': None,
     }
