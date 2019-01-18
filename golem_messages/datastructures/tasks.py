@@ -96,6 +96,7 @@ class TaskHeader(datastructures.Container):
         'task_owner',
         'subtasks_count',
         'min_version',
+        'timestamp',
     ))
 
     def __repr__(self):
@@ -117,10 +118,14 @@ class TaskHeader(datastructures.Container):
             msghash=self.get_hash(),
         )
 
-    def verify(self, public_key: bytes) -> None:
+    def verify(self, public_key: bytes) -> bool:
+        """
+        :return: `True` if the signature is correct.
+        :raises: `exceptions.InvalidSignature` if the signature is corrupted
+        """
         if self.signature is None:
             raise exceptions.InvalidSignature("No signature")
-        cryptography.ecdsa_verify(
+        return cryptography.ecdsa_verify(
             pubkey=public_key,
             signature=self.signature,
             message=self.get_hash(),

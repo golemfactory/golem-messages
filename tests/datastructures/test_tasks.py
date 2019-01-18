@@ -30,6 +30,7 @@ class TestTaskHeader(unittest.TestCase):
             "min_version": "0.19.0",
             "resource_size": 0,
             "estimated_memory": 0,
+            "timestamp": int(time.time()),
         }
 
     def test_validate_ok(self):
@@ -110,16 +111,16 @@ class TestTaskHeader(unittest.TestCase):
 
 class TestTaskHeaderSignature(unittest.TestCase):
     def setUp(self):
-        self.task_header = dt_tasks_factories.TaskHeader()
+        self.task_header = dt_tasks_factories.TaskHeaderFactory()
         self.keys = cryptography.ECCx(None)
 
     def test_signature(self):
         self.assertIsNone(self.task_header.signature)
-        self.task_header.sign(private_key=self.keys.raw_privkey)
+        self.task_header.sign(private_key=self.keys.raw_privkey)  # noqa pylint: disable=no-value-for-parameter
         self.assertIsInstance(self.task_header.signature, bytes)
 
     def test_verify_ok(self):
-        self.task_header.sign(private_key=self.keys.raw_privkey)
+        self.task_header.sign(private_key=self.keys.raw_privkey)  # noqa pylint: disable=no-value-for-parameter
         self.task_header.verify(public_key=self.keys.raw_pubkey)
 
     def test_verify_fail(self):

@@ -132,8 +132,8 @@ class Container:
             setattr(self, key, value)
         for key in kwargs:
             raise exceptions.FieldError(
-                'Unknown slots',
-                field_name=key,
+                '%s: Unknown slots' % type(self),
+                field=key,
                 value=kwargs[key],
             )
 

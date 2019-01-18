@@ -16,12 +16,16 @@ from golem_messages import factories
 from golem_messages import load
 from golem_messages import message
 from golem_messages import shortcuts
+from golem_messages.datastructures.tasks import TaskHeader
+from golem_messages.factories.datastructures.tasks import TaskHeaderFactory
 from golem_messages.factories.helpers import override_timestamp
 from golem_messages.utils import encode_hex, decode_hex
 from tests.message import mixins, helpers
 
 
-class WantToComputeTaskTest(unittest.TestCase):
+class WantToComputeTaskTest(unittest.TestCase, mixins.SerializationMixin):
+    FACTORY = factories.tasks.WantToComputeTaskFactory
+
     def test_concent_enabled_default_false(self):
         wtct = message.tasks.WantToComputeTask()
         self.assertFalse(wtct.concent_enabled)
@@ -42,12 +46,12 @@ class WantToComputeTaskTest(unittest.TestCase):
         self.assertEqual(wtct2.extra_data, extra_data_content)
 
     def test_provider_ethereum_address_checksum(self):
-        msg = factories.tasks.WantToComputeTaskFactory()
+        msg = self.FACTORY()
         self.assertTrue(msg.provider_ethereum_public_key)
         self.assertTrue(is_checksum_address(msg.provider_ethereum_address))
 
     def test_ethereum_address_provider(self):
-        msg = factories.tasks.WantToComputeTaskFactory()
+        msg = self.FACTORY()
         provider_public_key = decode_hex(msg.provider_ethereum_public_key)
 
         self.assertEqual(msg.provider_ethereum_address,
@@ -55,10 +59,14 @@ class WantToComputeTaskTest(unittest.TestCase):
                              '0x' + sha3(provider_public_key)[12:].hex()))
 
     def test_ethereum_address(self):
-        msg = factories.tasks.WantToComputeTaskFactory()
+        msg = self.FACTORY()
         serialized = shortcuts.dump(msg, None, None)
         msg_l = shortcuts.load(serialized, None, None)
         self.assertEqual(len(msg_l.provider_ethereum_address), 2 + (20*2))
+
+    def test_task_id(self):
+        wtct = self.FACTORY()
+        self.assertEqual(wtct.task_id, wtct.task_header.task_id)
 
 
 class ComputeTaskDefTestCase(unittest.TestCase):
@@ -201,12 +209,6 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
     def setUp(self):
         self.msg = self.FACTORY()
 
-    def test_task_to_compute_basic(self):
-        ttc = self.msg
-        serialized = shortcuts.dump(ttc, None, None)
-        msg = shortcuts.load(serialized, None, None)
-        self.assertIsInstance(msg, message.tasks.TaskToCompute)
-
     def test_concent_enabled_attribute(self):
         ttc = factories.tasks.TaskToComputeFactory(concent_enabled=True)
         self.assertTrue(ttc.concent_enabled)
@@ -290,7 +292,49 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
 
     def test_no_compute_task_def(self):
         # Should not raise
-        factories.tasks.TaskToComputeFactory(compute_task_def=None)
+        ttc = factories.tasks.TaskToComputeFactory(compute_task_def=None)
+        self.assertEqual(ttc.task_id, None)
+        self.assertEqual(ttc.subtask_id, None)
+
+    def test_validate_ownership_chain(self):
+        # Should not raise
+        requestor_keys = cryptography.ECCx(None)
+        task_header: TaskHeader = TaskHeaderFactory()
+        task_header.sign(requestor_keys.raw_privkey)  # noqa pylint: disable=no-value-for-parameter
+
+        wtc = factories.tasks.WantToComputeTaskFactory(
+            task_header=task_header
+        )
+
+        ttc: message.tasks.TaskToCompute = factories.tasks.TaskToComputeFactory(
+            requestor_public_key=encode_hex(
+                requestor_keys.raw_pubkey,
+            ),
+            want_to_compute_task=wtc,
+        )
+        ttc.sign_message(requestor_keys.raw_privkey)  # noqa pylint: disable=no-value-for-parameter
+
+        ttc.validate_ownership_chain()
+
+    def test_validate_ownership_chain_raises_when_invalid(self):
+        requestor_keys = cryptography.ECCx(None)
+        different_keys = cryptography.ECCx(None)
+        task_header: TaskHeader = TaskHeaderFactory()
+        task_header.sign(different_keys.raw_privkey)  # noqa pylint: disable=no-value-for-parameter
+
+        wtc = factories.tasks.WantToComputeTaskFactory(
+            task_header=task_header
+        )
+
+        ttc: message.tasks.TaskToCompute = factories.tasks.TaskToComputeFactory(
+            requestor_public_key=encode_hex(
+                requestor_keys.raw_pubkey,
+            ),
+            want_to_compute_task=wtc,
+        )
+        ttc.sign_message(requestor_keys.raw_privkey)  # noqa pylint: disable=no-value-for-parameter
+        with self.assertRaises(exceptions.InvalidSignature):
+            ttc.validate_ownership_chain()
 
     def test_past_deadline(self):
         now = calendar.timegm(time.gmtime())
@@ -311,6 +355,26 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
     def test_resources_options(self):
         ttc = factories.tasks.TaskToComputeFactory()
         self.assertTrue(hasattr(ttc, 'resources_options'))
+
+
+class TaskToComputeSignedChainFactory(unittest.TestCase):
+    def test_factory_with_signed_nested_messages(self):
+        requestor_keys = cryptography.ECCx(None)
+        provider_keys = cryptography.ECCx(None)
+
+        ttc: message.tasks.TaskToCompute = \
+            factories.tasks.TaskToComputeFactory.with_signed_nested_messages(
+                requestor_keys=requestor_keys,
+                provider_keys=provider_keys,
+            )
+        wtct: message.tasks.WantToComputeTask = ttc.want_to_compute_task
+        th: TaskHeader = wtct.task_header
+
+        self.assertTrue(ttc.verify_signature(requestor_keys.raw_pubkey))
+        self.assertTrue(wtct.verify_signature(provider_keys.raw_pubkey))
+        self.assertTrue(th.verify(requestor_keys.raw_pubkey))
+        self.assertEqual(ttc.requestor_id, th.task_owner.key)
+        self.assertEqual(ttc.task_id, th.task_id)
 
 
 class TaskToComputeEthereumAddressChecksum(unittest.TestCase):
@@ -603,10 +667,13 @@ class TaskMessageVerificationTest(unittest.TestCase):
         self.other_keys = self._fake_keys()
 
     def get_ttc(self, **kwargs):
+        task_header: TaskHeader = TaskHeaderFactory()
+        task_header.sign(self.requestor_keys.raw_privkey)  # noqa pylint: disable=no-value-for-parameter
         return factories.tasks.TaskToComputeFactory(
             requestor_public_key=encode_hex(self.requestor_keys.raw_pubkey),
             want_to_compute_task=factories.tasks.WantToComputeTaskFactory(
                 provider_public_key=encode_hex(self.provider_keys.raw_pubkey),
+                task_header=task_header,
             ),
             **kwargs,
         )
