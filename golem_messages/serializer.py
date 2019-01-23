@@ -16,8 +16,15 @@ def wrap_error(wrap_with):
             try:
                 return f(*args, **kwargs)
             except Exception as e:
-                logger.debug('Wrapping exception with %s. e=%r', wrap_with, e.__class__, exc_info=True)
-                raise wrap_with("({} ({})".format(e.__class__.__qualname__, e)) from e
+                logger.debug(
+                    'Wrapping exception with %s. e=%r',
+                    wrap_with,
+                    e.__class__,
+                    exc_info=True,
+                )
+                raise wrap_with(
+                    "({} ({})".format(e.__class__.__qualname__, e),
+                ) from e
         return _curry
     return _inner
 
