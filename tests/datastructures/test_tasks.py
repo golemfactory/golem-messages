@@ -44,14 +44,6 @@ class TestTaskHeader(unittest.TestCase):
         ):
             dt_tasks.TaskHeader(**self.th_dict_repr)
 
-    def test_validate_deadline_passed(self):
-        self.th_dict_repr['deadline'] = int(time.time() - 10)
-        with self.assertRaisesRegex(
-            exceptions.FieldError,
-            "Deadline already passed"
-        ):
-            dt_tasks.TaskHeader(**self.th_dict_repr)
-
     def test_validate_illegal_timeout(self):
         self.th_dict_repr['subtask_timeout'] = "abc"
         with self.assertRaisesRegex(
