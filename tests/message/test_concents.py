@@ -1,4 +1,6 @@
 # pylint: disable=protected-access
+import math
+import time
 import unittest
 
 from golem_messages import exceptions
@@ -553,6 +555,22 @@ class ForcePaymentTest(mixins.RegisteredMessageTestMixin, unittest.TestCase):
 
         with self.assertRaises(exceptions.FieldError):
             shortcuts.load(shortcuts.dump(msg, None, None), None, None)
+
+    def test_task_header_deadline_validator(self):
+        msg = factories.concents.ForcePaymentFactory(
+            subtask_results_accepted_list=[
+                factories.tasks.SubtaskResultsAcceptedFactory(
+                    **{
+                        'report_computed_task__'
+                        'task_to_compute__'
+                        'want_to_compute_task__'
+                        'task_header__'
+                        'deadline': math.ceil(time.time())
+                    }
+                )
+            ])
+        time.sleep(1)
+        shortcuts.load(shortcuts.dump(msg, None, None), None, None)
 
 
 class ForcePaymentCommittedTest(mixins.RegisteredMessageTestMixin,
