@@ -1,9 +1,10 @@
 # pylint: disable=protected-access
 from datetime import datetime, timedelta
-import freezegun
 import math
 import time
 import unittest
+
+import freezegun
 
 from golem_messages import exceptions
 from golem_messages import message
@@ -573,7 +574,7 @@ class ForcePaymentTest(mixins.RegisteredMessageTestMixin, unittest.TestCase):
                     )
                 ])
         msg2 = shortcuts.load(shortcuts.dump(msg, None, None), None, None)
-        self.assertEquals(msg, msg2)
+        self.assertEqual(msg, msg2)
 
 
 class ForcePaymentCommittedTest(mixins.RegisteredMessageTestMixin,

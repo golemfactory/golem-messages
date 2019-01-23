@@ -1,7 +1,6 @@
 import functools
 import hashlib
 import logging
-import time
 
 from golem_messages import cryptography
 from golem_messages import datastructures
