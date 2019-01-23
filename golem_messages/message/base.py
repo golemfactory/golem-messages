@@ -437,6 +437,7 @@ class Message():
             verify_time(header.timestamp)
 
         class_ = library[header.type_]
+        logger.debug('Deserialization class found. class=%r', class_)
         return class_.deserialize_with_header(
             header,
             data,
@@ -455,6 +456,7 @@ class Message():
         if header.encrypted:
             try:
                 payload = decrypt_func(payload)
+                logger.debug("Decrypted. payload=%r", payload)
             except exceptions.MessageError:
                 raise
             except Exception as e:
