@@ -20,6 +20,8 @@ class TaskHeaderFactory(factory.Factory):
         lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey)
     )
 
+    mask = factory.Faker('binary', length=masking.Mask.MASK_BYTES)
+    timestamp = factory.LazyFunction(lambda: int(time.time()))
     task_id = factory.LazyAttribute(
         lambda o: helpers.fake_golem_uuid(
             o.requestor_public_key
@@ -30,11 +32,11 @@ class TaskHeaderFactory(factory.Factory):
             key=o.requestor_public_key
         ).to_dict()
     )
-    subtasks_count = factory.Faker('random_int', min=1)
-    min_version = factory.LazyFunction(helpers.fake_version)
-    mask = factory.Faker('binary', length=masking.Mask.MASK_BYTES)
+    resource_size = factory.Faker('random_int', max=4096)
+    estimated_memory = factory.Faker('random_int', max=4096)
     environment = "DEFAULT"
-    timestamp = factory.LazyFunction(lambda: int(time.time()))
+    min_version = factory.LazyFunction(helpers.fake_version)
+    subtasks_count = factory.Faker('random_int', min=1, max=256)
 
     @factory.post_generation
     def sign(th: dt_tasks.TaskHeader, _, __, **kwargs):  # noqa pylint: disable=no-self-argument
