@@ -1,4 +1,6 @@
 # pylint: disable=protected-access
+from datetime import datetime, timedelta
+import freezegun
 import math
 import time
 import unittest
@@ -557,20 +559,21 @@ class ForcePaymentTest(mixins.RegisteredMessageTestMixin, unittest.TestCase):
             shortcuts.load(shortcuts.dump(msg, None, None), None, None)
 
     def test_task_header_deadline_validator(self):
-        msg = factories.concents.ForcePaymentFactory(
-            subtask_results_accepted_list=[
-                factories.tasks.SubtaskResultsAcceptedFactory(
-                    **{
-                        'report_computed_task__'
-                        'task_to_compute__'
-                        'want_to_compute_task__'
-                        'task_header__'
-                        'deadline': math.ceil(time.time())
-                    }
-                )
-            ])
-        time.sleep(1)
-        shortcuts.load(shortcuts.dump(msg, None, None), None, None)
+        with freezegun.freeze_time(datetime.utcnow() - timedelta(seconds=1)):
+            msg = factories.concents.ForcePaymentFactory(
+                subtask_results_accepted_list=[
+                    factories.tasks.SubtaskResultsAcceptedFactory(
+                        **{
+                            'report_computed_task__'
+                            'task_to_compute__'
+                            'want_to_compute_task__'
+                            'task_header__'
+                            'deadline': math.ceil(time.time())
+                        }
+                    )
+                ])
+        msg2 = shortcuts.load(shortcuts.dump(msg, None, None), None, None)
+        self.assertEquals(msg, msg2)
 
 
 class ForcePaymentCommittedTest(mixins.RegisteredMessageTestMixin,
