@@ -1,7 +1,6 @@
 import functools
 import hashlib
 import logging
-import time
 
 from golem_messages import cryptography
 from golem_messages import datastructures
@@ -56,14 +55,7 @@ class TaskHeader(datastructures.Container):
                 fail_msg="Should be a dict or Node",
             ),
         ),
-        'deadline': (
-            validators.validate_integer,
-            functools.partial(
-                _fail_if,
-                check=lambda x: x > time.time(),
-                fail_msg="Deadline already passed",
-            ),
-        ),
+        'deadline': (validators.validate_integer, ),
         'subtask_timeout': (
             validators.validate_integer,
             functools.partial(

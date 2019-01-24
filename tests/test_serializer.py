@@ -8,6 +8,21 @@ from golem_messages import shortcuts
 from golem_messages import factories
 
 
+class WrapErrorTestCase(unittest.TestCase):
+    class WrapOfError(Exception):
+        pass
+
+    @serializer.wrap_error(WrapOfError)
+    @classmethod
+    def wrapped(cls, fail_with):
+        if fail_with:
+            raise fail_with
+
+    def test_basic(self):
+        with self.assertRaises(self.WrapOfError):
+            self.wrapped(RuntimeError("test"))
+
+
 class MessageTestCase(unittest.TestCase):
     def equal_after_processing(self, o):
         s = serializer.dumps(o)
