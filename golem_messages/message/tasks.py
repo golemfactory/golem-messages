@@ -34,13 +34,6 @@ class ComputeTaskDef(datastructures.ValidatingDict, datastructures.FrozenDict):
         'docker_images': None,
     }
 
-    def __setitem__(self, key, value):
-        # Gracefully handle short_description from old pickles
-        # Can be removed in GMv3.0.0
-        if key == 'short_description':
-            return
-        super().__setitem__(key, value)
-
     validate_task_id = functools.partial(
         validators.validate_varchar,
         field_name='task_id',
