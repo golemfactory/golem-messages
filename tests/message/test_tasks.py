@@ -520,6 +520,19 @@ class TaskToComputeEthsigFactory(unittest.TestCase):
             )
 
 
+class PriceTaskToComputeTestCase(unittest.TestCase):
+    def setUp(self):
+        self.factory = factories.tasks.TaskToComputeFactory
+
+    def test_price_property(self):
+        price = 10
+        timeout = 7200
+        msg = self.factory()
+        msg.want_to_compute_task.price = price
+        msg.want_to_compute_task.task_header.subtask_timeout = timeout
+        self.assertEqual(msg.price, 20)
+
+
 class ReportComputedTaskTest(mixins.RegisteredMessageTestMixin,
                              mixins.SerializationMixin,
                              unittest.TestCase):
