@@ -27,6 +27,7 @@ class WantToComputeTaskFactory(helpers.MessageFactory):
         'provider_public_key'
     )
     task_header = factory.SubFactory(TaskHeaderFactory)
+    price = factory.Faker('random_int', min=1 << 20, max=10 << 20)
 
 
 class CTDBlenderExtraDataFactory(factory.DictFactory):
@@ -72,7 +73,6 @@ class TaskToComputeFactory(helpers.MessageFactory):
     want_to_compute_task = factory.SubFactory(WantToComputeTaskFactory)
     package_hash = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
     size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
-    price = factory.Faker('random_int', min=1 << 20, max=10 << 20)
 
     @classmethod
     def with_signed_nested_messages(

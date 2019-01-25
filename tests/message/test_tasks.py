@@ -520,25 +520,6 @@ class TaskToComputeEthsigFactory(unittest.TestCase):
             )
 
 
-class PriceTaskToComputeTestCase(unittest.TestCase):
-    def setUp(self):
-        self.factory = factories.tasks.TaskToComputeFactory
-
-    def test_valid_price_value(self):
-        price = 1994
-        msg = self.factory(price=price)
-        s = msg.serialize()
-        msg2 = message.Message.deserialize(s, None)
-        self.assertEqual(msg2.price, price)
-
-    def test_invalid_price_value(self):
-        price = '1994'
-        msg = self.factory(price=price)
-        s = msg.serialize()
-        with self.assertRaises(exceptions.FieldError):
-            message.Message.deserialize(s, None)
-
-
 class ReportComputedTaskTest(mixins.RegisteredMessageTestMixin,
                              mixins.SerializationMixin,
                              unittest.TestCase):

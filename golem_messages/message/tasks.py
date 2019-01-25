@@ -292,7 +292,6 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         'package_hash',  # the hash of the package (resources) zip file
         'size',  # the size of the resources zip file
         'concent_enabled',
-        'price',  # total subtask price computed as `price * subtask_timeout`
         'ethsig'
     ] + base.Message.__slots__
 
@@ -314,11 +313,17 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
     def provider_ethereum_address(self):
         return self.want_to_compute_task.provider_ethereum_address
 
+    @property
+    def price(self):
+        price = self.want_to_compute_task.price
+        timeout = self.want_to_compute_task.task_header.subtask_timeout
+        return (price * timeout + 3599) // 3600
+
     def deserialize_slot(self, key, value):
         value = super().deserialize_slot(key, value)
         if key == 'compute_task_def':
             value = ComputeTaskDef(value)
-        if key in ('price', 'size'):
+        if key == 'size':
             validators.validate_integer(
                 field_name=key,
                 value=value,
