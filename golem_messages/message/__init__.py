@@ -50,13 +50,11 @@ from golem_messages.message.tasks import StartSessionResponse  # noqa
 from golem_messages.message.tasks import WaitingForResults  # noqa
 from golem_messages.message.tasks import SubtaskPayment  # noqa
 from golem_messages.message.tasks import SubtaskPaymentRequest  # noqa
-from golem_messages.message.tasks import GetResource  # noqa
 from golem_messages.message.resources import PushResource  # noqa
 from golem_messages.message.resources import HasResource  # noqa
 from golem_messages.message.resources import WantsResource  # noqa
 from golem_messages.message.resources import PullResource  # noqa
 from golem_messages.message.resources import PullAnswer  # noqa
-from golem_messages.message.resources import ResourceList  # noqa
 from golem_messages.message.resources import ResourceHandshakeStart  # noqa
 from golem_messages.message.resources import ResourceHandshakeNonce  # noqa
 from golem_messages.message.resources import ResourceHandshakeVerdict  # noqa
