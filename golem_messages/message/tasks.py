@@ -32,6 +32,7 @@ class ComputeTaskDef(datastructures.ValidatingDict, datastructures.FrozenDict):
         'extra_data': {},  # safe because of copy in parent.__missing__()
         'performance': 0,
         'docker_images': None,
+        'resources': [],
     }
 
     validate_task_id = functools.partial(
@@ -293,6 +294,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         'size',  # the size of the resources zip file
         'concent_enabled',
         'price',  # total subtask price computed as `price * subtask_timeout`
+        'resources_options',
         'ethsig'
     ] + base.Message.__slots__
 
@@ -459,15 +461,6 @@ class ReportComputedTask(TaskMessage):
                          # the result directly between the nodes
         'secret',
         'options',
-    ] + base.Message.__slots__
-
-
-@library.register(TASK_MSG_BASE + 8)
-class GetResource(base.Message):
-    """Request a resource for a given task"""
-    __slots__ = [
-        'task_id',
-        'resource_header'
     ] + base.Message.__slots__
 
 

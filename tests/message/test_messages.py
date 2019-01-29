@@ -185,19 +185,6 @@ class MessagesTestCase(unittest.TestCase):
         ]
         self.assertEqual(expected, msg.slots())
 
-    def test_message_get_resource(self):
-        task_id = 'test-ti-{}'.format(uuid.uuid4())
-        resource_header = 'test-rh-{}'.format(uuid.uuid4())
-        msg = message.GetResource(
-            task_id=task_id,
-            resource_header=resource_header
-        )
-        expected = [
-            ['task_id', task_id],
-            ['resource_header', resource_header],
-        ]
-        self.assertEqual(expected, msg.slots())
-
     def test_message_task_failure(self):
         ttc = factories.tasks.TaskToComputeFactory()
         err = (
@@ -255,16 +242,6 @@ class MessagesTestCase(unittest.TestCase):
                 ['has_resource', has_resource],
             ]
             self.assertEqual(expected, msg.slots())
-
-    def test_message_resource_list(self):
-        resources = 'test-rs-{}'.format(uuid.uuid4())
-        options = 'test-clientoptions-{}'.format(uuid.uuid4())
-        msg = message.ResourceList(resources=resources, options=options)
-        expected = [
-            ['resources', resources],
-            ['options', options],
-        ]
-        self.assertEqual(expected, msg.slots())
 
     def test_message_remove_task_container(self):
         test_cases = 10
