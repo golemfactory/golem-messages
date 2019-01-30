@@ -167,3 +167,8 @@ class Container:
                 pass
             dictionary[key] = value
         return dictionary
+
+    def __repr__(self):
+        return '<%s: %r>' % (
+            type(self).__name__, self.to_dict()
+        )

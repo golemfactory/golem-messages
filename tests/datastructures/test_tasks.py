@@ -100,6 +100,10 @@ class TestTaskHeader(unittest.TestCase):
         ):
             dt_tasks.TaskHeader(**self.th_dict_repr)
 
+    def test_repr(self):
+        th = dt_tasks_factories.TaskHeaderFactory()
+        self.assertEqual(repr(th), '<TaskHeader: %r>' % th.to_dict())
+
 
 class TestTaskHeaderSignature(unittest.TestCase):
     def setUp(self):
