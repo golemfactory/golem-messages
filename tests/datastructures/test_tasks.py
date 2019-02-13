@@ -28,7 +28,6 @@ class TestTaskHeader(unittest.TestCase):
             "subtasks_count": 21,
             "max_price": 10,
             "min_version": "0.19.0",
-            "resource_size": 0,
             "estimated_memory": 0,
             "timestamp": int(time.time()),
         }
