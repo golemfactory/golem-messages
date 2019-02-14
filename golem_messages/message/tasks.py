@@ -590,6 +590,7 @@ class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
         InsufficientDeposit = enum.auto()  # GNTB deposit too low
         TooShortDeposit = enum.auto()  # GNTB deposit has too short lock
         OfferCancelled = enum.auto()
+        ResourcesTooBig = enum.auto()
 
 
 @library.register(TASK_MSG_BASE + 27)
