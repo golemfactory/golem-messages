@@ -109,13 +109,6 @@ class ComputeTaskDefTestCase(unittest.TestCase):
         self.assertTrue(extra_data['frames'])
         self.assertTrue(extra_data['output_format'])
 
-    def test_short_description(self):
-        # TODO: Remove in 3.0.0
-        import pickle
-        pickle_with_short_description = b"\x80\x03cgolem_messages.message.tasks\nComputeTaskDef\nq\x00)\x81q\x01(X\x07\x00\x00\x00task_idq\x02X$\x00\x00\x006a2a77a2-bebd-8cba-a26f-f4346ac2bb2fq\x03X\n\x00\x00\x00subtask_idq\x04X$\x00\x00\x00945bf430-ea7e-676d-b260-0a574f697f9dq\x05X\x08\x00\x00\x00deadlineq\x06JR K\\X\x08\x00\x00\x00src_codeq\x07X\xc3\x00\x00\x00Style dark yes film until. Gun hundred growth notice food. Most political child without carry term citizen.\nStand future worker simply while business. Push owner clear yard. Course myself cancer.q\x08X\n\x00\x00\x00extra_dataq\t}q\n(X\t\x00\x00\x00path_rootq\x0bX\x00\x00\x00\x00q\x0cX\n\x00\x00\x00start_taskq\rK\x01X\x08\x00\x00\x00end_taskq\x0eK\x01X\x0b\x00\x00\x00total_tasksq\x0fK\x01X\x0f\x00\x00\x00outfilebasenameq\x10X\t\x00\x00\x00test taskq\x11X\n\x00\x00\x00scene_fileq\x12X'\x00\x00\x00/golem/resources/look_to_windward.blendq\x13X\n\x00\x00\x00script_srcq\x14X\x04\x00\x00\x00passq\x15X\x06\x00\x00\x00framesq\x16]q\x17K\x01aX\r\x00\x00\x00output_formatq\x18X\x03\x00\x00\x00PNGq\x19uX\x11\x00\x00\x00short_descriptionq\x1ah\x0cX\x0b\x00\x00\x00performanceq\x1bK\x00X\r\x00\x00\x00docker_imagesq\x1cNu."  # noqa pylint: disable=line-too-long
-        ctd = pickle.loads(pickle_with_short_description)
-        self.assertIsInstance(ctd, message.tasks.ComputeTaskDef)
-
 
 class SubtaskResultsAcceptedTest(mixins.RegisteredMessageTestMixin,
                                  mixins.SerializationMixin,

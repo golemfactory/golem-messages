@@ -55,6 +55,7 @@ class ComputeTaskDefFactory(factory.DictFactory):
         int(datetime.timedelta(days=1).total_seconds()))
     src_code = factory.Faker('text')
     extra_data = factory.SubFactory(CTDBlenderExtraDataFactory)
+    resources = factory.List([factory.Faker('uuid4')])
 
 
 class TaskToComputeFactory(helpers.MessageFactory):
@@ -73,6 +74,7 @@ class TaskToComputeFactory(helpers.MessageFactory):
     package_hash = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
     size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
     price = factory.Faker('random_int', min=1 << 20, max=10 << 20)
+    resources_options = factory.Faker('uuid4')
 
     @classmethod
     def with_signed_nested_messages(
