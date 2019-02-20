@@ -802,3 +802,13 @@ class TaskFailureTest(
     MSG_CLASS = message.tasks.TaskFailure
     FACTORY = factories.tasks.TaskFailureFactory
     TASK_ID_PROVIDER = 'task_to_compute'
+
+
+class WaitingForResultsTest(
+        mixins.RegisteredMessageTestMixin,
+        mixins.SerializationMixin,
+        mixins.TaskIdMixin,
+        unittest.TestCase):
+    FACTORY = factories.tasks.WaitingForResultsFactory
+    MSG_CLASS = message.tasks.WaitingForResults
+    TASK_ID_PROVIDER = 'task_to_compute'

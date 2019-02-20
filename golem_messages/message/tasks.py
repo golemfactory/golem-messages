@@ -563,8 +563,16 @@ class StartSessionResponse(base.Message):
 
 
 @library.register(TASK_MSG_BASE + 25)
-class WaitingForResults(base.Message):
-    __slots__ = base.Message.__slots__
+class WaitingForResults(TaskMessage):
+    TASK_ID_PROVIDERS = ('task_to_compute', )
+    EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
+    MSG_SLOTS = {
+        'task_to_compute': base.MessageSlotDefinition(TaskToCompute),
+    }
+
+    __slots__ = [
+        'task_to_compute',
+    ] + base.Message.__slots__
 
 
 @library.register(TASK_MSG_BASE + 26)
