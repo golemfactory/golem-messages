@@ -74,7 +74,7 @@ class TaskToComputeFactory(helpers.MessageFactory):
     package_hash = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
     size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
     price = factory.Faker('random_int', min=1 << 20, max=10 << 20)
-    resources_options = factory.Faker('uuid4')
+    resources_options = None
 
     @classmethod
     def with_signed_nested_messages(
