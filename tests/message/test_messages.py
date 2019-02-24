@@ -119,7 +119,7 @@ class MessagesTestCase(unittest.TestCase):
                 message.GetTasks,
                 message.GetResourcePeers,
                 message.StopGossip,
-                message.WaitingForResults, ):
+        ):
             msg = message_class()
             expected = []
             self.assertEqual(expected, msg.slots())

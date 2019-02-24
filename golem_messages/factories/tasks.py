@@ -325,3 +325,10 @@ class SubtaskResultsRejectedFactory(helpers.MessageFactory):
         model = tasks.SubtaskResultsRejected
 
     report_computed_task = factory.SubFactory(ReportComputedTaskFactory)
+
+
+class WaitingForResultsFactory(helpers.MessageFactory):
+    class Meta:
+        model = tasks.WaitingForResults
+
+    task_to_compute = factory.SubFactory(TaskToComputeFactory)
