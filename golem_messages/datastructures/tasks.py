@@ -90,9 +90,6 @@ class TaskHeader(datastructures.Container):
         'timestamp',
     ))
 
-    def __repr__(self):
-        return '<TaskHeader: %r>' % (self.task_id,)
-
     @classmethod
     def deserialize_task_owner(cls, value):
         if isinstance(value, dt_p2p.Node):
