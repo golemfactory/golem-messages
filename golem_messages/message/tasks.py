@@ -429,7 +429,9 @@ class CannotAssignTask(base.AbstractReasonMessage):
 
     class REASON(datastructures.StringEnum):
         NotMyTask = enum.auto()
-        NoMoreSubtasks = enum.auto()
+        NoMoreSubtasks = enum.auto()  # No more subtasks but you can ask later
+        # All subtasks are computed and verified. Task finished.
+        TaskFinished = enum.auto()
         ConcentDisabled = enum.auto()
 
 
