@@ -78,7 +78,7 @@ def verify_version(msg_version):
         )
 
 
-class Message:  # noqa pylint:disable=too-many-public-methods
+class Message:
     """ Communication message that is sent in all networks """
 
     __slots__ = ['header', 'sig']
@@ -130,7 +130,7 @@ class Message:  # noqa pylint:disable=too-many-public-methods
         # Header
         if header is None:
             header = datastructures.MessageHeader(
-                library.get_type(self.__class__),
+                self._type,
                 # On AppVeyorCI time.time() returns unreliable values thus
                 # we use calendar.timegm() instead of time.time() to unify it.
                 calendar.timegm(time.gmtime()),
@@ -169,9 +169,9 @@ class Message:  # noqa pylint:disable=too-many-public-methods
             slots=slots_,
         )
 
-    @classmethod
-    def get_type(cls):
-        return library.get_type(cls)
+    @property
+    def _type(self):
+        return library.get_type(self.__class__)
 
     @property
     def timestamp(self):
@@ -255,7 +255,7 @@ class Message:  # noqa pylint:disable=too-many-public-methods
         """
         return struct.pack(
             self.HDR_FORMAT,
-            library.get_type(self.__class__),
+            self._type,
             self.timestamp,
             self.encrypted,
         )
