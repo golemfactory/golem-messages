@@ -573,3 +573,9 @@ class VerifyVersionTestCase(unittest.TestCase):
                      'Myślcie sobie, jak tam chcecie.'),
                 ),
     # pylint: enable=expression-not-assigned
+
+
+class MessageGetTypeTest(unittest.TestCase):
+    def test_get_type(self):
+        msg1 = message.RandVal(rand_val=1)
+        self.assertEqual(msg1.header.type_, message.RandVal.get_type())

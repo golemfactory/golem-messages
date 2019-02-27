@@ -78,7 +78,7 @@ def verify_version(msg_version):
         )
 
 
-class Message():
+class Message:  # noqa pylint:disable=too-many-public-methods
     """ Communication message that is sent in all networks """
 
     __slots__ = ['header', 'sig']
@@ -168,6 +168,10 @@ class Message():
             sig=getattr(self, 'sig', None),
             slots=slots_,
         )
+
+    @classmethod
+    def get_type(cls):
+        return library.get_type(cls)
 
     @property
     def timestamp(self):
