@@ -64,7 +64,6 @@ class TaskHeader(datastructures.Container):
                 fail_msg="Subtask timeout is less than 0",
             ),
         ),
-        'resource_size': (validators.validate_integer, ),
         # environment.get_id()
         'environment': (validators.validate_varchar128, ),
         'min_version': (validators.validate_version, ),

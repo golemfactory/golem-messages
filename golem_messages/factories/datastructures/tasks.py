@@ -34,7 +34,6 @@ class TaskHeaderFactory(factory.Factory):
     )
     deadline = factory.LazyFunction(lambda: int(time.time()) + 3600)
     subtask_timeout = factory.Faker('random_int', min=60, max=600)
-    resource_size = factory.Faker('random_int', max=4096)
     environment = "DEFAULT"
     min_version = factory.LazyFunction(helpers.fake_version)
     estimated_memory = factory.Faker('random_int', max=4096)
