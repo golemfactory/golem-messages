@@ -576,6 +576,6 @@ class VerifyVersionTestCase(unittest.TestCase):
 
 
 class MessageGetTypeTest(unittest.TestCase):
-    def test_get_type(self):
+    def test_type(self):
         msg1 = message.RandVal(rand_val=1)
-        self.assertEqual(msg1.header.type_, message.RandVal.get_type())
+        self.assertEqual(msg1.header.type_, msg1._type)
