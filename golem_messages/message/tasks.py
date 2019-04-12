@@ -236,6 +236,7 @@ class ConcentEnabled:  # noqa pylint:disable=too-few-public-methods
 class WantToComputeTask(ConcentEnabled, base.Message):
     __slots__ = [
         'node_name',
+        'demands_cnt',      # introduced for Golem Unlimited; 1 by default
         'perf_index',
         'max_resource_size',
         'max_memory_size',
@@ -272,7 +273,15 @@ class WantToComputeTask(ConcentEnabled, base.Message):
     def deserialize_slot(self, key, value):
         if key == 'task_header' and value is not None:
             return TaskHeader(**value)
-        return super().deserialize_slot(key, value)
+
+        value = super().deserialize_slot(key, value)
+
+        if key == 'demands_cnt':
+            if value is None:
+                value = 1
+            validators.validate_positive_integer(key, value)
+
+        return value
 
 
 @library.register(TASK_MSG_BASE + 2)

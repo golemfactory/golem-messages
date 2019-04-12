@@ -32,6 +32,16 @@ def validate_integer(field_name, value):
         )
 
 
+def validate_positive_integer(field_name, value):
+    validate_integer(field_name, value);
+    if value < 1:
+        raise exceptions.FieldError(
+            "Should be an positive integer",
+            field=field_name,
+            value=value,
+        )
+
+
 def validate_port(field_name, value):
     validate_integer(field_name, value)
     if not 0 < value < (2**16-1):
