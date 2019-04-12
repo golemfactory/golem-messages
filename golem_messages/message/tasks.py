@@ -268,7 +268,13 @@ class WantToComputeTask(ConcentEnabled, base.Message):
     def serialize_slot(self, key, value):
         if key == 'task_header' and isinstance(value, TaskHeader):
             return value.to_dict()
-        return super().serialize_slot(key, value)
+        
+        value = super().serialize_slot(key, value)
+
+        if key == 'demands_cnt' and value is None:
+            value = 1
+
+        return value
 
     def deserialize_slot(self, key, value):
         if key == 'task_header' and value is not None:
@@ -277,8 +283,6 @@ class WantToComputeTask(ConcentEnabled, base.Message):
         value = super().deserialize_slot(key, value)
 
         if key == 'demands_cnt':
-            if value is None:
-                value = 1
             validators.validate_positive_integer(key, value)
 
         return value
