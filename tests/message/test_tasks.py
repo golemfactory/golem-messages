@@ -79,7 +79,9 @@ class WantToComputeTaskTest(unittest.TestCase, mixins.SerializationMixin):
 
     def test_num_subtasks_more_than_1(self):
         wtct = message.tasks.WantToComputeTask(num_subtasks=17)
+        wtct_1 = helpers.dump_and_load(wtct)
         self.assertEqual(wtct.num_subtasks, 17)
+        self.assertEqual(wtct.num_subtasks, wtct_1.num_subtasks)
 
     def test_num_subtasks_non_int_raises(self):
         wtct = message.tasks.WantToComputeTask(num_subtasks=3.14)
