@@ -238,7 +238,7 @@ class WantToComputeTask(ConcentEnabled, base.Message):
     A computation Offer.
 
     A Provider sends it directly to a Requestor as a response to the Requestor's
-    Demand (Task) in order to get work (SubTask) to do.
+    Demand (Task) in order to get work (SubTask ie. TaskToCompute) to do.
 
     Attributes:
         node_name:          Provider's node name

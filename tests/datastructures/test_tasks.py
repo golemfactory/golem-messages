@@ -39,7 +39,7 @@ class TestTaskHeader(unittest.TestCase):
         self.th_dict_repr['deadline'] = datetime.datetime.now()
         with self.assertRaisesRegex(
             exceptions.FieldError,
-            r"^Should be an integer \[deadline:datetime\.datetime\(.+\)\]$"
+            r"^Should be a integer \[deadline:datetime\.datetime\(.+\)\]$"
         ):
             dt_tasks.TaskHeader(**self.th_dict_repr)
 
@@ -47,7 +47,7 @@ class TestTaskHeader(unittest.TestCase):
         self.th_dict_repr['subtask_timeout'] = "abc"
         with self.assertRaisesRegex(
             exceptions.FieldError,
-            r"Should be an integer \[subtask_timeout:'abc'\]"
+            r"Should be a integer \[subtask_timeout:'abc'\]"
         ):
             dt_tasks.TaskHeader(**self.th_dict_repr)
 
@@ -87,7 +87,7 @@ class TestTaskHeader(unittest.TestCase):
         self.th_dict_repr['subtasks_count'] = None
         with self.assertRaisesRegex(
             exceptions.FieldError,
-            r"^Should be an integer \[subtasks_count:None\]$",
+            r"^Should be a integer \[subtasks_count:None\]$",
         ):
             dt_tasks.TaskHeader(**self.th_dict_repr)
 
