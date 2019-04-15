@@ -77,6 +77,33 @@ class WantToComputeTaskTest(unittest.TestCase, mixins.SerializationMixin):
         self.assertEqual(wtct.num_subtasks, 1)
         self.assertIsInstance(wtct.num_subtasks, int)
 
+    def test_num_subtasks_non_int_raises(self):
+        wtct = message.tasks.WantToComputeTask(num_subtasks=3.14)
+        serialized = shortcuts.dump(wtct, None, None)
+        with self.assertRaisesRegex(
+            exceptions.FieldError,
+            r"Should be an integer \[num_subtasks:3.14\]"
+        ):
+            shortcuts.load(serialized, None, None)
+
+    def test_num_subtasks_zero_raises(self):
+        wtct = message.tasks.WantToComputeTask(num_subtasks=0)
+        serialized = shortcuts.dump(wtct, None, None)
+        with self.assertRaisesRegex(
+            exceptions.FieldError,
+            r"Should be an positive integer \[num_subtasks:0\]"
+        ):
+            shortcuts.load(serialized, None, None)
+
+    def test_num_subtasks_negative_raises(self):
+        wtct = message.tasks.WantToComputeTask(num_subtasks=-7)
+        serialized = shortcuts.dump(wtct, None, None)
+        with self.assertRaisesRegex(
+            exceptions.FieldError,
+            r"Should be an positive integer \[num_subtasks:-7\]"
+        ):
+            shortcuts.load(serialized, None, None)
+
     def test_num_subtasks_int(self):
         wtct = self.FACTORY()
         self.assertIsInstance(wtct.num_subtasks, int)

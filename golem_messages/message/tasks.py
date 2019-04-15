@@ -280,7 +280,8 @@ class WantToComputeTask(ConcentEnabled, base.Message):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.num_subtasks = self.num_subtasks or self.DEFAULT_NUM_SUBTASKS
+        if self.num_subtasks is None:
+            self.num_subtasks = self.DEFAULT_NUM_SUBTASKS
 
     @property
     def provider_ethereum_address(self):
