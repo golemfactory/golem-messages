@@ -1,18 +1,19 @@
 # pylint: disable=too-few-public-methods,unnecessary-lambda
 import calendar
-from contextlib import suppress
 import datetime
 import time
 import typing
+from contextlib import suppress
 
 import factory.fuzzy
 import faker
+from eth_utils import to_checksum_address
+from ethereum.utils import sha3
 
 from golem_messages import cryptography
 from golem_messages.factories.datastructures.tasks import TaskHeaderFactory
-from golem_messages.utils import encode_hex as encode_key_id
 from golem_messages.message import tasks
-
+from golem_messages.utils import encode_hex as encode_key_id
 from . import helpers
 
 
@@ -23,9 +24,10 @@ class WantToComputeTaskFactory(helpers.MessageFactory):
     node_name = factory.Faker('name')
     provider_public_key = factory.LazyFunction(
         lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey))
-    provider_ethereum_public_key = factory.SelfAttribute(
-        'provider_public_key'
-    )
+    provider_ethereum_address = factory.LazyFunction(
+        lambda: to_checksum_address(
+            sha3(cryptography.ECCx(None).raw_pubkey)[12:].hex()))
+
     task_header = factory.SubFactory(TaskHeaderFactory)
 
 

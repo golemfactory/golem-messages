@@ -47,16 +47,8 @@ class WantToComputeTaskTest(unittest.TestCase, mixins.SerializationMixin):
 
     def test_provider_ethereum_address_checksum(self):
         wtct = self.FACTORY()
-        self.assertTrue(wtct.provider_ethereum_public_key)
+        self.assertTrue(wtct.provider_ethereum_address)
         self.assertTrue(is_checksum_address(wtct.provider_ethereum_address))
-
-    def test_ethereum_address_provider(self):
-        wtct = self.FACTORY()
-        provider_public_key = decode_hex(wtct.provider_ethereum_public_key)
-
-        self.assertEqual(wtct.provider_ethereum_address,
-                         to_checksum_address(
-                             '0x' + sha3(provider_public_key)[12:].hex()))
 
     def test_ethereum_address(self):
         wtct = self.FACTORY()
@@ -279,20 +271,11 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
 
     def test_ethereum_address_provider(self):
         msg = factories.tasks.TaskToComputeFactory()
-        provider_public_key = decode_hex(msg.provider_ethereum_public_key)
         serialized = shortcuts.dump(msg, None, None)
         msg_l = shortcuts.load(serialized, None, None)
         self.assertEqual(len(msg_l.provider_ethereum_address), 2 + (20*2))
         self.assertEqual(msg_l.provider_ethereum_address,
                          msg_l.want_to_compute_task.provider_ethereum_address)
-        self.assertEqual(msg.provider_ethereum_address,
-                         to_checksum_address(
-                             '0x' + sha3(provider_public_key)[12:].hex()))
-
-    def test_public_key_provider(self):
-        msg = factories.tasks.TaskToComputeFactory()
-        self.assertEqual(msg.provider_ethereum_public_key,
-                         msg.want_to_compute_task.provider_ethereum_public_key)
 
     def test_task_id(self):
         self.assertEqual(self.msg.task_id,

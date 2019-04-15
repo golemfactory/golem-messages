@@ -255,7 +255,7 @@ class WantToComputeTask(ConcentEnabled, base.Message):
                             of this field.
         provider_public_key:
                             for signing and encryption
-        provider_ethereum_public_key:
+        provider_ethereum_address:
                             for transactions on ETH blockchain
         task_header:        Demand; signed by a Requestor
     """
@@ -270,7 +270,7 @@ class WantToComputeTask(ConcentEnabled, base.Message):
         'extra_data',
         # TODO: `provider` prefix is redundant; all above fields refers Provider
         'provider_public_key',
-        'provider_ethereum_public_key',
+        'provider_ethereum_address',
         'task_header',
     ] + base.Message.__slots__
 
@@ -280,12 +280,6 @@ class WantToComputeTask(ConcentEnabled, base.Message):
         super().__init__(*args, **kwargs)
         if self.num_subtasks is None:
             self.num_subtasks = self.DEFAULT_NUM_SUBTASKS
-
-    @property
-    def provider_ethereum_address(self):
-        return to_checksum_address(
-            sha3(decode_hex(self.provider_ethereum_public_key))[12:].hex(),
-        )
 
     @property
     def task_id(self):
@@ -341,10 +335,6 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
     @property
     def provider_public_key(self):
         return self.want_to_compute_task.provider_public_key
-
-    @property
-    def provider_ethereum_public_key(self):
-        return self.want_to_compute_task.provider_ethereum_public_key
 
     @property
     def provider_ethereum_address(self):
