@@ -234,29 +234,31 @@ class ConcentEnabled:  # noqa pylint:disable=too-few-public-methods
 
 @library.register(TASK_MSG_BASE + 1)
 class WantToComputeTask(ConcentEnabled, base.Message):
-    """ A computation Offer.
+    """
+    A computation Offer.
 
     A Provider sends it directly to a Requestor as a response to the Requestor's
-    Demand (Task) in order to get work (subtask) to do.
+    Demand (Task) in order to get work (SubTask) to do.
 
     Attributes:
-      node_name             Provider's node name
-      perf_index            Performance index
-      max_resource_size     Storage size available for computation
-      max_memory_size       RAM
-      num_cores             CPU cores (deprecated)
-      price                 Offered price in GNT "WEI" (10e-18)
-      num_subtasks          How many subtasks Provider wants to work on
+        node_name:          Provider's node name
+        perf_index:         Provider's Performance index
+        max_resource_size:  Provider's Storage size available for computation
+        max_memory_size:    Provider's RAM
+        num_cores:          Provider's CPU cores (deprecated)
+        price:              Offered price in GNT "WEI" (10e-18)
+        num_subtasks:       How many subtasks Provider wants to work on
                             (simultaneously); 1 by default
-      concent_enabled       Provider notifies requestor about his Concent status
-      extra_data            additional required information about the Provider's
+        concent_enabled:    Provider's Concent status
+        extra_data:         additional required information about the Provider's
                             environment. `golem-messages` should be
                             intentionally agnostic with regards to the contents
                             of this field.
-      provider_public_key   for signing and encryption
-      provider_ethereum_public_key
+        provider_public_key:
+                            for signing and encryption
+        provider_ethereum_public_key:
                             for transactions on ETH blockchain
-      task_header           signed by a Requestor
+        task_header:        Demand; signed by a Requestor
     """
     __slots__ = [
         'node_name',
@@ -268,6 +270,7 @@ class WantToComputeTask(ConcentEnabled, base.Message):
         'num_subtasks',
         'concent_enabled',
         'extra_data',
+        # TODO: `provider` prefix is redundant; all above fields refers Provider
         'provider_public_key',
         'provider_ethereum_public_key',
         'task_header',
@@ -301,7 +304,7 @@ class WantToComputeTask(ConcentEnabled, base.Message):
 
         value = super().deserialize_slot(key, value)
 
-        if key == 'demands_cnt':
+        if key == 'num_subtasks':
             validators.validate_positive_integer(key, value)
 
         return value
