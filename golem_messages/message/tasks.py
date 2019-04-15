@@ -245,7 +245,6 @@ class WantToComputeTask(ConcentEnabled, base.Message):
         perf_index:         Provider's Performance index
         max_resource_size:  Provider's Storage size available for computation
         max_memory_size:    Provider's RAM
-        num_cores:          Provider's CPU cores (deprecated)
         price:              Offered price in GNT "WEI" (10e-18)
         num_subtasks:       How many subtasks Provider wants to work on
                             (simultaneously); 1 by default
@@ -265,7 +264,6 @@ class WantToComputeTask(ConcentEnabled, base.Message):
         'perf_index',
         'max_resource_size',
         'max_memory_size',
-        'num_cores',
         'price',
         'num_subtasks',
         'concent_enabled',
