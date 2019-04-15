@@ -46,27 +46,46 @@ class WantToComputeTaskTest(unittest.TestCase, mixins.SerializationMixin):
         self.assertEqual(wtct2.extra_data, extra_data_content)
 
     def test_provider_ethereum_address_checksum(self):
-        msg = self.FACTORY()
-        self.assertTrue(msg.provider_ethereum_public_key)
-        self.assertTrue(is_checksum_address(msg.provider_ethereum_address))
+        wtct = self.FACTORY()
+        self.assertTrue(wtct.provider_ethereum_public_key)
+        self.assertTrue(is_checksum_address(wtct.provider_ethereum_address))
 
     def test_ethereum_address_provider(self):
-        msg = self.FACTORY()
-        provider_public_key = decode_hex(msg.provider_ethereum_public_key)
+        wtct = self.FACTORY()
+        provider_public_key = decode_hex(wtct.provider_ethereum_public_key)
 
-        self.assertEqual(msg.provider_ethereum_address,
+        self.assertEqual(wtct.provider_ethereum_address,
                          to_checksum_address(
                              '0x' + sha3(provider_public_key)[12:].hex()))
 
     def test_ethereum_address(self):
-        msg = self.FACTORY()
-        serialized = shortcuts.dump(msg, None, None)
+        wtct = self.FACTORY()
+        serialized = shortcuts.dump(wtct, None, None)
         msg_l = shortcuts.load(serialized, None, None)
         self.assertEqual(len(msg_l.provider_ethereum_address), 2 + (20*2))
 
     def test_task_id(self):
         wtct = self.FACTORY()
         self.assertEqual(wtct.task_id, wtct.task_header.task_id)
+
+    def test_num_subtasks_default_1(self):
+        wtct = message.tasks.WantToComputeTask()
+        self.assertEqual(wtct.num_subtasks, 1)
+
+    def test_num_subtasks_none_1(self):
+        wtct = message.tasks.WantToComputeTask(num_subtasks=None)
+        self.assertEqual(wtct.num_subtasks, 1)
+        self.assertIsInstance(wtct.num_subtasks, int)
+
+    def test_num_subtasks_int(self):
+        wtct = self.FACTORY()
+        self.assertIsInstance(wtct.num_subtasks, int)
+
+    def test_has_header_aka_check_proper_inheritance(self):
+        from golem_messages.datastructures import MessageHeader
+        wtct = self.FACTORY()
+        self.assertIsNotNone(wtct.header)
+        self.assertIsInstance(wtct.header, MessageHeader)
 
 
 class ComputeTaskDefTestCase(unittest.TestCase):

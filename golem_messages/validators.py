@@ -33,7 +33,7 @@ def validate_integer(field_name, value):
 
 
 def validate_positive_integer(field_name, value):
-    validate_integer(field_name, value);
+    validate_integer(field_name, value)
     if value < 1:
         raise exceptions.FieldError(
             "Should be an positive integer",
