@@ -26,7 +26,7 @@ validate_varchar128 = functools.partial(
 def validate_integer(field_name, value):
     if not isinstance(value, int):
         raise exceptions.FieldError(
-            "Should be a integer",
+            "Should be an integer",
             field=field_name,
             value=value,
         )
