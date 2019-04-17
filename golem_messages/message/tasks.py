@@ -246,7 +246,7 @@ class WantToComputeTask(ConcentEnabled, base.Message):
         max_resource_size:  Provider's Storage size available for computation
         max_memory_size:    Provider's RAM
         num_cores:          Provider's CPU cores (deprecated)
-        price:              Offered price in GNT "WEI" (10e-18)
+        price:              Offered total subtask price in GNT "WEI" (10e-18)
         num_subtasks:       How many subtasks Provider wants to work on
                             (simultaneously); 1 by default
         concent_enabled:    Provider's Concent status
@@ -329,7 +329,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         'package_hash',  # the hash of the package (resources) zip file
         'size',  # the size of the resources zip file
         'concent_enabled',
-        'price',  # total subtask price computed as `price * subtask_timeout`
+        'price',  # total subtask price in GNT "WEI" (10e-18)
         'resources_options',
         'ethsig'
     ] + base.Message.__slots__
