@@ -1,6 +1,7 @@
 import enum
 
 from golem_messages import datastructures
+from golem_messages.datastructures.promissory import PromissoryNote
 from golem_messages import exceptions
 from golem_messages.register import library
 
@@ -218,7 +219,39 @@ class SubtaskResultsVerify(tasks.TaskMessage):
 
     __slots__ = [
         'subtask_results_rejected',
+        'concent_promissory_note_sig',  # the signature of the PromissoryNote
+                                        # for the Concent Service,
+                                        # signed by the provider
     ] + base.Message.__slots__
+
+    def get_concent_promissory_note(
+            self, deposit_contract_address: str) -> PromissoryNote:
+        ttc = self.subtask_results_rejected.task_to_compute
+        return PromissoryNote(
+            address_from=ttc.provider_ethereum_address,
+            address_to=deposit_contract_address,
+            amount=ttc.price,
+            subtask_id=ttc.subtask_id,
+        )
+
+    def sign_concent_promissory_note(
+            self,
+            deposit_contract_address: str,
+            private_key: bytes
+    ) -> None:
+        self.concent_promissory_note_sig = self.get_concent_promissory_note(  # noqa pylint: disable=attribute-defined-outside-init
+            deposit_contract_address
+        ).sign(
+            privkey=private_key
+        )
+
+    def verify_concent_promissory_note(
+            self, deposit_contract_address: str) -> bool:
+        return self.get_concent_promissory_note(
+            deposit_contract_address
+        ).sig_valid(
+            self.concent_promissory_note_sig
+        )
 
 
 @library.register(CONCENT_MSG_BASE + 7)
