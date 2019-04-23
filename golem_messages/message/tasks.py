@@ -2,9 +2,6 @@ import enum
 import functools
 import typing
 
-from eth_utils import to_checksum_address
-from ethereum.utils import sha3
-
 from golem_messages import datastructures
 from golem_messages import exceptions
 from golem_messages import idgenerator
@@ -13,7 +10,7 @@ from golem_messages import validators
 from golem_messages.datastructures.tasks import TaskHeader
 from golem_messages.datastructures.promissory import PromissoryNote
 from golem_messages.register import library
-from golem_messages.utils import decode_hex
+from golem_messages.utils import decode_hex, pubkey_to_address
 
 from . import base
 
@@ -257,9 +254,7 @@ class WantToComputeTask(ConcentEnabled, base.Message):
 
     @property
     def provider_ethereum_address(self):
-        return to_checksum_address(
-            sha3(decode_hex(self.provider_ethereum_public_key))[12:].hex(),
-        )
+        return pubkey_to_address(self.provider_ethereum_public_key)
 
     @property
     def task_id(self):
@@ -306,9 +301,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
 
     @property
     def requestor_ethereum_address(self):
-        return to_checksum_address(
-            sha3(decode_hex(self.requestor_ethereum_public_key))[12:].hex()
-        )
+        return pubkey_to_address(self.requestor_ethereum_public_key)
 
     @property
     def provider_public_key(self):
