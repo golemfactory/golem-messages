@@ -26,7 +26,7 @@ class UtilsTestCase(unittest.TestCase):
                          '75a362e7684a5cdab7ac4587fc146a72' \
                          '6494f96ddc38635ceccdeba4ec14784d' \
                          '735511acccabc29effdf584a3589a86e'
-        self.assertEquals(
+        self.assertEqual(
             utils.pubkey_to_address(encoded_pubkey),
             '0xA2B1b6644F953d3d8488C35132045CC235A568E4'
         )

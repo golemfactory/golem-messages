@@ -17,10 +17,6 @@ class PromissoryNoteTest(unittest.TestCase):
                       b'\xa1\x02\xf7\x06\x0c\x05\xa0\xbb\xbd\xbd\xa5\xfc\x9e' \
                       b'\x8a_%{ \xbd\x12\xe5\r\xdb(6\x8e\x9f'
 
-        self.address_from = utils.pubkey_to_address(
-            utils.encode_hex(self.pubkey)
-        )
-
         # an arbitrary `to` and `amount`
         self.address_to = '0x8bbd87311EA35490B6BE9c7C81e2ae5BCD6f111D'
         self.amount = 667
@@ -31,7 +27,15 @@ class PromissoryNoteTest(unittest.TestCase):
                                 b"\xc3\xa2\x90\x00\x00\x00\x00\x00\x00\x00" \
                                 b"\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
-        self.promissory_note = promissory.PromissoryNote(
+    @property
+    def address_from(self):
+        return utils.pubkey_to_address(
+            utils.encode_hex(self.pubkey)
+        )
+
+    @property
+    def promissory_note(self):
+        return promissory.PromissoryNote(
             address_from=self.address_from,
             address_to=self.address_to,
             amount=self.amount,
@@ -50,9 +54,9 @@ class PromissoryNoteTest(unittest.TestCase):
         self.assertEqual(self.promissory_note.hexmsg, hexmsg)
 
     def test_hash(self):
-        hash = b'\xf2Co>E\x1b9)a\x92-\xc8\xd2\x1b0S' \
-               b'\xbe\xc3\\1\xe5!(\xc6~K\xd3\x1f]\xd7Te'
-        self.assertEqual(self.promissory_note.hash, hash)
+        pn_hash = b'\xf2Co>E\x1b9)a\x92-\xc8\xd2\x1b0S' \
+                   b'\xbe\xc3\\1\xe5!(\xc6~K\xd3\x1f]\xd7Te'
+        self.assertEqual(self.promissory_note.hash, pn_hash)
 
     def test_sign(self):
         sig = self.promissory_note.sign(privkey=self.privkey)

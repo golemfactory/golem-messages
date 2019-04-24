@@ -144,9 +144,9 @@ class SubtaskResultsVerifyTest(mixins.RegisteredMessageTestMixin,
             provider_public_key=encode_key_id(provider_keys.raw_pubkey)
         )
         srv: concents.SubtaskResultsVerify = self.FACTORY(**{
-            'subtask_results_rejected__' \
-            'report_computed_task__' \
-            'task_to_compute__' \
+            'subtask_results_rejected__'
+            'report_computed_task__'
+            'task_to_compute__'
             'want_to_compute_task': wtct
         })
         srv.concent_promissory_note_sig = srv.get_concent_promissory_note(

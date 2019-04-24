@@ -72,7 +72,7 @@ class PromissoryNote:
         return eth_account.messages.defunct_hash_message(hexstr=self.hexmsg)
 
     def sign(self, privkey: bytes) -> PromissoryNoteSig:
-        signed_message = eth_account.account.Account.signHash(
+        signed_message = eth_account.account.Account.signHash(  # noqa pylint: disable=no-value-for-parameter, line-too-long;  # pylint can't make sense of eth_utils' `@combomethod` decorator
             message_hash=self.hash,
             private_key=privkey
         )
@@ -92,11 +92,11 @@ class PromissoryNote:
                 "The provided promissory note sig: `{}` has wrong type. "
                 "Must be a tuple with format: {}".format(
                     promissory_note_sig,
-                    PromissoryNoteSig._field_types,
+                    PromissoryNoteSig._field_types,  # noqa pylint: disable=protected-access
                 )
             ) from e
 
-        address_from = eth_account.Account.recoverHash(
+        address_from = eth_account.Account.recoverHash(  # noqa pylint: disable=no-value-for-parameter, line-too-long;  # pylint can't make sense of  eth_utils' `@combomethod` decorator
             message_hash=self.hash,
             vrs=promissory_note_sig
         )

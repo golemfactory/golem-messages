@@ -205,8 +205,6 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
 
     def setUp(self):
         self.msg: message.tasks.TaskToCompute = self.FACTORY()
-        # arbitrary address
-        self.gntdeposit = '0x89915ddA14eFd6b064da953431E8b7f902d89c83'
 
     def test_concent_enabled_attribute(self):
         ttc = factories.tasks.TaskToComputeFactory(concent_enabled=True)
@@ -350,6 +348,15 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         ttc = factories.tasks.TaskToComputeFactory(size=None)
         with self.assertRaises(exceptions.FieldError):
             helpers.dump_and_load(ttc)
+
+
+class TaskToComputePromissoryNotesTest(unittest.TestCase):
+    FACTORY = factories.tasks.TaskToComputeFactory
+
+    def setUp(self):
+        self.msg: message.tasks.TaskToCompute = self.FACTORY()
+        # arbitrary address
+        self.gntdeposit = '0x89915ddA14eFd6b064da953431E8b7f902d89c83'
 
     def test_promissory_note(self):
         requestor_keys = cryptography.ECCx(None)
