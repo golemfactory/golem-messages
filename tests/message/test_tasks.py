@@ -70,6 +70,7 @@ class WantToComputeTaskTest(unittest.TestCase, mixins.SerializationMixin):
 
     def test_num_subtasks_default_1(self):
         wtct = message.tasks.WantToComputeTask()
+        self.assertIsInstance(wtct.num_subtasks, int)
         self.assertEqual(wtct.num_subtasks, 1)
 
     def test_num_subtasks_none_1(self):
@@ -88,7 +89,7 @@ class WantToComputeTaskTest(unittest.TestCase, mixins.SerializationMixin):
         serialized = shortcuts.dump(wtct, None, None)
         with self.assertRaisesRegex(
             exceptions.FieldError,
-            r"Should be a integer \[num_subtasks:3.14\]"
+            r"Should be an integer \[num_subtasks:3.14\]"
         ):
             shortcuts.load(serialized, None, None)
 
@@ -110,11 +111,7 @@ class WantToComputeTaskTest(unittest.TestCase, mixins.SerializationMixin):
         ):
             shortcuts.load(serialized, None, None)
 
-    def test_num_subtasks_int(self):
-        wtct = self.FACTORY()
-        self.assertIsInstance(wtct.num_subtasks, int)
-
-    def test_has_header_aka_check_proper_inheritance(self):
+    def test_concent_enabled_invokes_another_constructor(self):
         from golem_messages.datastructures import MessageHeader
         wtct = self.FACTORY()
         self.assertIsNotNone(wtct.header)
