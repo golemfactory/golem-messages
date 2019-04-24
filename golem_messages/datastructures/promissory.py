@@ -1,8 +1,10 @@
 import typing
+import uuid
 
 import eth_account.account
 import eth_account.messages
 
+from golem_messages.utils import uuid_to_bytes32
 
 PromissoryNoteSig = typing.NamedTuple(
     'PromissoryNoteSig',
@@ -46,22 +48,34 @@ class PromissoryNote:
         self.amount = amount
         self.subtask_id = subtask_id
 
+    def __repr__(self):
+        return "<{cls}: from: {address_from}, to: {address_to}, " \
+               "amount: {amount}, subtask_id: {subtask_id}>"\
+            .format(
+                cls=self.__class__.__name__,
+                address_from=self.address_from,
+                address_to=self.address_to,
+                amount=self.amount,
+                subtask_id=self.subtask_id,
+            )
+
     @property
     def hexmsg(self) -> str:
         return "0x" + \
                self.address_from[2:] + \
-               self.address_from[2:] + \
+               self.address_to[2:] + \
                self.amount.to_bytes(32, byteorder='big').hex() + \
-               self.subtask_id.encode('ascii').hex()
+               uuid_to_bytes32(uuid.UUID(self.subtask_id)).hex()
 
     @property
     def hash(self):
         return eth_account.messages.defunct_hash_message(hexstr=self.hexmsg)
 
     def sign(self, privkey: bytes) -> PromissoryNoteSig:
-        account = eth_account.account.Account.privateKeyToAccount(
-            privkey=privkey)
-        signed_message = account.signHash(self.hash)
+        signed_message = eth_account.account.Account.signHash(
+            message_hash=self.hash,
+            private_key=privkey
+        )
         v = signed_message['v']
         r = (signed_message['r']).to_bytes(32, byteorder='big')
         s = (signed_message['s']).to_bytes(32, byteorder='big')
@@ -69,6 +83,7 @@ class PromissoryNote:
 
     def sig_valid(self, promissory_note_sig: PromissoryNoteSig) -> bool:
         address_from = eth_account.Account.recoverHash(
-            self.hash, promissory_note_sig
+            message_hash=self.hash,
+            vrs=promissory_note_sig
         )
         return self.address_from == address_from
