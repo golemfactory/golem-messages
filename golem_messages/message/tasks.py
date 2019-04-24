@@ -7,7 +7,7 @@ from golem_messages import exceptions
 from golem_messages import idgenerator
 from golem_messages import settings
 from golem_messages import validators
-from golem_messages.datastructures import promissory as dt_promissory
+from golem_messages.datastructures import promissory
 from golem_messages.datastructures.tasks import TaskHeader
 from golem_messages.datastructures.promissory import PromissoryNote
 from golem_messages.register import library
@@ -276,7 +276,7 @@ class WantToComputeTask(ConcentEnabled, base.Message):
 class TaskToCompute(
         ConcentEnabled,
         TaskMessage,
-        dt_promissory.PromissorySlotMixin,
+        promissory.PromissorySlotMixin,
 ):
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
 
@@ -424,8 +424,8 @@ class TaskToCompute(
         )
         return super().validate_ownership(concent_public_key)
 
-    def get_promissory_note(self) -> dt_promissory.PromissoryNote:
-        return dt_promissory.PromissoryNote(
+    def get_promissory_note(self) -> promissory.PromissoryNote:
+        return promissory.PromissoryNote(
             address_from=self.requestor_ethereum_address,
             address_to=self.provider_ethereum_address,
             amount=self.price,
@@ -434,7 +434,7 @@ class TaskToCompute(
 
     def get_concent_promissory_note(
             self, deposit_contract_address: str) -> PromissoryNote:
-        return dt_promissory.PromissoryNote(
+        return promissory.PromissoryNote(
             address_from=self.requestor_ethereum_address,
             address_to=deposit_contract_address,
             amount=self.price,

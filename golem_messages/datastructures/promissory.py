@@ -50,9 +50,9 @@ class PromissoryNote:
 
     def __repr__(self):
         return (
-            f"<{self.__class__.__name__}:"
-            f" from: {self.address_from}, to: {self.address_to}"
-            f", amount: {self.amount}, subtask_id: {self.subtask_id}>"
+            f"<{self.__class__.__name__}: "
+            f" from: {self.address_from}, to: {self.address_to}, "
+            f"amount: {self.amount}, subtask_id: {self.subtask_id}>"
         )
 
     @property

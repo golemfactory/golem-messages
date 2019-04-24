@@ -1,7 +1,7 @@
 import enum
 
 from golem_messages import datastructures
-from golem_messages.datastructures import promissory as dt_promissory
+from golem_messages.datastructures import promissory
 from golem_messages import exceptions
 from golem_messages.register import library
 
@@ -203,7 +203,7 @@ class FileTransferToken(base.Message):
 @library.register(CONCENT_MSG_BASE + 6)
 class SubtaskResultsVerify(
         tasks.TaskMessage,
-        dt_promissory.PromissorySlotMixin,
+        promissory.PromissorySlotMixin,
 ):
     """
     Message sent from a Provider to the Concent, requesting additional
@@ -230,9 +230,9 @@ class SubtaskResultsVerify(
     def get_concent_promissory_note(
             self,
             deposit_contract_address: str,
-    ) -> dt_promissory.PromissoryNote:
+    ) -> promissory.PromissoryNote:
         ttc = self.subtask_results_rejected.task_to_compute
-        return dt_promissory.PromissoryNote(
+        return promissory.PromissoryNote(
             address_from=ttc.provider_ethereum_address,
             address_to=deposit_contract_address,
             amount=ttc.price,
