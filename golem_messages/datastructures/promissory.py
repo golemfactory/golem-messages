@@ -81,7 +81,21 @@ class PromissoryNote:
         s = (signed_message['s']).to_bytes(32, byteorder='big')
         return PromissoryNoteSig(v, r, s)
 
-    def sig_valid(self, promissory_note_sig: PromissoryNoteSig) -> bool:
+    def sig_valid(self, promissory_note_sig: typing.Optional[tuple]) -> bool:
+        if not promissory_note_sig:
+            return False
+
+        try:
+            promissory_note_sig = PromissoryNoteSig(*promissory_note_sig)
+        except TypeError as e:
+            raise TypeError(
+                "The provided promissory note sig: `{}` has wrong type. "
+                "Must be a tuple with format: {}".format(
+                    promissory_note_sig,
+                    PromissoryNoteSig._field_types,
+                )
+            ) from e
+
         address_from = eth_account.Account.recoverHash(
             message_hash=self.hash,
             vrs=promissory_note_sig

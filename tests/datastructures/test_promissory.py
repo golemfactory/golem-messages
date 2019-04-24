@@ -79,3 +79,10 @@ class PromissoryNoteTest(unittest.TestCase):
     def test_not_sig_valid_wrong_signature_key(self):
         sig = self.promissory_note.sign(cryptography.ECCx(None).raw_privkey)
         self.assertFalse(self.promissory_note.sig_valid(sig))
+
+    def test_not_sig_valid_empty(self):
+        self.assertFalse(self.promissory_note.sig_valid(None))
+
+    def test_not_sig_valid_corrupted(self):
+        with self.assertRaises(TypeError):
+            self.promissory_note.sig_valid((1, 2, ))
