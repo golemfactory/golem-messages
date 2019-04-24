@@ -240,40 +240,26 @@ class WantToComputeTask(ConcentEnabled, base.Message):
     A Provider sends it directly to a Requestor as a response to the Requestor's
     Demand (Task) in order to get work (SubTask ie. TaskToCompute) to do.
 
-    Attributes:
-        node_name:          Provider's node name
-        perf_index:         Provider's Performance index
-        max_resource_size:  Provider's Storage size available for computation
-        max_memory_size:    Provider's RAM
-        num_cores:          Provider's CPU cores (deprecated)
-        price:              Offered total subtask price in GNT "WEI" (10e-18)
-        num_subtasks:       How many subtasks Provider wants to work on
-                            (simultaneously); 1 by default
-        concent_enabled:    Provider's Concent status
-        extra_data:         additional required information about the Provider's
-                            environment. `golem-messages` should be
-                            intentionally agnostic with regards to the contents
-                            of this field.
-        provider_public_key:
-                            for signing and encryption
-        provider_ethereum_public_key:
-                            for transactions on ETH blockchain
-        task_header:        Demand; signed by a Requestor
     """
     __slots__ = [
-        'node_name',
-        'perf_index',
-        'max_resource_size',
-        'max_memory_size',
-        'num_cores',
-        'price',
-        'num_subtasks',
-        'concent_enabled',
-        'extra_data',
-        # TODO: `provider` prefix is redundant; all above fields refers Provider
-        'provider_public_key',
-        'provider_ethereum_public_key',
-        'task_header',
+        'node_name',          # Provider's node name
+        'perf_index',         # Provider's performance; a benchmark result
+        'max_resource_size',  # P's storage size available for computation
+        'max_memory_size',    # P's RAM
+        'num_cores',          # P's CPU cores (deprecated)
+        'price',              # Offered total subtask price in GNT WEI (10e-18)
+        'num_subtasks',       # How many subtasks Provider wants to work on
+                              # (simultaneously); 1 by default
+        'concent_enabled',    # Provider's Concent status
+        'extra_data',         # additional required information about the
+                              # Provider's environment. `golem-messages` should
+                              # be intentionally agnostic with regards to the
+                              # contents of this field.
+
+        # `provider` prefix is redundant; all above fields refers Provider
+        'provider_public_key',  # for signing and encryption
+        'provider_ethereum_public_key',  # for transactions on ETH blockchain
+        'task_header',        # Demand; signed by a Requestor
     ] + base.Message.__slots__
 
     DEFAULT_NUM_SUBTASKS = 1
