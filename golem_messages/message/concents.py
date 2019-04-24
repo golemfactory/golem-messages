@@ -1,7 +1,7 @@
 import enum
 
 from golem_messages import datastructures
-from golem_messages.datastructures.promissory import PromissoryNote
+from golem_messages.datastructures import promissory
 from golem_messages import exceptions
 from golem_messages.register import library
 
@@ -201,7 +201,10 @@ class FileTransferToken(base.Message):
 
 
 @library.register(CONCENT_MSG_BASE + 6)
-class SubtaskResultsVerify(tasks.TaskMessage):
+class SubtaskResultsVerify(
+        tasks.TaskMessage,
+        promissory.PromissorySlotMixin,
+):
     """
     Message sent from a Provider to the Concent, requesting additional
     verification in case the result had been rejected by the Requestor
@@ -225,32 +228,15 @@ class SubtaskResultsVerify(tasks.TaskMessage):
     ] + base.Message.__slots__
 
     def get_concent_promissory_note(
-            self, deposit_contract_address: str) -> PromissoryNote:
+            self,
+            deposit_contract_address: str,
+    ) -> promissory.PromissoryNote:
         ttc = self.subtask_results_rejected.task_to_compute
-        return PromissoryNote(
+        return promissory.PromissoryNote(
             address_from=ttc.provider_ethereum_address,
             address_to=deposit_contract_address,
             amount=ttc.price,
             subtask_id=ttc.subtask_id,
-        )
-
-    def sign_concent_promissory_note(
-            self,
-            deposit_contract_address: str,
-            private_key: bytes
-    ) -> None:
-        self.concent_promissory_note_sig = self.get_concent_promissory_note(  # noqa pylint: disable=attribute-defined-outside-init
-            deposit_contract_address
-        ).sign(
-            privkey=private_key
-        )
-
-    def verify_concent_promissory_note(
-            self, deposit_contract_address: str) -> bool:
-        return self.get_concent_promissory_note(
-            deposit_contract_address
-        ).sig_valid(
-            self.concent_promissory_note_sig
         )
 
 

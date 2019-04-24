@@ -6,8 +6,7 @@ disable=invalid-name,                   # Pylint is overzealous here
         no-member,
         useless-import-alias,           # 2018-05-21 Bug in pylint triggers this on lines with "import unittest.mock as mock"
         try-except-raise,
-        cyclic-import,
-        duplicate-code                  # no way to silence pylint sensibly
+        cyclic-import
 
 [TYPECHECK]
 

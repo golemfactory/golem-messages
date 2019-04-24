@@ -107,6 +107,7 @@ class FileTransferTokenTest(mixins.SerializationMixin,
 
 class SubtaskResultsVerifyTest(mixins.RegisteredMessageTestMixin,
                                mixins.SerializationMixin,
+                               mixins.PromissoryNoteMixin,
                                unittest.TestCase):
     FACTORY = factories.concents.SubtaskResultsVerifyFactory
     MSG_CLASS = concents.SubtaskResultsVerify
@@ -164,23 +165,6 @@ class SubtaskResultsVerifyTest(mixins.RegisteredMessageTestMixin,
 
         self.assertTrue(
             srv2.verify_concent_promissory_note(self.gntdeposit),
-        )
-
-    def test_concent_promissory_note_empty(self):
-        self.assertFalse(
-            self.msg.verify_concent_promissory_note(self.gntdeposit)
-        )
-
-    def test_concent_promissory_note_bad(self):
-        provider_keys = cryptography.ECCx(None)
-        self.msg.concent_promissory_note_sig = \
-            self.msg.get_concent_promissory_note(
-                self.gntdeposit
-            ).sign(
-                privkey=provider_keys.raw_privkey
-            )
-        self.assertFalse(
-            self.msg.verify_concent_promissory_note(self.gntdeposit)
         )
 
 

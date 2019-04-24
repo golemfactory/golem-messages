@@ -7,6 +7,7 @@ from golem_messages import exceptions
 from golem_messages import idgenerator
 from golem_messages import settings
 from golem_messages import validators
+from golem_messages.datastructures import promissory
 from golem_messages.datastructures.tasks import TaskHeader
 from golem_messages.datastructures.promissory import PromissoryNote
 from golem_messages.register import library
@@ -272,7 +273,11 @@ class WantToComputeTask(ConcentEnabled, base.Message):
 
 
 @library.register(TASK_MSG_BASE + 2)
-class TaskToCompute(ConcentEnabled, TaskMessage):
+class TaskToCompute(
+        ConcentEnabled,
+        TaskMessage,
+        promissory.PromissorySlotMixin,
+):
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
 
     MSG_SLOTS = {
@@ -419,8 +424,8 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         )
         return super().validate_ownership(concent_public_key)
 
-    def get_promissory_note(self) -> PromissoryNote:
-        return PromissoryNote(
+    def get_promissory_note(self) -> promissory.PromissoryNote:
+        return promissory.PromissoryNote(
             address_from=self.requestor_ethereum_address,
             address_to=self.provider_ethereum_address,
             amount=self.price,
@@ -429,7 +434,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
 
     def get_concent_promissory_note(
             self, deposit_contract_address: str) -> PromissoryNote:
-        return PromissoryNote(
+        return promissory.PromissoryNote(
             address_from=self.requestor_ethereum_address,
             address_to=deposit_contract_address,
             amount=self.price,
@@ -442,27 +447,8 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
             privkey=private_key
         )
 
-    def sign_concent_promissory_note(
-            self,
-            deposit_contract_address: str,
-            private_key: bytes
-    ) -> None:
-        self.concent_promissory_note_sig = self.get_concent_promissory_note(  # noqa pylint: disable=attribute-defined-outside-init
-            deposit_contract_address
-        ).sign(
-            privkey=private_key
-        )
-
     def verify_promissory_note(self) -> bool:
         return self.get_promissory_note().sig_valid(self.promissory_note_sig)
-
-    def verify_concent_promissory_note(
-            self, deposit_contract_address: str) -> bool:
-        return self.get_concent_promissory_note(
-            deposit_contract_address
-        ).sig_valid(
-            self.concent_promissory_note_sig
-        )
 
 
 @library.register(TASK_MSG_BASE + 3)
