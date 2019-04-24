@@ -350,7 +350,10 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
             helpers.dump_and_load(ttc)
 
 
-class TaskToComputePromissoryNotesTest(unittest.TestCase):
+class TaskToComputePromissoryNotesTest(
+        mixins.PromissoryNoteMixin,
+        unittest.TestCase,
+):
     FACTORY = factories.tasks.TaskToComputeFactory
 
     def setUp(self):
@@ -427,23 +430,6 @@ class TaskToComputePromissoryNotesTest(unittest.TestCase):
 
         self.assertTrue(
             ttc2.verify_concent_promissory_note(self.gntdeposit),
-        )
-
-    def test_concent_promissory_note_empty(self):
-        self.assertFalse(
-            self.msg.verify_concent_promissory_note(self.gntdeposit)
-        )
-
-    def test_concent_promissory_note_bad(self):
-        requestor_keys = cryptography.ECCx(None)
-        self.msg.concent_promissory_note_sig = \
-            self.msg.get_concent_promissory_note(
-                self.gntdeposit
-            ).sign(
-                privkey=requestor_keys.raw_privkey
-            )
-        self.assertFalse(
-            self.msg.verify_concent_promissory_note(self.gntdeposit)
         )
 
 

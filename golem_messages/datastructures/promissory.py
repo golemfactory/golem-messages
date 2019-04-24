@@ -49,15 +49,11 @@ class PromissoryNote:
         self.subtask_id = subtask_id
 
     def __repr__(self):
-        return "<{cls}: from: {address_from}, to: {address_to}, " \
-               "amount: {amount}, subtask_id: {subtask_id}>"\
-            .format(
-                cls=self.__class__.__name__,
-                address_from=self.address_from,
-                address_to=self.address_to,
-                amount=self.amount,
-                subtask_id=self.subtask_id,
-            )
+        return (
+            f"<{self.__class__.__name__}:"
+            f" from: {self.address_from}, to: {self.address_to}"
+            f", amount: {self.amount}, subtask_id: {self.subtask_id}>"
+        )
 
     @property
     def hexmsg(self) -> str:
@@ -101,3 +97,32 @@ class PromissoryNote:
             vrs=promissory_note_sig
         )
         return self.address_from == address_from
+
+
+class PromissorySlotMixin:
+    __slots__ = ()
+
+    CONCENT_PROMISSORY_NOTE_SIG = 'concent_promissory_note_sig'
+
+    def sign_concent_promissory_note(
+            self,
+            deposit_contract_address: str,
+            private_key: bytes
+    ) -> None:
+        setattr(
+            self,
+            self.CONCENT_PROMISSORY_NOTE_SIG,
+            self.get_concent_promissory_note(
+                deposit_contract_address
+            ).sign(
+                privkey=private_key
+            ),
+        )
+
+    def verify_concent_promissory_note(
+            self, deposit_contract_address: str) -> bool:
+        return self.get_concent_promissory_note(
+            deposit_contract_address
+        ).sig_valid(
+            self.concent_promissory_note_sig
+        )
