@@ -242,7 +242,7 @@ class WantToComputeTask(ConcentEnabled, base.Message):
 
     """
     __slots__ = [
-        'node_name',          # Provider's node name
+        'node_name',          # Provider's node name (it's a duplicate from task_header.owner.node_name)
         'perf_index',         # Provider's performance; a benchmark result
         'max_resource_size',  # P's storage size available for computation
         'max_memory_size',    # P's RAM
@@ -256,7 +256,7 @@ class WantToComputeTask(ConcentEnabled, base.Message):
                               # be intentionally agnostic with regards to the
                               # contents of this field.
 
-        # `provider` prefix is redundant; all above fields refers Provider
+        # `provider` prefix is redundant; all above fields refer to Provider
         'provider_public_key',  # for signing and encryption
         'provider_ethereum_public_key',  # for transactions on ETH blockchain
         'task_header',        # Demand; signed by a Requestor
