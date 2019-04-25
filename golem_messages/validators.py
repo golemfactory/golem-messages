@@ -6,6 +6,15 @@ import semantic_version
 from golem_messages import exceptions
 
 
+def fail_unless(field_name, value, check, fail_msg):
+    if not check(value):
+        raise exceptions.FieldError(
+            fail_msg,
+            field=field_name,
+            value=value,
+        )
+
+
 def validate_varchar(field_name, value, max_length):
     if not (isinstance(value, str) and len(value) <= max_length):
         raise exceptions.FieldError(
