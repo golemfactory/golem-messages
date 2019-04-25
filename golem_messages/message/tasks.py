@@ -257,7 +257,6 @@ class WantToComputeTask(ConcentEnabled, base.Message):
                               # be intentionally agnostic with regards to the
                               # contents of this field.
 
-        # `provider` prefix is redundant; all above fields refer to Provider
         'provider_public_key',  # for signing and encryption
         'provider_ethereum_public_key',  # for transactions on ETH blockchain
         'task_header',        # Demand; signed by a Requestor
@@ -316,7 +315,7 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         'package_hash',  # the hash of the package (resources) zip file
         'size',  # the size of the resources zip file
         'concent_enabled',
-        'price',  # total subtask price in GNT "WEI" (10e-18)
+        'price',  # total subtask price in GNT WEI (10e-18)
         'resources_options',
         'ethsig'
     ] + base.Message.__slots__
