@@ -2,8 +2,7 @@ import binascii
 import copy
 from uuid import UUID
 
-from eth_utils import to_checksum_address
-from ethereum.utils import sha3
+from eth_utils import to_checksum_address, keccak
 
 from golem_messages import message
 
@@ -13,7 +12,7 @@ def pubkey_to_address(pubkey: str) -> str:
     convert a hex-encoded pubkey into a checksummed address
     """
     return to_checksum_address(
-        sha3(decode_hex(pubkey))[12:].hex(),
+        keccak(decode_hex(pubkey))[12:].hex(),
     )
 
 
