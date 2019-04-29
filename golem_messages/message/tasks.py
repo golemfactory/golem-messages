@@ -233,25 +233,39 @@ class ConcentEnabled:  # noqa pylint:disable=too-few-public-methods
 
 @library.register(TASK_MSG_BASE + 1)
 class WantToComputeTask(ConcentEnabled, base.Message):
+    """
+    A computation Offer.
+
+    A Provider sends it directly to a Requestor as a response to the Requestor's
+    Demand (Task) in order to get work (SubTask ie. TaskToCompute) to do.
+
+    """
     __slots__ = [
-        'node_name',
-        'perf_index',
-        'max_resource_size',
-        'max_memory_size',
-        'num_cores',
-        'price',
-        'concent_enabled',  # Provider notifies requestor
-                            # about his concent status
+        'node_name',          # Provider's node name (it's a duplicate from
+        # task_header.owner.node_name)
+        'perf_index',         # Provider's performance; a benchmark result
+        'max_resource_size',  # P's storage size available for computation
+        'max_memory_size',    # P's RAM
+        'price',              # Offered total subtask price in GNT WEI (10e-18)
+        'num_subtasks',       # How many subtasks Provider wants to work on
+                              # (simultaneously); 1 by default
+        'concent_enabled',    # Provider's Concent status
+        'extra_data',         # additional required information about the
+                              # Provider's environment. `golem-messages` should
+                              # be intentionally agnostic with regards to the
+                              # contents of this field.
 
-        'extra_data',       # used to specify additional required
-                            # information about the provider's environment.
-                            # `golem-messages` should be intentionally agnostic
-                            # with regards to the contents of this field.
-
-        'provider_public_key',  # key used for msg signing and encryption
-        'provider_ethereum_public_key',  # used for transactions on blockchain
-        'task_header',  # TaskHeader, should be signed by requestor
+        'provider_public_key',  # for signing and encryption
+        'provider_ethereum_public_key',  # for transactions on ETH blockchain
+        'task_header',        # Demand; signed by a Requestor
     ] + base.Message.__slots__
+
+    DEFAULT_NUM_SUBTASKS = 1
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.num_subtasks is None:
+            self.num_subtasks = self.DEFAULT_NUM_SUBTASKS
 
     @property
     def provider_ethereum_address(self):
@@ -264,12 +278,19 @@ class WantToComputeTask(ConcentEnabled, base.Message):
     def serialize_slot(self, key, value):
         if key == 'task_header' and isinstance(value, TaskHeader):
             return value.to_dict()
+
         return super().serialize_slot(key, value)
 
     def deserialize_slot(self, key, value):
         if key == 'task_header' and value is not None:
             return TaskHeader(**value)
-        return super().deserialize_slot(key, value)
+
+        value = super().deserialize_slot(key, value)
+
+        if key == 'num_subtasks':
+            validators.validate_positive_integer(key, value)
+
+        return value
 
 
 @library.register(TASK_MSG_BASE + 2)
@@ -294,7 +315,7 @@ class TaskToCompute(
         'package_hash',  # the hash of the package (resources) zip file
         'size',  # the size of the resources zip file
         'concent_enabled',
-        'price',  # total subtask price computed as `price * subtask_timeout`
+        'price',  # total subtask price in GNT WEI (10e-18)
         'resources_options',
         'ethsig',
         'promissory_note_sig',  # the signature of the PromissoryNote
