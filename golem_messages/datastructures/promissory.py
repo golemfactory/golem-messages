@@ -100,6 +100,13 @@ class PromissoryNote:
 
 
 class PromissorySlotMixin:
+    """
+    Defines sign and verify methods for messages containing the
+    promissory note signatures for the Concent Service itself.
+
+    Requires each message to contain the implementation of its own
+    `_get_concent_promissory_note` method.
+    """
     __slots__ = ()
 
     CONCENT_PROMISSORY_NOTE_SIG = 'concent_promissory_note_sig'
