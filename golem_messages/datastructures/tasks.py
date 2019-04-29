@@ -14,15 +14,6 @@ from golem_messages.datastructures import p2p as dt_p2p
 logger = logging.getLogger(__name__)
 
 
-def _fail_if(field_name, value, check, fail_msg):
-    if not check(value):
-        raise exceptions.FieldError(
-            fail_msg,
-            field=field_name,
-            value=value,
-        )
-
-
 class TaskHeader(datastructures.Container):
     """
     Task header describes general information about task as an request and
@@ -32,7 +23,7 @@ class TaskHeader(datastructures.Container):
     __slots__ = {
         'mask': (
             functools.partial(
-                _fail_if,
+                validators.fail_unless,
                 check=lambda x: isinstance(x, bytes),
                 fail_msg="Should be bytes",
             ),
@@ -42,7 +33,7 @@ class TaskHeader(datastructures.Container):
         ),
         'signature': (
             functools.partial(
-                _fail_if,
+                validators.fail_unless,
                 check=lambda x: isinstance(x, bytes),
                 fail_msg="Should be bytes",
             ),
@@ -50,7 +41,7 @@ class TaskHeader(datastructures.Container):
         'task_id': (validators.validate_varchar128, ),
         'task_owner': (
             functools.partial(
-                _fail_if,
+                validators.fail_unless,
                 check=lambda x: isinstance(x, (dict, dt_p2p.Node)),
                 fail_msg="Should be a dict or Node",
             ),
@@ -59,7 +50,7 @@ class TaskHeader(datastructures.Container):
         'subtask_timeout': (
             validators.validate_integer,
             functools.partial(
-                _fail_if,
+                validators.fail_unless,
                 check=lambda x: x >= 0,
                 fail_msg="Subtask timeout is less than 0",
             ),
@@ -74,7 +65,7 @@ class TaskHeader(datastructures.Container):
         'subtasks_count': (
             validators.validate_integer,
             functools.partial(
-                _fail_if,
+                validators.fail_unless,
                 check=lambda x: x > 0,
                 fail_msg="Subtasks count is less than 1",
             ),

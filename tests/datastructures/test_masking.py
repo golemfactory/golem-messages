@@ -7,7 +7,7 @@ from golem_messages.datastructures.masking import Mask
 
 class TestMask(TestCase):
 
-    NETWORK_SIZE = 1024
+    NETWORK_SIZE = 200
 
     def setUp(self):
         self.random = Random(__name__)
@@ -98,10 +98,10 @@ class TestMask(TestCase):
             mask = Mask.get_mask_for_task(num_subtasks, self.NETWORK_SIZE)
             self.assertEqual(mask.num_bits, exp_num_bits)
 
-        _check(1, 10)    # 1024 / 2**10 == 1
-        _check(16, 6)    # 1024 / 2**6  == 16
-        _check(80, 4)    # 1024 / 2**3 > 80 > 1024 / 2**4
-        _check(5000, 0)  # 5000 > 1024 / 2 ** 0
+        _check(1, 8)     # 2**7 < 200 / 1  < 2**8
+        _check(16, 4)    # 2**3 < 200 / 16 < 2**4
+        _check(80, 2)    # 2**1 < 200 / 80 < 2**2
+        _check(5000, 0)  # 200 / 5000 < 2**0
 
     @patch('golem_messages.datastructures.masking.random', new=Random(__name__))
     def test_matches(self):
@@ -109,9 +109,9 @@ class TestMask(TestCase):
             mask = Mask.generate(num_bits)
             avg_nodes = sum(
                 sum(mask.matches(addr) for addr in self._get_test_network())
-                for _ in range(1000)) / 1000
+                for _ in range(100)) / 100
             self.assertAlmostEqual(avg_nodes, exp_num_nodes, delta=1)
 
-        _check(3, 128)  # 1024 / 2**3 == 128
-        _check(5, 32)   # 1024 / 2**5 == 32
-        _check(7, 8)    # 1024 / 2**7 == 8
+        _check(3, 25)  # 200 / 2**3 == 25
+        _check(5, 6)   # 200 / 2**5 == 6.25
+        _check(7, 1)   # 200 / 2**7 == 1.5625
