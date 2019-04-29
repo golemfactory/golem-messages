@@ -6,12 +6,15 @@ import unittest
 
 import freezegun
 
+from golem_messages import cryptography
+from golem_messages.datastructures import promissory
 from golem_messages import exceptions
 from golem_messages import message
 
 from golem_messages import factories
 from golem_messages import shortcuts
 from golem_messages.message import concents
+from golem_messages.utils import encode_hex as encode_key_id
 
 from tests.message import helpers
 from tests.message import mixins
@@ -104,12 +107,15 @@ class FileTransferTokenTest(mixins.SerializationMixin,
 
 class SubtaskResultsVerifyTest(mixins.RegisteredMessageTestMixin,
                                mixins.SerializationMixin,
+                               mixins.PromissoryNoteMixin,
                                unittest.TestCase):
     FACTORY = factories.concents.SubtaskResultsVerifyFactory
     MSG_CLASS = concents.SubtaskResultsVerify
 
     def setUp(self):
-        self.msg = self.FACTORY()
+        self.msg: concents.SubtaskResultsVerify = self.FACTORY()
+        # arbitrary address
+        self.gntdeposit = '0x89915ddA14eFd6b064da953431E8b7f902d89c83'
 
     def test_subtask_results_verify(self):
         srr = factories.tasks.SubtaskResultsRejectedFactory()
@@ -117,7 +123,8 @@ class SubtaskResultsVerifyTest(mixins.RegisteredMessageTestMixin,
             subtask_results_rejected=srr,
         )
         expected = [
-            ['subtask_results_rejected', helpers.single_nested(srr)]
+            ['subtask_results_rejected', helpers.single_nested(srr), ],
+            ['concent_promissory_note_sig', None, ],
         ]
 
         self.assertEqual(expected, msg.slots())
@@ -131,6 +138,34 @@ class SubtaskResultsVerifyTest(mixins.RegisteredMessageTestMixin,
     def test_subtask_id(self):
         self.assertEqual(self.msg.subtask_id,
                          self.msg.subtask_results_rejected.subtask_id)
+
+    def test_concent_promissory_note(self):
+        provider_keys = cryptography.ECCx(None)
+        wtct = factories.tasks.WantToComputeTaskFactory(
+            provider_public_key=encode_key_id(provider_keys.raw_pubkey)
+        )
+        srv: concents.SubtaskResultsVerify = self.FACTORY(**{
+            'subtask_results_rejected__'
+            'report_computed_task__'
+            'task_to_compute__'
+            'want_to_compute_task': wtct
+        })
+        srv.concent_promissory_note_sig = srv._get_concent_promissory_note(
+            self.gntdeposit
+        ).sign(
+            privkey=provider_keys.raw_privkey
+        )
+
+        self.assertIsInstance(
+            srv.concent_promissory_note_sig,
+            promissory.PromissoryNoteSig,
+        )
+
+        srv2 = helpers.dump_and_load(srv)
+
+        self.assertTrue(
+            srv2.verify_concent_promissory_note(self.gntdeposit),
+        )
 
 
 class AckSubtaskResultsVerifyTest(mixins.RegisteredMessageTestMixin,
