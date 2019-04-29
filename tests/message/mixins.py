@@ -73,12 +73,11 @@ class PromissoryNoteMixin:
 
     def test_concent_promissory_note_bad(self):
         provider_keys = cryptography.ECCx(None)
-        self.msg.concent_promissory_note_sig = \
-            self.msg.get_concent_promissory_note(
-                self.gntdeposit
-            ).sign(
-                privkey=provider_keys.raw_privkey
-            )
+
+        self.msg.sign_concent_promissory_note(
+            self.gntdeposit,
+            private_key=provider_keys.raw_privkey
+        )
         self.assertFalse(
             self.msg.verify_concent_promissory_note(self.gntdeposit)
         )

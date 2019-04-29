@@ -150,7 +150,7 @@ class SubtaskResultsVerifyTest(mixins.RegisteredMessageTestMixin,
             'task_to_compute__'
             'want_to_compute_task': wtct
         })
-        srv.concent_promissory_note_sig = srv.get_concent_promissory_note(
+        srv.concent_promissory_note_sig = srv._get_concent_promissory_note(
             self.gntdeposit
         ).sign(
             privkey=provider_keys.raw_privkey

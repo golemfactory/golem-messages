@@ -367,9 +367,7 @@ class TaskToComputePromissoryNotesTest(
         ttc: message.tasks.TaskToCompute = self.FACTORY(
             ethsig__keys=requestor_keys
         )
-        ttc.promissory_note_sig = ttc.get_promissory_note().sign(
-            privkey=requestor_keys.raw_privkey
-        )
+        ttc.sign_promissory_note(private_key=requestor_keys.raw_privkey)
 
         self.assertIsInstance(
             ttc.promissory_note_sig,
@@ -394,12 +392,8 @@ class TaskToComputePromissoryNotesTest(
 
     def test_promissory_note_bad(self):
         requestor_keys = cryptography.ECCx(None)
-        self.msg.promissory_note_sig = self.msg.get_promissory_note().sign(
-            privkey=requestor_keys.raw_privkey
-        )
-        self.assertFalse(
-            self.msg.verify_promissory_note()
-        )
+        self.msg.sign_promissory_note(private_key=requestor_keys.raw_privkey)
+        self.assertFalse(self.msg.verify_promissory_note())
 
     def test_concent_promissory_note(self):
         requestor_keys = cryptography.ECCx(None)
@@ -410,10 +404,9 @@ class TaskToComputePromissoryNotesTest(
             ),
             ethsig__privkey=requestor_keys.raw_privkey,
         )
-        ttc.concent_promissory_note_sig = ttc.get_concent_promissory_note(
-            self.gntdeposit
-        ).sign(
-            privkey=requestor_keys.raw_privkey
+        ttc.sign_concent_promissory_note(
+            self.gntdeposit,
+            private_key=requestor_keys.raw_privkey
         )
 
         self.assertIsInstance(

@@ -104,7 +104,7 @@ class PromissorySlotMixin:
 
     CONCENT_PROMISSORY_NOTE_SIG = 'concent_promissory_note_sig'
 
-    def get_concent_promissory_note(  # noqa pylint: disable=no-self-use
+    def _get_concent_promissory_note(  # noqa pylint: disable=no-self-use
             self, deposit_contract_address: str  # noqa pylint: disable=unused-argument
     ) -> PromissoryNote:
         raise NotImplementedError()
@@ -117,7 +117,7 @@ class PromissorySlotMixin:
         setattr(
             self,
             self.CONCENT_PROMISSORY_NOTE_SIG,
-            self.get_concent_promissory_note(
+            self._get_concent_promissory_note(
                 deposit_contract_address
             ).sign(
                 privkey=private_key
@@ -126,7 +126,7 @@ class PromissorySlotMixin:
 
     def verify_concent_promissory_note(
             self, deposit_contract_address: str) -> bool:
-        return self.get_concent_promissory_note(
+        return self._get_concent_promissory_note(
             deposit_contract_address
         ).sig_valid(
             self.concent_promissory_note_sig

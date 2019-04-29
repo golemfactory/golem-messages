@@ -227,7 +227,7 @@ class SubtaskResultsVerify(
                                         # signed by the provider
     ] + base.Message.__slots__
 
-    def get_concent_promissory_note(
+    def _get_concent_promissory_note(
             self,
             deposit_contract_address: str,
     ) -> promissory.PromissoryNote:

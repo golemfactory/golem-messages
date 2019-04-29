@@ -424,7 +424,7 @@ class TaskToCompute(
         )
         return super().validate_ownership(concent_public_key)
 
-    def get_promissory_note(self) -> promissory.PromissoryNote:
+    def _get_promissory_note(self) -> promissory.PromissoryNote:
         return promissory.PromissoryNote(
             address_from=self.requestor_ethereum_address,
             address_to=self.provider_ethereum_address,
@@ -432,7 +432,7 @@ class TaskToCompute(
             subtask_id=self.subtask_id,
         )
 
-    def get_concent_promissory_note(
+    def _get_concent_promissory_note(
             self, deposit_contract_address: str) -> PromissoryNote:
         return promissory.PromissoryNote(
             address_from=self.requestor_ethereum_address,
@@ -442,13 +442,13 @@ class TaskToCompute(
         )
 
     def sign_promissory_note(self, private_key: bytes) -> None:
-        self.promissory_note_sig = self.get_promissory_note(  # noqa pylint: disable=attribute-defined-outside-init
+        self.promissory_note_sig = self._get_promissory_note(  # noqa pylint: disable=attribute-defined-outside-init
         ).sign(
             privkey=private_key
         )
 
     def verify_promissory_note(self) -> bool:
-        return self.get_promissory_note().sig_valid(self.promissory_note_sig)
+        return self._get_promissory_note().sig_valid(self.promissory_note_sig)
 
 
 @library.register(TASK_MSG_BASE + 3)
