@@ -241,12 +241,11 @@ class WantToComputeTask(ConcentEnabled, base.Message):
 
     """
     __slots__ = [
-        'node_name',          # Provider's node name (it's a duplicate from
-        # task_header.owner.node_name)
+        'node_name',          # Provider's node name
         'perf_index',         # Provider's performance; a benchmark result
         'max_resource_size',  # P's storage size available for computation
         'max_memory_size',    # P's RAM
-        'price',              # Offered total subtask price in GNT WEI (10e-18)
+        'price',              # Offered price per hour in GNT WEI (10e-18)
         'num_subtasks',       # How many subtasks Provider wants to work on
                               # (simultaneously); 1 by default
         'concent_enabled',    # Provider's Concent status
