@@ -16,6 +16,7 @@ from golem_messages import factories
 from golem_messages import load
 from golem_messages import message
 from golem_messages import shortcuts
+from golem_messages.datastructures import promissory
 from golem_messages.datastructures.tasks import TaskHeader
 from golem_messages.factories.datastructures.tasks import TaskHeaderFactory
 from golem_messages.factories.helpers import override_timestamp
@@ -62,6 +63,7 @@ class WantToComputeTaskTest(unittest.TestCase, mixins.SerializationMixin):
 
     def test_num_subtasks_default_1(self):
         wtct = message.tasks.WantToComputeTask()
+        self.assertIsInstance(wtct.num_subtasks, int)
         self.assertEqual(wtct.num_subtasks, 1)
 
     def test_num_subtasks_none_1(self):
@@ -71,14 +73,16 @@ class WantToComputeTaskTest(unittest.TestCase, mixins.SerializationMixin):
 
     def test_num_subtasks_more_than_1(self):
         wtct = message.tasks.WantToComputeTask(num_subtasks=17)
+        wtct_1 = helpers.dump_and_load(wtct)
         self.assertEqual(wtct.num_subtasks, 17)
+        self.assertEqual(wtct.num_subtasks, wtct_1.num_subtasks)
 
     def test_num_subtasks_non_int_raises(self):
         wtct = message.tasks.WantToComputeTask(num_subtasks=3.14)
         serialized = shortcuts.dump(wtct, None, None)
         with self.assertRaisesRegex(
             exceptions.FieldError,
-            r"Should be a integer \[num_subtasks:3.14\]"
+            r"Should be an integer \[num_subtasks:3.14\]"
         ):
             shortcuts.load(serialized, None, None)
 
@@ -100,11 +104,7 @@ class WantToComputeTaskTest(unittest.TestCase, mixins.SerializationMixin):
         ):
             shortcuts.load(serialized, None, None)
 
-    def test_num_subtasks_int(self):
-        wtct = self.FACTORY()
-        self.assertIsInstance(wtct.num_subtasks, int)
-
-    def test_has_header_aka_check_proper_inheritance(self):
+    def test_concent_enabled_invokes_another_constructor(self):
         from golem_messages.datastructures import MessageHeader
         wtct = self.FACTORY()
         self.assertIsNotNone(wtct.header)
@@ -245,7 +245,7 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
     MSG_CLASS = message.tasks.TaskToCompute
 
     def setUp(self):
-        self.msg = self.FACTORY()
+        self.msg: message.tasks.TaskToCompute = self.FACTORY()
 
     def test_concent_enabled_attribute(self):
         ttc = factories.tasks.TaskToComputeFactory(concent_enabled=True)
@@ -380,6 +380,82 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
         ttc = factories.tasks.TaskToComputeFactory(size=None)
         with self.assertRaises(exceptions.FieldError):
             helpers.dump_and_load(ttc)
+
+
+class TaskToComputePromissoryNotesTest(
+        mixins.PromissoryNoteMixin,
+        unittest.TestCase,
+):
+    FACTORY = factories.tasks.TaskToComputeFactory
+
+    def setUp(self):
+        self.msg: message.tasks.TaskToCompute = self.FACTORY()
+        # arbitrary address
+        self.gntdeposit = '0x89915ddA14eFd6b064da953431E8b7f902d89c83'
+
+    def test_promissory_note(self):
+        requestor_keys = cryptography.ECCx(None)
+
+        ttc: message.tasks.TaskToCompute = self.FACTORY(
+            ethsig__keys=requestor_keys
+        )
+        ttc.sign_promissory_note(private_key=requestor_keys.raw_privkey)
+
+        self.assertIsInstance(
+            ttc.promissory_note_sig,
+            promissory.PromissoryNoteSig,
+        )
+
+        ttc2: message.tasks.TaskToCompute = helpers.dump_and_load(ttc)
+
+        self.assertEqual(
+            ttc.promissory_note_sig,
+            tuple(ttc2.promissory_note_sig)
+        )
+
+        self.assertTrue(
+            ttc2.verify_promissory_note(),
+        )
+
+    def test_promissory_note_empty(self):
+        self.assertFalse(
+            self.msg.verify_promissory_note()
+        )
+
+    def test_promissory_note_bad(self):
+        requestor_keys = cryptography.ECCx(None)
+        self.msg.sign_promissory_note(private_key=requestor_keys.raw_privkey)
+        self.assertFalse(self.msg.verify_promissory_note())
+
+    def test_concent_promissory_note(self):
+        requestor_keys = cryptography.ECCx(None)
+
+        ttc: message.tasks.TaskToCompute = self.FACTORY(
+            requestor_ethereum_public_key=encode_hex(
+                requestor_keys.raw_pubkey
+            ),
+            ethsig__privkey=requestor_keys.raw_privkey,
+        )
+        ttc.sign_concent_promissory_note(
+            self.gntdeposit,
+            private_key=requestor_keys.raw_privkey
+        )
+
+        self.assertIsInstance(
+            ttc.concent_promissory_note_sig,
+            promissory.PromissoryNoteSig,
+        )
+
+        ttc2: message.tasks.TaskToCompute = helpers.dump_and_load(ttc)
+
+        self.assertEqual(
+            ttc.concent_promissory_note_sig,
+            tuple(ttc2.concent_promissory_note_sig)
+        )
+
+        self.assertTrue(
+            ttc2.verify_concent_promissory_note(self.gntdeposit),
+        )
 
 
 class TaskToComputeSignedChainFactory(unittest.TestCase):

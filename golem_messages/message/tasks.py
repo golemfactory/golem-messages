@@ -2,17 +2,16 @@ import enum
 import functools
 import typing
 
-from eth_utils import to_checksum_address
-from ethereum.utils import sha3
-
 from golem_messages import datastructures
 from golem_messages import exceptions
 from golem_messages import idgenerator
 from golem_messages import settings
 from golem_messages import validators
+from golem_messages.datastructures import promissory
 from golem_messages.datastructures.tasks import TaskHeader
+from golem_messages.datastructures.promissory import PromissoryNote
 from golem_messages.register import library
-from golem_messages.utils import decode_hex
+from golem_messages.utils import decode_hex, pubkey_to_address
 
 from . import base
 
@@ -240,38 +239,24 @@ class WantToComputeTask(ConcentEnabled, base.Message):
     A Provider sends it directly to a Requestor as a response to the Requestor's
     Demand (Task) in order to get work (SubTask ie. TaskToCompute) to do.
 
-    Attributes:
-        node_name:          Provider's node name
-        perf_index:         Provider's Performance index
-        max_resource_size:  Provider's Storage size available for computation
-        max_memory_size:    Provider's RAM
-        price:              Offered price in GNT "WEI" (10e-18)
-        num_subtasks:       How many subtasks Provider wants to work on
-                            (simultaneously); 1 by default
-        concent_enabled:    Provider's Concent status
-        extra_data:         additional required information about the Provider's
-                            environment. `golem-messages` should be
-                            intentionally agnostic with regards to the contents
-                            of this field.
-        provider_public_key:
-                            for signing and encryption
-        provider_ethereum_address:
-                            for transactions on ETH blockchain
-        task_header:        Demand; signed by a Requestor
     """
     __slots__ = [
-        'node_name',
-        'perf_index',
-        'max_resource_size',
-        'max_memory_size',
-        'price',
-        'num_subtasks',
-        'concent_enabled',
-        'extra_data',
-        # TODO: `provider` prefix is redundant; all above fields refers Provider
-        'provider_public_key',
-        'provider_ethereum_address',
-        'task_header',
+        'node_name',          # Provider's node name
+        'perf_index',         # Provider's performance; a benchmark result
+        'max_resource_size',  # P's storage size available for computation
+        'max_memory_size',    # P's RAM
+        'price',              # Offered price per hour in GNT WEI (10e-18)
+        'num_subtasks',       # How many subtasks Provider wants to work on
+                              # (simultaneously); 1 by default
+        'concent_enabled',    # Provider's Concent status
+        'extra_data',         # additional required information about the
+                              # Provider's environment. `golem-messages` should
+                              # be intentionally agnostic with regards to the
+                              # contents of this field.
+
+        'provider_public_key',  # for signing and encryption
+        'provider_ethereum_address',  # for transactions on ETH blockchain
+        'task_header',        # Demand; signed by a Requestor
     ] + base.Message.__slots__
 
     DEFAULT_NUM_SUBTASKS = 1
@@ -304,7 +289,11 @@ class WantToComputeTask(ConcentEnabled, base.Message):
 
 
 @library.register(TASK_MSG_BASE + 2)
-class TaskToCompute(ConcentEnabled, TaskMessage):
+class TaskToCompute(
+        ConcentEnabled,
+        TaskMessage,
+        promissory.PromissorySlotMixin,
+):
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
 
     MSG_SLOTS = {
@@ -321,16 +310,19 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
         'package_hash',  # the hash of the package (resources) zip file
         'size',  # the size of the resources zip file
         'concent_enabled',
-        'price',  # total subtask price computed as `price * subtask_timeout`
+        'price',  # total subtask price in GNT WEI (10e-18)
         'resources_options',
-        'ethsig'
+        'ethsig',
+        'promissory_note_sig',  # the signature of the PromissoryNote
+                                # for the provider, signed by the requestor
+        'concent_promissory_note_sig',  # the signature of the PromissoryNote
+                                        # for the Concent Service,
+                                        # signed by the requestor
     ] + base.Message.__slots__
 
     @property
     def requestor_ethereum_address(self):
-        return to_checksum_address(
-            sha3(decode_hex(self.requestor_ethereum_public_key))[12:].hex()
-        )
+        return pubkey_to_address(self.requestor_ethereum_public_key)
 
     @property
     def provider_public_key(self):
@@ -443,6 +435,32 @@ class TaskToCompute(ConcentEnabled, TaskMessage):
             decode_hex(self.requestor_public_key)
         )
         return super().validate_ownership(concent_public_key)
+
+    def _get_promissory_note(self) -> promissory.PromissoryNote:
+        return promissory.PromissoryNote(
+            address_from=self.requestor_ethereum_address,
+            address_to=self.provider_ethereum_address,
+            amount=self.price,
+            subtask_id=self.subtask_id,
+        )
+
+    def _get_concent_promissory_note(
+            self, deposit_contract_address: str) -> PromissoryNote:
+        return promissory.PromissoryNote(
+            address_from=self.requestor_ethereum_address,
+            address_to=deposit_contract_address,
+            amount=self.price,
+            subtask_id=self.subtask_id,
+        )
+
+    def sign_promissory_note(self, private_key: bytes) -> None:
+        self.promissory_note_sig = self._get_promissory_note(  # noqa pylint: disable=attribute-defined-outside-init
+        ).sign(
+            privkey=private_key
+        )
+
+    def verify_promissory_note(self) -> bool:
+        return self._get_promissory_note().sig_valid(self.promissory_note_sig)
 
 
 @library.register(TASK_MSG_BASE + 3)
@@ -623,6 +641,7 @@ class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
         InsufficientBalance = enum.auto()
         InsufficientDeposit = enum.auto()  # GNTB deposit too low
         TooShortDeposit = enum.auto()  # GNTB deposit has too short lock
+        PromissoryNoteMissing = enum.auto()  # deposit unusable
         OfferCancelled = enum.auto()
         ResourcesTooBig = enum.auto()
 

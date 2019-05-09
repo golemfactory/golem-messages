@@ -1,5 +1,6 @@
 # pylint: disable=protected-access
 import golem_messages
+from golem_messages import cryptography
 from golem_messages import message
 from golem_messages.register import library
 
@@ -62,3 +63,21 @@ class TaskIdMixin:
                          self.task_id_provider.requestor_id)
         self.assertEqual(self.msg.requestor_id,
                          self.msg.task_to_compute.requestor_id)
+
+
+class PromissoryNoteMixin:
+    def test_concent_promissory_note_empty(self):
+        self.assertFalse(
+            self.msg.verify_concent_promissory_note(self.gntdeposit)
+        )
+
+    def test_concent_promissory_note_bad(self):
+        provider_keys = cryptography.ECCx(None)
+
+        self.msg.sign_concent_promissory_note(
+            self.gntdeposit,
+            private_key=provider_keys.raw_privkey
+        )
+        self.assertFalse(
+            self.msg.verify_concent_promissory_note(self.gntdeposit)
+        )
