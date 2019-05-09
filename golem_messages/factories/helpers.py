@@ -5,8 +5,9 @@ import uuid
 import factory
 import faker
 
-from golem_messages import datastructures
+from golem_messages import datastructures, cryptography
 from golem_messages import idgenerator
+from golem_messages.utils import encode_hex, pubkey_to_address
 
 if typing.TYPE_CHECKING:
     from golem_messages.message.base import Message  # noqa pylint:disable=unused-import
@@ -88,6 +89,14 @@ def fake_version() -> str:
         minor=fake.random_int(min=0),
         patch=fake.random_int(min=0),
     )
+
+
+def random_eth_pub_key():
+    return encode_hex(cryptography.ECCx(None).raw_pubkey)
+
+
+def random_eth_address():
+    return pubkey_to_address(random_eth_pub_key())
 
 
 class MessageFactory(factory.Factory):

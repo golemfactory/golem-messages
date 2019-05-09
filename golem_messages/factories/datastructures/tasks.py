@@ -8,6 +8,7 @@ from golem_messages.datastructures import masking
 from golem_messages.datastructures import tasks as dt_tasks
 from golem_messages.factories import helpers
 from golem_messages.factories.datastructures import p2p as dt_p2p_factories
+from golem_messages.factories.helpers import random_eth_pub_key
 from golem_messages.utils import encode_hex as encode_key_id
 
 
@@ -16,10 +17,7 @@ class TaskHeaderFactory(factory.Factory):
         model = dt_tasks.TaskHeader
         exclude = ('requestor_public_key', )
 
-    requestor_public_key = factory.LazyFunction(
-        lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey)
-    )
-
+    requestor_public_key = random_eth_pub_key()
     mask = factory.Faker('binary', length=masking.Mask.MASK_BYTES)
     timestamp = factory.LazyFunction(lambda: int(time.time()))
     task_id = factory.LazyAttribute(

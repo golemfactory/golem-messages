@@ -7,13 +7,13 @@ from contextlib import suppress
 
 import factory.fuzzy
 import faker
-from eth_utils import to_checksum_address
-from ethereum.utils import sha3
 
 from golem_messages import cryptography
 from golem_messages.factories.datastructures.tasks import TaskHeaderFactory
+from golem_messages.factories.helpers import random_eth_pub_key, \
+    random_eth_address
 from golem_messages.message import tasks
-from golem_messages.utils import encode_hex as encode_key_id
+from golem_messages.utils import encode_hex
 from . import helpers
 
 
@@ -22,11 +22,9 @@ class WantToComputeTaskFactory(helpers.MessageFactory):
         model = tasks.WantToComputeTask
 
     node_name = factory.Faker('name')
-    provider_public_key = factory.LazyFunction(
-        lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey))
+    provider_public_key = factory.LazyFunction(lambda: random_eth_pub_key())
     provider_ethereum_address = factory.LazyFunction(
-        lambda: to_checksum_address(
-            sha3(cryptography.ECCx(None).raw_pubkey)[12:].hex()))
+        lambda: random_eth_address())
 
     task_header = factory.SubFactory(TaskHeaderFactory)
 
@@ -70,8 +68,7 @@ class TaskToComputeFactory(helpers.MessageFactory):
         lambda o: o.want_to_compute_task.provider_public_key
     )
     compute_task_def = factory.SubFactory(ComputeTaskDefFactory)
-    requestor_public_key = factory.LazyFunction(
-        lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey))
+    requestor_public_key = factory.LazyFunction(lambda: random_eth_pub_key())
     want_to_compute_task = factory.SubFactory(WantToComputeTaskFactory)
     package_hash = factory.LazyFunction(lambda: 'sha1:' + faker.Faker().sha1())
     size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
@@ -94,7 +91,7 @@ class TaskToComputeFactory(helpers.MessageFactory):
         WTCT_TH_KEY = 'want_to_compute_task__task_header'  # noqa
         WTCT_KEY = 'want_to_compute_task'  # noqa
         if requestor_keys:
-            encoded_pubkey = encode_key_id(requestor_keys.raw_pubkey)
+            encoded_pubkey = encode_hex(requestor_keys.raw_pubkey)
             # initialize the TTC's requestor public key from the requestor pair
             if 'requestor_public_key' not in kwargs:
                 kwargs['requestor_public_key'] = encoded_pubkey
@@ -130,7 +127,7 @@ class TaskToComputeFactory(helpers.MessageFactory):
                     WTCT_KEY + '__provider_public_key' not in kwargs
             ):
                 kwargs[WTCT_KEY + '__provider_public_key'] = \
-                    encode_key_id(provider_keys.raw_pubkey)
+                    encode_hex(provider_keys.raw_pubkey)
 
             # initialize the WantToComputeTask's signature private key from
             # the provider key pair
@@ -217,7 +214,7 @@ class TaskToComputeFactory(helpers.MessageFactory):
         if not privkey and not ttc.requestor_ethereum_public_key:
             keys = keys or cryptography.ECCx(None)
             privkey = keys.raw_privkey
-            ttc.requestor_ethereum_public_key = encode_key_id(keys.raw_pubkey)
+            ttc.requestor_ethereum_public_key = encode_hex(keys.raw_pubkey)
 
         if privkey:
             ttc.generate_ethsig(privkey)

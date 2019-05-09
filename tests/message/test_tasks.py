@@ -19,7 +19,8 @@ from golem_messages import shortcuts
 from golem_messages.datastructures import promissory
 from golem_messages.datastructures.tasks import TaskHeader
 from golem_messages.factories.datastructures.tasks import TaskHeaderFactory
-from golem_messages.factories.helpers import override_timestamp
+from golem_messages.factories.helpers import override_timestamp, \
+    random_eth_pub_key
 from golem_messages.utils import encode_hex, decode_hex
 from tests.message import mixins, helpers
 
@@ -500,8 +501,7 @@ class TaskToComputeEthsigTest(unittest.TestCase):
     def test_ethsig_none(self):
         msg: message.tasks.TaskToCompute = \
             factories.tasks.TaskToComputeFactory(
-                requestor_ethereum_public_key=encode_hex(
-                    cryptography.ECCx(None).raw_pubkey))
+                requestor_ethereum_public_key=random_eth_pub_key())
         self.assertIsNone(msg.ethsig)
         with self.assertRaises(exceptions.InvalidSignature):
             helpers.dump_and_load(msg)
