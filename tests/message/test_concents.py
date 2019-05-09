@@ -1,21 +1,19 @@
 # pylint: disable=protected-access
-from datetime import datetime, timedelta
 import math
 import time
 import unittest
+from datetime import datetime, timedelta
 
 import freezegun
 
 from golem_messages import cryptography
-from golem_messages.datastructures import promissory
 from golem_messages import exceptions
-from golem_messages import message
-
 from golem_messages import factories
+from golem_messages import message
 from golem_messages import shortcuts
+from golem_messages.datastructures import promissory
 from golem_messages.message import concents
-from golem_messages.utils import encode_hex as encode_key_id
-
+from golem_messages.utils import pubkey_to_address
 from tests.message import helpers
 from tests.message import mixins
 
@@ -142,7 +140,9 @@ class SubtaskResultsVerifyTest(mixins.RegisteredMessageTestMixin,
     def test_concent_promissory_note(self):
         provider_keys = cryptography.ECCx(None)
         wtct = factories.tasks.WantToComputeTaskFactory(
-            provider_public_key=encode_key_id(provider_keys.raw_pubkey)
+            provider_ethereum_address=pubkey_to_address(
+                provider_keys.raw_pubkey
+            )
         )
         srv: concents.SubtaskResultsVerify = self.FACTORY(**{
             'subtask_results_rejected__'
