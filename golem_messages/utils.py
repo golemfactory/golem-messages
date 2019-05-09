@@ -2,17 +2,18 @@ import binascii
 import copy
 from uuid import UUID
 
-from eth_utils import to_checksum_address, keccak
+from eth_utils import to_checksum_address, keccak, hexstr_if_str
 
 from golem_messages import message
 
 
 def pubkey_to_address(pubkey: str) -> str:
     """
-    convert a hex-encoded pubkey into a checksummed address
+    convert pubkey into a checksummed address
+    pubkey might be hex str or bytes or int
     """
     return to_checksum_address(
-        keccak(decode_hex(pubkey))[12:].hex(),
+        hexstr_if_str(keccak, pubkey)[12:].hex(),
     )
 
 
