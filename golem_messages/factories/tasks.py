@@ -10,10 +10,9 @@ import faker
 
 from golem_messages import cryptography
 from golem_messages.factories.datastructures.tasks import TaskHeaderFactory
-from golem_messages.factories.helpers import random_eth_pub_key, \
-    random_eth_address
+from golem_messages.factories.helpers import random_eth_pub_key
 from golem_messages.message import tasks
-from golem_messages.utils import encode_hex
+from golem_messages.utils import encode_hex, pubkey_to_address
 from . import helpers
 
 
@@ -23,8 +22,15 @@ class WantToComputeTaskFactory(helpers.MessageFactory):
 
     node_name = factory.Faker('name')
     provider_public_key = factory.LazyFunction(lambda: random_eth_pub_key())
-    provider_ethereum_address = factory.LazyFunction(
-        lambda: random_eth_address())
+    # provider_ethereum_address is not bound to provider_public_key
+    # below binding is only for compatibility with Concent tests
+    # it should be like this
+    # ```
+    #   provider_ethereum_address = factory.LazyFunction(
+    #       lambda: random_eth_address())
+    # ```
+    provider_ethereum_address = factory.LazyAttribute(
+        lambda o: pubkey_to_address(o.provider_public_key))
 
     task_header = factory.SubFactory(TaskHeaderFactory)
 

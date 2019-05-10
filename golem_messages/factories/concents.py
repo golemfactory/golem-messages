@@ -2,9 +2,9 @@
 import random
 import time
 
+from ethereum.utils import denoms
 import factory.fuzzy
 import faker
-from ethereum.utils import denoms
 
 from golem_messages.factories import tasks as tasks_factories
 from golem_messages.factories.helpers import random_eth_pub_key
