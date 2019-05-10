@@ -10,5 +10,5 @@ class HelpersTest(unittest.TestCase):
     # below binding is only for compatibility with Concent tests
     def test_WTCT_factory_pubkey_bound_to_addr(self):
         wtct = WantToComputeTaskFactory()
-        self.assertEquals(wtct.provider_ethereum_address,
-                          pubkey_to_address(wtct.provider_public_key))
+        self.assertEqual(wtct.provider_ethereum_address,
+                         pubkey_to_address(wtct.provider_public_key))
