@@ -1,5 +1,6 @@
 import binascii
 import copy
+from typing import Union
 from uuid import UUID
 
 from eth_utils import to_checksum_address, keccak, hexstr_if_str
@@ -7,7 +8,7 @@ from eth_utils import to_checksum_address, keccak, hexstr_if_str
 from golem_messages import message
 
 
-def pubkey_to_address(pubkey: str) -> str:
+def pubkey_to_address(pubkey: Union[str, int]) -> str:
     """
     convert pubkey into a checksummed address
     pubkey might be hex str or bytes or int
