@@ -636,7 +636,6 @@ class Hello(dt_p2p.NodeSlotMixin, Message):
         'node_info',
         'port',
         'client_ver',
-        'client_key_id',
         'solve_challenge',
         'challenge',
         'difficulty',
