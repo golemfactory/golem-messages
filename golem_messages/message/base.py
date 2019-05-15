@@ -632,7 +632,6 @@ class Hello(dt_p2p.NodeSlotMixin, Message):
     __slots__ = [
         'rand_val',
         'proto_id',
-        'node_name',
         'node_info',
         'port',
         'client_ver',

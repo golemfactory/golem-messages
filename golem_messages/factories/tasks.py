@@ -20,7 +20,6 @@ class WantToComputeTaskFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.WantToComputeTask
 
-    node_name = factory.Faker('name')
     provider_public_key = factory.LazyFunction(
         lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey))
     provider_ethereum_public_key = factory.SelfAttribute(
@@ -252,7 +251,6 @@ class ReportComputedTaskFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.ReportComputedTask
 
-    node_name = factory.Faker('name')
     address = factory.Faker('ipv4')
     port = factory.Faker('pyint')
     key_id = factory.Faker('binary', length=64)

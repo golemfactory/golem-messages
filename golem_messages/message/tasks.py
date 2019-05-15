@@ -241,7 +241,6 @@ class WantToComputeTask(ConcentEnabled, base.Message):
 
     """
     __slots__ = [
-        'node_name',          # Provider's node name
         'perf_index',         # Provider's performance; a benchmark result
         'max_resource_size',  # P's storage size available for computation
         'max_memory_size',    # P's RAM
@@ -500,7 +499,6 @@ class ReportComputedTask(TaskMessage):
     }
 
     __slots__ = [
-        'node_name',
         'address',
         'node_info',
         'port',
