@@ -11,6 +11,7 @@ class Node(factory.Factory):
 
     # considered as difficult by `keysauth.is_pubkey_difficult` with level 10
     key = '00adbeef' + 'deadbeef' * 15
+    node_name = factory.Faker('name')
 
 
 class Peer(factory.DictFactory):

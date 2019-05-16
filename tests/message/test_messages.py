@@ -27,23 +27,23 @@ class InitializationTestCase(unittest.TestCase):
             self.assertIsNone(getattr(msg, key))
 
     def test_kwarg(self):
-        node_name = 'Tuż nad Bugiem, z lewej strony,'
-        msg = message.Hello(node_name=node_name)
-        self.assertEqual(msg.node_name, node_name)
+        challenge = 'Tuż nad Bugiem, z lewej strony,'
+        msg = message.Hello(challenge=challenge)
+        self.assertEqual(msg.challenge, challenge)
 
     def test_slot(self):
-        node_name = 'Tuż nad Bugiem, z lewej strony,'
-        msg = message.Hello(slots=[('node_name', node_name), ])
-        self.assertEqual(msg.node_name, node_name)
+        challenge = 'Tuż nad Bugiem, z lewej strony,'
+        msg = message.Hello(slots=[('challenge', challenge), ])
+        self.assertEqual(msg.challenge, challenge)
 
     def test_kwarg_and_slot(self):
-        node_name_kwarg = 'Tuż nad Bugiem, z lewej strony,'
-        node_name_slot = 'Stoi wielki bór zielony.'
+        challenge_kwarg = 'Tuż nad Bugiem, z lewej strony,'
+        challenge_slot = 'Stoi wielki bór zielony.'
         msg = message.Hello(
-            node_name=node_name_kwarg,
-            slots=[('node_name', node_name_slot), ],
+            challenge=challenge_kwarg,
+            slots=[('challenge', challenge_slot), ],
         )
-        self.assertEqual(msg.node_name, node_name_slot)
+        self.assertEqual(msg.challenge, challenge_slot)
 
 
 class MessagesTestCase(unittest.TestCase):
