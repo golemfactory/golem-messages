@@ -89,8 +89,9 @@ class VerdictReportComputedTask(tasks.TaskMessage):
         'force_report_computed_task': base.MessageSlotDefinition(
             ForceReportComputedTask,
         ),
-        'ack_report_computed_task':
-            base.MessageSlotDefinition(tasks.AckReportComputedTask),
+        'ack_report_computed_task': base.MessageSlotDefinition(
+            tasks.AckReportComputedTask
+        ),
     }
 
     __slots__ = [
