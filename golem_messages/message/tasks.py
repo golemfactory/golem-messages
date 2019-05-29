@@ -566,9 +566,14 @@ class SubtaskResultsRejected(TaskMessage, base.AbstractReasonMessage):
 
     __slots__ = [
         'report_computed_task',
+        'force_get_task_result_failed',
     ] + base.AbstractReasonMessage.__slots__
     MSG_SLOTS = {
         'report_computed_task': base.MessageSlotDefinition(ReportComputedTask),
+        'force_get_task_result_failed': base.MessageSlotDefinition(
+            'golem_messages.message.concents.ForceGetTaskResultFailed',
+            allow_none=True,
+        )
     }
 
     @enum.unique
@@ -581,6 +586,59 @@ class SubtaskResultsRejected(TaskMessage, base.AbstractReasonMessage):
             'Concent reported failure to retrieve the resources to verify'
         ResourcesFailure = \
             'Could not retrieve resources'
+
+    REQUESTOR_REASONS_ALLOWED = {
+        'concent': (
+            REASON.VerificationNegative,
+            REASON.ForcedResourcesFailure,
+        ),
+        'no_concent': (
+            REASON.VerificationNegative,
+            REASON.ResourcesFailure,
+        )
+    }
+
+    def is_valid(self):
+        if not self.reason:
+            raise exceptions.ValidationError("Undefined reason.")
+
+        fgtrf = self.force_get_task_result_failed
+        if fgtrf:
+            if (
+                    self.task_id != fgtrf.task_id or
+                    self.subtask_id != fgtrf.subtask_id
+            ):
+                raise exceptions.ValidationError(
+                    "The ForceGetTaskResultFailed message must pertain to the "
+                    "same task/subtask."
+                )
+        if self.reason == self.REASON.ForcedResourcesFailure and not fgtrf:
+            raise exceptions.ValidationError(
+                "ForcedResourcesFailure requires providing a "
+                "Concent-signed ForceGetTaskResultFailed"
+            )
+
+        return True
+
+    def is_valid_for_requestor(self):
+        """
+        validates if the message is correct if coming from a requestor
+
+        :raises: `exceptions.ValidationError`
+        :return: bool
+        """
+        concent = self.report_computed_task.task_to_compute.concent_enabled
+        allowed_reasons = self.REQUESTOR_REASONS_ALLOWED[
+            'concent' if concent else 'no_concent'
+        ]
+
+        if self.reason not in allowed_reasons:
+            raise exceptions.ValidationError(
+                f"{self.reason.value} is not allowed for a Requestor "
+                f"when concent_enabled={concent}."
+            )
+
+        return self.is_valid()
 
 
 @library.register(TASK_MSG_BASE + 15)
