@@ -323,6 +323,7 @@ class SubtaskResultsRejectedFactory(helpers.MessageFactory):
         model = tasks.SubtaskResultsRejected
 
     report_computed_task = factory.SubFactory(ReportComputedTaskFactory)
+    reason = tasks.SubtaskResultsRejected.REASON.VerificationNegative
 
 
 class WaitingForResultsFactory(helpers.MessageFactory):
