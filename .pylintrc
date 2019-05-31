@@ -20,3 +20,8 @@ ignored-classes=optparse.Values,
                 twisted.internet.reactor,
                 pathlib.PurePath,
                 types,
+
+[SIMILARITIES]
+
+# Ignore imports when computing similarities.
+ignore-imports=yes
