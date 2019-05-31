@@ -42,6 +42,12 @@ class PromissoryNoteTest(unittest.TestCase):
             subtask_id=self.subtask_id,
         )
 
+    def test_subtask_id_bytes(self):
+        self.assertEqual(
+            self.promissory_note.subtask_id_bytes,
+            self.subtask_id_bytes
+        )
+
     def test_hexmsg(self):
         # address_from + address_to + amount + subtask_id
         hexmsg = '0x'\

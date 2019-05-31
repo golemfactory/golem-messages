@@ -20,7 +20,6 @@ class WantToComputeTaskFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.WantToComputeTask
 
-    node_name = factory.Faker('name')
     provider_public_key = factory.LazyFunction(lambda: random_eth_pub_key())
     # provider_ethereum_address is not bound to provider_public_key
     # below binding is only for compatibility with Concent tests
@@ -257,7 +256,6 @@ class ReportComputedTaskFactory(helpers.MessageFactory):
     class Meta:
         model = tasks.ReportComputedTask
 
-    node_name = factory.Faker('name')
     address = factory.Faker('ipv4')
     port = factory.Faker('pyint')
     key_id = factory.Faker('binary', length=64)
@@ -330,6 +328,7 @@ class SubtaskResultsRejectedFactory(helpers.MessageFactory):
         model = tasks.SubtaskResultsRejected
 
     report_computed_task = factory.SubFactory(ReportComputedTaskFactory)
+    reason = tasks.SubtaskResultsRejected.REASON.VerificationNegative
 
 
 class WaitingForResultsFactory(helpers.MessageFactory):

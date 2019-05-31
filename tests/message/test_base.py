@@ -83,6 +83,18 @@ class VerifySlotListParentAllowNone(base.Message):
     }
 
 
+@library.register(MAX_MESSAGE_ID - 6)
+class VerifySlotParentStringChild(base.Message):
+    __slots__ = [
+        'child'
+    ] + base.Message.__slots__
+    MSG_SLOTS = {
+        'child': base.MessageSlotDefinition(
+            'tests.message.test_base.VerifySlotChild'
+        )
+    }
+
+
 class VerifySlotTest(unittest.TestCase):
     def setUp(self):
         self.child = VerifySlotChild()
@@ -130,6 +142,18 @@ class VerifySlotTest(unittest.TestCase):
             ('child_list', [True, [None]]),
         ])
         self.assertIsNone(msg.child_list[0])
+
+    def test_verify_slot_string_child(self):
+        msg = VerifySlotParentStringChild(slots=[
+            ('child', helpers.single_nested(self.child)),
+        ])
+        self.assertIsInstance(msg.child, VerifySlotChild)
+
+    def test_not_verify_slot_string_child(self):
+        with self.assertRaises(exceptions.FieldError):
+            VerifySlotParentStringChild(slots=[
+                ('child', helpers.single_nested(VerifySlotParent())),
+            ])
 
 
 class TestHelloNodeInfo(unittest.TestCase):

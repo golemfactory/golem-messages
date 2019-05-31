@@ -56,12 +56,16 @@ class PromissoryNote:
         )
 
     @property
+    def subtask_id_bytes(self):
+        return uuid_to_bytes32(uuid.UUID(self.subtask_id))
+
+    @property
     def hexmsg(self) -> str:
         return "0x" + \
                self.address_from[2:] + \
                self.address_to[2:] + \
                self.amount.to_bytes(32, byteorder='big').hex() + \
-               uuid_to_bytes32(uuid.UUID(self.subtask_id)).hex()
+               self.subtask_id_bytes.hex()
 
     @property
     def hash(self):

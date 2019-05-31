@@ -3,6 +3,7 @@ import collections
 import datetime
 import enum
 import hashlib
+import importlib
 import logging
 import struct
 import time
@@ -284,7 +285,7 @@ class Message:
 
     def serialize_message_single(self, key, value):
         slot_definition = self.MSG_SLOTS[key]
-        if not isinstance(value, slot_definition.klass):
+        if not isinstance(value, slot_definition.get_class()):
             raise exceptions.FieldError(
                 "Should be instance of {}".format(slot_definition.klass),
                 field=key,
@@ -360,7 +361,7 @@ class Message:
                 value=value,
             )
         try:
-            result = slot_definition.klass(
+            result = slot_definition.get_class()(
                 header=datastructures.MessageHeader(*nested.header),
                 sig=nested.sig,
                 slots=nested.slots,
@@ -590,17 +591,27 @@ class Message:
         self.sig = b'\0' * Message.SIG_LEN
 
 
-MessageSlotDefinition_ = collections.namedtuple(
-    "MessageSlotDefinition",
-    ["klass", "allow_none", "is_list"],
-    # defaults added in python3.7
-    # defaults=[False, False],
-)
+class MessageSlotDefinition(collections.namedtuple(
+        "MessageSlotDefinition", ["klass", "allow_none", "is_list"])):
+    """
+    defines a slot that needs to be an instance of the specified Message class
 
+    to alleviate issues resulting from potential circular imports among
+    messages, `klass` can be specified as a dot-separated module path
+    to the message class in question
+    """
 
-def MessageSlotDefinition(klass, allow_none=False, is_list=False):
-    # Overcome python3.6 limitation and set default values
-    return MessageSlotDefinition_(klass, allow_none, is_list)
+    def __new__(cls, klass, allow_none=False, is_list=False):
+        return super().__new__(
+            cls, klass, allow_none=allow_none, is_list=is_list
+        )
+
+    def get_class(self):
+        if isinstance(self.klass, str):
+            m, c = self.klass.rsplit('.', 1)
+            module = importlib.import_module(m)
+            return getattr(module, c)
+        return self.klass
 
 
 class AbstractReasonMessage(Message):
@@ -632,11 +643,9 @@ class Hello(dt_p2p.NodeSlotMixin, Message):
     __slots__ = [
         'rand_val',
         'proto_id',
-        'node_name',
         'node_info',
         'port',
         'client_ver',
-        'client_key_id',
         'solve_challenge',
         'challenge',
         'difficulty',
