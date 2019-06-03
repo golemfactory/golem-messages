@@ -254,7 +254,7 @@ class WantToComputeTask(ConcentEnabled, base.Message):
                               # contents of this field.
 
         'provider_public_key',  # for signing and encryption
-        'provider_ethereum_public_key',  # for transactions on ETH blockchain
+        'provider_ethereum_address',  # for transactions on ETH blockchain
         'task_header',        # Demand; signed by a Requestor
     ] + base.Message.__slots__
 
@@ -264,10 +264,6 @@ class WantToComputeTask(ConcentEnabled, base.Message):
         super().__init__(*args, **kwargs)
         if self.num_subtasks is None:
             self.num_subtasks = self.DEFAULT_NUM_SUBTASKS
-
-    @property
-    def provider_ethereum_address(self):
-        return pubkey_to_address(self.provider_ethereum_public_key)
 
     @property
     def task_id(self):
@@ -330,10 +326,6 @@ class TaskToCompute(
     @property
     def provider_public_key(self):
         return self.want_to_compute_task.provider_public_key
-
-    @property
-    def provider_ethereum_public_key(self):
-        return self.want_to_compute_task.provider_ethereum_public_key
 
     @property
     def provider_ethereum_address(self):

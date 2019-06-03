@@ -1,14 +1,11 @@
 import unittest
 
-from eth_utils import is_checksum_address, to_checksum_address
-from ethereum.utils import sha3
+from eth_utils import is_checksum_address
 
 from golem_messages import exceptions
 from golem_messages import factories
 from golem_messages import message
 from golem_messages import shortcuts
-from golem_messages.utils import decode_hex
-
 from tests.message import mixins, helpers
 
 
@@ -36,16 +33,7 @@ class WantToComputeTaskTest(unittest.TestCase, mixins.SerializationMixin):
 
     def test_provider_ethereum_address_checksum(self):
         wtct = self.FACTORY()
-        self.assertTrue(wtct.provider_ethereum_public_key)
         self.assertTrue(is_checksum_address(wtct.provider_ethereum_address))
-
-    def test_ethereum_address_provider(self):
-        wtct = self.FACTORY()
-        provider_public_key = decode_hex(wtct.provider_ethereum_public_key)
-
-        self.assertEqual(wtct.provider_ethereum_address,
-                         to_checksum_address(
-                             '0x' + sha3(provider_public_key)[12:].hex()))
 
     def test_ethereum_address(self):
         wtct = self.FACTORY()

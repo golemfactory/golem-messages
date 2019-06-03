@@ -6,11 +6,10 @@ from ethereum.utils import denoms
 import factory.fuzzy
 import faker
 
-from golem_messages import cryptography
 from golem_messages.factories import tasks as tasks_factories
+from golem_messages.factories.helpers import random_eth_pub_key
 from golem_messages.message import concents
 from golem_messages.message.concents import FileTransferToken
-from golem_messages.utils import encode_hex as encode_key_id
 from . import helpers
 from .tasks import (
     SubtaskResultsAcceptedFactory, SubtaskResultsRejectedFactory
@@ -273,8 +272,7 @@ class ForcePaymentCommittedFactory(helpers.MessageFactory):
         model = concents.ForcePaymentCommitted
 
     payment_ts = factory.LazyFunction(lambda: int(time.time()))
-    task_owner_key = factory.LazyFunction(
-        lambda: encode_key_id(cryptography.ECCx(None).raw_pubkey))
+    task_owner_key = factory.LazyFunction(lambda: random_eth_pub_key())
     provider_eth_account = factory.LazyFunction(
         lambda: '0x' + faker.Faker().sha1())
     amount_paid = factory.LazyFunction(

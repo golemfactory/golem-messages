@@ -13,12 +13,11 @@ from golem_messages import exceptions
 from golem_messages import factories
 from golem_messages import message
 from golem_messages import shortcuts
-
 from golem_messages.datastructures import promissory
 from golem_messages.datastructures.tasks import TaskHeader
 from golem_messages.factories.datastructures.tasks import TaskHeaderFactory
+from golem_messages.factories.helpers import random_eth_pub_key
 from golem_messages.utils import encode_hex, decode_hex
-
 from tests.message import mixins, helpers
 
 
@@ -59,20 +58,11 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
 
     def test_ethereum_address_provider(self):
         msg = factories.tasks.TaskToComputeFactory()
-        provider_public_key = decode_hex(msg.provider_ethereum_public_key)
         serialized = shortcuts.dump(msg, None, None)
         msg_l = shortcuts.load(serialized, None, None)
         self.assertEqual(len(msg_l.provider_ethereum_address), 2 + (20*2))
         self.assertEqual(msg_l.provider_ethereum_address,
                          msg_l.want_to_compute_task.provider_ethereum_address)
-        self.assertEqual(msg.provider_ethereum_address,
-                         to_checksum_address(
-                             '0x' + sha3(provider_public_key)[12:].hex()))
-
-    def test_public_key_provider(self):
-        msg = factories.tasks.TaskToComputeFactory()
-        self.assertEqual(msg.provider_ethereum_public_key,
-                         msg.want_to_compute_task.provider_ethereum_public_key)
 
     def test_task_id(self):
         self.assertEqual(self.msg.task_id,
@@ -293,8 +283,7 @@ class TaskToComputeEthsigTest(unittest.TestCase):
     def test_ethsig_none(self):
         msg: message.tasks.TaskToCompute = \
             factories.tasks.TaskToComputeFactory(
-                requestor_ethereum_public_key=encode_hex(
-                    cryptography.ECCx(None).raw_pubkey))
+                requestor_ethereum_public_key=random_eth_pub_key())
         self.assertIsNone(msg.ethsig)
         with self.assertRaises(exceptions.InvalidSignature):
             helpers.dump_and_load(msg)
