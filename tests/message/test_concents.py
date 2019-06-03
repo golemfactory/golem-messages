@@ -1,8 +1,8 @@
 # pylint: disable=protected-access
+from datetime import datetime, timedelta
 import math
 import time
 import unittest
-from datetime import datetime, timedelta
 
 import freezegun
 

@@ -17,7 +17,7 @@ class TaskHeaderFactory(factory.Factory):
         model = dt_tasks.TaskHeader
         exclude = ('requestor_public_key', )
 
-    requestor_public_key = random_eth_pub_key()
+    requestor_public_key = factory.LazyFunction(lambda: random_eth_pub_key())
     mask = factory.Faker('binary', length=masking.Mask.MASK_BYTES)
     timestamp = factory.LazyFunction(lambda: int(time.time()))
     task_id = factory.LazyAttribute(

@@ -6,6 +6,7 @@ import uuid
 
 from eth_utils import is_checksum_address, to_checksum_address
 from ethereum.utils import sha3
+import factory
 
 from golem_messages import cryptography
 from golem_messages import exceptions
@@ -18,7 +19,6 @@ from golem_messages.factories.datastructures.tasks import TaskHeaderFactory
 from golem_messages.factories.helpers import random_eth_pub_key
 from golem_messages.utils import encode_hex, decode_hex
 from tests.message import mixins, helpers
-import factory
 
 
 class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
