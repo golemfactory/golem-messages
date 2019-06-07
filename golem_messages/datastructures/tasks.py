@@ -57,6 +57,7 @@ class TaskHeader(datastructures.Container):
         ),
         # environment.get_id()
         'environment': (validators.validate_varchar128, ),
+        'environment_prerequisites': (validators.validate_dict, ),
         'min_version': (validators.validate_version, ),
         'estimated_memory': (validators.validate_integer, ),
         # maximum price that this (requestor) node
