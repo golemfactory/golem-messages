@@ -316,7 +316,9 @@ class SubtaskResultsAcceptedFactory(helpers.MessageFactory):
         model = tasks.SubtaskResultsAccepted
 
     report_computed_task = factory.SubFactory(ReportComputedTaskFactory)
-    payment_ts = factory.LazyFunction(lambda: int(time.time()))
+    payment_ts = factory.LazyFunction(
+        lambda: int(
+            datetime.datetime.now(tz=datetime.timezone.utc).timestamp()))
 
 
 class SubtaskResultsRejectedFactory(helpers.MessageFactory):

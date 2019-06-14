@@ -1,7 +1,7 @@
 # pylint: disable=too-few-public-methods
 
+import datetime
 import factory
-import time
 
 from golem_messages import cryptography
 from golem_messages.datastructures import masking
@@ -12,6 +12,10 @@ from golem_messages.factories.helpers import random_eth_pub_key
 from golem_messages.utils import encode_hex as encode_key_id
 
 
+def _date_now() -> int:
+    return int(datetime.datetime.now(tz=datetime.timezone.utc).timestamp())
+
+
 class TaskHeaderFactory(factory.Factory):
     class Meta:
         model = dt_tasks.TaskHeader
@@ -19,7 +23,7 @@ class TaskHeaderFactory(factory.Factory):
 
     requestor_public_key = factory.LazyFunction(lambda: random_eth_pub_key())
     mask = factory.Faker('binary', length=masking.Mask.MASK_BYTES)
-    timestamp = factory.LazyFunction(lambda: int(time.time()))
+    timestamp = factory.LazyFunction(lambda: _date_now())
     task_id = factory.LazyAttribute(
         lambda o: helpers.fake_golem_uuid(
             o.requestor_public_key
@@ -30,7 +34,7 @@ class TaskHeaderFactory(factory.Factory):
             key=o.requestor_public_key
         ).to_dict()
     )
-    deadline = factory.LazyFunction(lambda: int(time.time()) + 3600)
+    deadline = factory.LazyFunction(lambda: _date_now() + 3600)
     subtask_timeout = factory.Faker('random_int', min=60, max=600)
     environment = "DEFAULT"
     min_version = factory.LazyFunction(helpers.fake_version)
