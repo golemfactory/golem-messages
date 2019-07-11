@@ -660,19 +660,6 @@ class StartSessionResponse(base.Message):
         super().__init__(**kwargs)
 
 
-@library.register(TASK_MSG_BASE + 25)
-class WaitingForResults(TaskMessage):
-    TASK_ID_PROVIDERS = ('task_to_compute', )
-    EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.requestor, )
-    MSG_SLOTS = {
-        'task_to_compute': base.MessageSlotDefinition(TaskToCompute),
-    }
-
-    __slots__ = [
-        'task_to_compute',
-    ] + base.Message.__slots__
-
-
 @library.register(TASK_MSG_BASE + 26)
 class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
     TASK_ID_PROVIDERS = ('task_to_compute', )
