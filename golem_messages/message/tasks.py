@@ -27,7 +27,6 @@ class ComputeTaskDef(datastructures.ValidatingDict, datastructures.FrozenDict):
         # If you're looking for whole TASK deadline SEE: task_header.deadline
         # Task headers are received in MessageTasks.tasks.
         'deadline': 0,
-        'src_code': '',
         'extra_data': {},  # safe because of copy in parent.__missing__()
         'performance': 0,
         'docker_images': None,

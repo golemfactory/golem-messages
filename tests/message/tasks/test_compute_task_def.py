@@ -25,7 +25,6 @@ class ComputeTaskDefTestCase(unittest.TestCase):
 
     def test_type(self):
         ctd = message.ComputeTaskDef()
-        ctd['src_code'] = "custom code"
         msg = factories.tasks.TaskToComputeFactory(compute_task_def=ctd)
         s = msg.serialize()
         msg2 = message.Message.deserialize(s, None)
