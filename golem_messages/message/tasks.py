@@ -309,6 +309,7 @@ class TaskToCompute(
         'size',  # the size of the resources zip file
         'concent_enabled',
         'price',  # total subtask price in GNT WEI (10e-18)
+        'budget',  # subtask budget in GNT WEI (10e-18)
         'resources_options',
         'ethsig',
         'promissory_note_sig',  # the signature of the PromissoryNote
@@ -438,7 +439,7 @@ class TaskToCompute(
         return promissory.PromissoryNote(
             address_from=self.requestor_ethereum_address,
             address_to=self.provider_ethereum_address,
-            amount=self.price,
+            amount=self.budget,
             subtask_id=self.subtask_id,
         )
 
@@ -447,7 +448,7 @@ class TaskToCompute(
         return promissory.PromissoryNote(
             address_from=self.requestor_ethereum_address,
             address_to=deposit_contract_address,
-            amount=self.price,
+            amount=self.budget,
             subtask_id=self.subtask_id,
         )
 
