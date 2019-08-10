@@ -58,7 +58,6 @@ class ComputeTaskDefFactory(factory.DictFactory):
     deadline = factory.LazyFunction(
         lambda: calendar.timegm(time.gmtime()) +
         int(datetime.timedelta(days=1).total_seconds()))
-    src_code = factory.Faker('text')
     extra_data = factory.SubFactory(CTDBlenderExtraDataFactory)
     resources = factory.List([factory.Faker('uuid4')])
 

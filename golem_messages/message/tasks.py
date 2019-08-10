@@ -8,8 +8,9 @@ from golem_messages import idgenerator
 from golem_messages import settings
 from golem_messages import validators
 from golem_messages.datastructures import promissory
-from golem_messages.datastructures.tasks import TaskHeader
 from golem_messages.datastructures.promissory import PromissoryNote
+from golem_messages.datastructures.stats import ProviderStats
+from golem_messages.datastructures.tasks import TaskHeader
 from golem_messages.register import library
 from golem_messages.utils import decode_hex, pubkey_to_address
 
@@ -27,7 +28,6 @@ class ComputeTaskDef(datastructures.ValidatingDict, datastructures.FrozenDict):
         # If you're looking for whole TASK deadline SEE: task_header.deadline
         # Task headers are received in MessageTasks.tasks.
         'deadline': 0,
-        'src_code': '',
         'extra_data': {},  # safe because of copy in parent.__missing__()
         'performance': 0,
         'docker_images': None,
@@ -503,7 +503,20 @@ class ReportComputedTask(TaskMessage):
                          # the result directly between the nodes
         'secret',
         'options',
+        'stats',
     ] + base.Message.__slots__
+
+    def serialize_slot(self, key, value):
+        if key == 'stats' and isinstance(value, ProviderStats):
+            return value.to_dict()
+
+        return super().serialize_slot(key, value)
+
+    def deserialize_slot(self, key, value):
+        if key == 'stats' and value is not None:
+            return ProviderStats(**value)
+
+        return super().deserialize_slot(key, value)
 
 
 @library.register(TASK_MSG_BASE + 10)
