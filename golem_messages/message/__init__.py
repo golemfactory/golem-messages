@@ -47,7 +47,6 @@ from golem_messages.message.tasks import WantToComputeTask  # noqa
 from golem_messages.message.tasks import ReportComputedTask  # noqa
 from golem_messages.message.tasks import TaskFailure  # noqa
 from golem_messages.message.tasks import StartSessionResponse  # noqa
-from golem_messages.message.tasks import WaitingForResults  # noqa
 from golem_messages.message.tasks import SubtaskPayment  # noqa
 from golem_messages.message.tasks import SubtaskPaymentRequest  # noqa
 from golem_messages.message.resources import PushResource  # noqa
