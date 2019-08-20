@@ -36,23 +36,26 @@ class PromissoryNote:
                             promissory note has been issued
 
     """
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
             self,
             address_from: str,
             address_to: str,
             amount: int,
             subtask_id: str,
+            contract_address: str,
     ):
         self.address_from = address_from
         self.address_to = address_to
         self.amount = amount
         self.subtask_id = subtask_id
+        self.contract_address = contract_address
 
     def __repr__(self):
         return (
             f"<{self.__class__.__name__}: "
             f" from: {self.address_from}, to: {self.address_to}, "
-            f"amount: {self.amount}, subtask_id: {self.subtask_id}>"
+            f"amount: {self.amount}, subtask_id: {self.subtask_id}, "
+            f"contract: {self.contract_address}>"
         )
 
     @property
@@ -62,6 +65,7 @@ class PromissoryNote:
     @property
     def hexmsg(self) -> str:
         return "0x" + \
+               self.contract_address[2:] + \
                self.address_from[2:] + \
                self.address_to[2:] + \
                self.amount.to_bytes(32, byteorder='big').hex() + \
@@ -140,5 +144,5 @@ class PromissorySlotMixin:
         return self._get_concent_promissory_note(
             deposit_contract_address
         ).sig_valid(
-            self.concent_promissory_note_sig
+            getattr(self, self.CONCENT_PROMISSORY_NOTE_SIG)
         )

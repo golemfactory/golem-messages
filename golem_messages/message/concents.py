@@ -238,6 +238,7 @@ class SubtaskResultsVerify(
             address_to=deposit_contract_address,
             amount=ttc.price,
             subtask_id=ttc.subtask_id,
+            contract_address=deposit_contract_address,
         )
 
 
