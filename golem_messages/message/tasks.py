@@ -435,12 +435,14 @@ class TaskToCompute(
         )
         return super().validate_ownership(concent_public_key)
 
-    def _get_promissory_note(self) -> promissory.PromissoryNote:
+    def _get_promissory_note(
+            self, deposit_contract_address: str) -> PromissoryNote:
         return promissory.PromissoryNote(
             address_from=self.requestor_ethereum_address,
             address_to=self.provider_ethereum_address,
             amount=self.price,
             subtask_id=self.subtask_id,
+            contract_address=deposit_contract_address,
         )
 
     def _get_concent_promissory_note(
@@ -450,16 +452,46 @@ class TaskToCompute(
             address_to=deposit_contract_address,
             amount=self.price,
             subtask_id=self.subtask_id,
+            contract_address=deposit_contract_address,
         )
 
-    def sign_promissory_note(self, private_key: bytes) -> None:
+    def sign_promissory_note(
+            self,
+            deposit_contract_address: str,
+            private_key: bytes
+    ) -> None:
         self.promissory_note_sig = self._get_promissory_note(  # noqa pylint: disable=attribute-defined-outside-init
+            deposit_contract_address=deposit_contract_address
         ).sign(
             privkey=private_key
         )
 
-    def verify_promissory_note(self) -> bool:
-        return self._get_promissory_note().sig_valid(self.promissory_note_sig)
+    def verify_promissory_note(self, deposit_contract_address: str) -> bool:
+        return self._get_promissory_note(
+            deposit_contract_address=deposit_contract_address
+        ).sig_valid(self.promissory_note_sig)
+
+    def sign_all_promissory_notes(
+            self,
+            deposit_contract_address: str,
+            private_key: bytes
+    ) -> None:
+        self.sign_concent_promissory_note(
+            deposit_contract_address=deposit_contract_address,
+            private_key=private_key,
+        )
+        self.sign_promissory_note(
+            deposit_contract_address=deposit_contract_address,
+            private_key=private_key,
+        )
+
+    def verify_all_promissory_notes(
+            self, deposit_contract_address: str) -> bool:
+        return self.verify_concent_promissory_note(
+            deposit_contract_address=deposit_contract_address,
+        ) and self.verify_promissory_note(
+            deposit_contract_address=deposit_contract_address
+        )
 
 
 @library.register(TASK_MSG_BASE + 3)

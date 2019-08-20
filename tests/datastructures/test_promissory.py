@@ -17,9 +17,10 @@ class PromissoryNoteTest(unittest.TestCase):
                       b'\xa1\x02\xf7\x06\x0c\x05\xa0\xbb\xbd\xbd\xa5\xfc\x9e' \
                       b'\x8a_%{ \xbd\x12\xe5\r\xdb(6\x8e\x9f'
 
-        # an arbitrary `to` and `amount`
+        # an arbitrary `to`, `amount` and `contract_address`
         self.address_to = '0x8bbd87311EA35490B6BE9c7C81e2ae5BCD6f111D'
         self.amount = 667
+        self.contract_address = '0x89915ddA14eFd6b064da953431E8b7f902d89c83'
 
         # and not so arbitrary `subtask_id` + bytes
         self.subtask_id = '84ef2787-9daa-abad-0a0b-77b35dc3a290'
@@ -40,6 +41,7 @@ class PromissoryNoteTest(unittest.TestCase):
             address_to=self.address_to,
             amount=self.amount,
             subtask_id=self.subtask_id,
+            contract_address=self.contract_address,
         )
 
     def test_subtask_id_bytes(self):
@@ -49,8 +51,9 @@ class PromissoryNoteTest(unittest.TestCase):
         )
 
     def test_hexmsg(self):
-        # address_from + address_to + amount + subtask_id
+        # contract_address + address_from + address_to + amount + subtask_id
         hexmsg = '0x'\
+                 '89915ddA14eFd6b064da953431E8b7f902d89c83' \
                  '459bC6422378156c3dbf3d7Ad4ec3411BA488f40' \
                  '8bbd87311EA35490B6BE9c7C81e2ae5BCD6f111D' \
                  '00000000000000000000000000000000' \
@@ -60,8 +63,8 @@ class PromissoryNoteTest(unittest.TestCase):
         self.assertEqual(self.promissory_note.hexmsg, hexmsg)
 
     def test_hash(self):
-        pn_hash = b'\xf2Co>E\x1b9)a\x92-\xc8\xd2\x1b0S' \
-                   b'\xbe\xc3\\1\xe5!(\xc6~K\xd3\x1f]\xd7Te'
+        pn_hash = b'\xa97\xd5\xfb\x0f\x18\x9d9m\x9f\xa9U\x87\xec:\xe8' \
+                  b'=\x86WMc\x98\xe3\x08\xdf\xee\xa9\x05x\x98`\xbd'
         self.assertEqual(self.promissory_note.hash, pn_hash)
 
     def test_sign(self):
@@ -80,7 +83,8 @@ class PromissoryNoteTest(unittest.TestCase):
             address_from=self.address_from,
             address_to=self.address_from,  # purposefully broken
             amount=self.amount,
-            subtask_id=self.subtask_id
+            subtask_id=self.subtask_id,
+            contract_address=self.contract_address,
         ).sign(
             self.privkey
         )

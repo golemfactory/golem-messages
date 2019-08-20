@@ -182,7 +182,10 @@ class TaskToComputePromissoryNotesTest(
         ttc: message.tasks.TaskToCompute = self.FACTORY(
             ethsig__keys=requestor_keys
         )
-        ttc.sign_promissory_note(private_key=requestor_keys.raw_privkey)
+        ttc.sign_promissory_note(
+            self.gntdeposit,
+            private_key=requestor_keys.raw_privkey
+        )
 
         self.assertIsInstance(
             ttc.promissory_note_sig,
@@ -197,18 +200,21 @@ class TaskToComputePromissoryNotesTest(
         )
 
         self.assertTrue(
-            ttc2.verify_promissory_note(),
+            ttc2.verify_promissory_note(self.gntdeposit),
         )
 
     def test_promissory_note_empty(self):
         self.assertFalse(
-            self.msg.verify_promissory_note()
+            self.msg.verify_promissory_note(self.gntdeposit)
         )
 
     def test_promissory_note_bad(self):
         requestor_keys = cryptography.ECCx(None)
-        self.msg.sign_promissory_note(private_key=requestor_keys.raw_privkey)
-        self.assertFalse(self.msg.verify_promissory_note())
+        self.msg.sign_promissory_note(
+            self.gntdeposit,
+            private_key=requestor_keys.raw_privkey
+        )
+        self.assertFalse(self.msg.verify_promissory_note(self.gntdeposit))
 
     def test_concent_promissory_note(self):
         requestor_keys = cryptography.ECCx(None)
@@ -238,6 +244,20 @@ class TaskToComputePromissoryNotesTest(
 
         self.assertTrue(
             ttc2.verify_concent_promissory_note(self.gntdeposit),
+        )
+
+    def test_sign_all_promissory_notes(self):
+        requestor_keys = cryptography.ECCx(None)
+        ttc: message.tasks.TaskToCompute = self.FACTORY(
+            ethsig__keys=requestor_keys
+        )
+        ttc.sign_all_promissory_notes(
+            self.gntdeposit,
+            private_key=requestor_keys.raw_privkey
+        )
+        ttc2: message.tasks.TaskToCompute = helpers.dump_and_load(ttc)
+        self.assertTrue(
+            ttc2.verify_all_promissory_notes(self.gntdeposit)
         )
 
 
