@@ -55,6 +55,7 @@ class TaskHeader(datastructures.Container):
                 fail_msg="Subtask timeout is less than 0",
             ),
         ),
+        'task_type': (validators.validate_varchar128, ),
         # environment.get_id()
         'environment': (validators.validate_varchar128, ),
         'environment_prerequisites': (validators.validate_dict, ),
@@ -76,6 +77,7 @@ class TaskHeader(datastructures.Container):
 
     REQUIRED = frozenset((
         'task_id',
+        'task_type',
         'task_owner',
         'subtasks_count',
         'min_version',

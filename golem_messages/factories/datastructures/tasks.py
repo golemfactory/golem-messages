@@ -29,6 +29,7 @@ class TaskHeaderFactory(factory.Factory):
             o.requestor_public_key
         ),
     )
+    task_type = "dummy"
     task_owner = factory.LazyAttribute(
         lambda o: dt_p2p_factories.Node(
             key=o.requestor_public_key
