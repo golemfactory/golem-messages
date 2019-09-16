@@ -3,6 +3,7 @@
 import datetime
 import factory
 
+from golem_messages import constants
 from golem_messages import cryptography
 from golem_messages.datastructures import masking
 from golem_messages.datastructures import tasks as dt_tasks
@@ -29,7 +30,7 @@ class TaskHeaderFactory(factory.Factory):
             o.requestor_public_key
         ),
     )
-    task_type = "dummy"
+    market_type = constants.MarketType.BRASS_MARKET
     task_owner = factory.LazyAttribute(
         lambda o: dt_p2p_factories.Node(
             key=o.requestor_public_key

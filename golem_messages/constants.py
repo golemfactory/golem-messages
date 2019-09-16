@@ -1,5 +1,6 @@
 import collections
 import datetime
+from enum import Enum
 
 from golem_messages import message
 
@@ -44,3 +45,8 @@ MSG_DELAYS = collections.defaultdict(
         message.concents.ForceReportComputedTask: (2 * MMTT + MAT),
     },
 )
+
+
+class MarketType(str, Enum):
+    BRASS_MARKET = "brass"
+    USAGE_MARKET = "usage"
