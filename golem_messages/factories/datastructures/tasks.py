@@ -30,7 +30,7 @@ class TaskHeaderFactory(factory.Factory):
             o.requestor_public_key
         ),
     )
-    market_type = constants.MarketType.BRASS_MARKET
+    market_type = dt_tasks.TaskHeader.MARKET_TYPE.Brass
     task_owner = factory.LazyAttribute(
         lambda o: dt_p2p_factories.Node(
             key=o.requestor_public_key

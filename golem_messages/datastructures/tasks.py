@@ -1,3 +1,4 @@
+import enum
 import functools
 import hashlib
 import logging
@@ -19,6 +20,10 @@ class TaskHeader(datastructures.Container):
     Task header describes general information about task as an request and
     is propagated in the network as an offer for computing nodes
     """
+
+    class MARKET_TYPE(datastructures.StringEnum):
+        Brass = enum.auto()
+        Usage = enum.auto()
 
     __slots__ = {
         'mask': (
@@ -55,7 +60,7 @@ class TaskHeader(datastructures.Container):
                 fail_msg="Subtask timeout is less than 0",
             ),
         ),
-        'market_type': (validators.validate_varchar128, ),
+        'market_type': (),
         # environment.get_id()
         'environment': (validators.validate_varchar128, ),
         'environment_prerequisites': (validators.validate_dict, ),
@@ -126,3 +131,14 @@ class TaskHeader(datastructures.Container):
     @classmethod
     def serialize_mask(cls, value):
         return value.to_bytes()
+
+    @classmethod
+    def deserialize_market_type(cls, value):
+        try:
+            return cls.MARKET_TYPE(value)
+        except ValueError as e:
+            raise exceptions.FieldError(
+                "Invalid value for MARKET_TYPE",
+                field='market_type',
+                value=value,
+            ) from e

@@ -161,6 +161,8 @@ class Container:
         dictionary = {}
         for key in self.__slots__:
             value = getattr(self, key, None)
+            if isinstance(value, enum.Enum):
+                value = value.value
             try:
                 value = getattr(self, f'serialize_{key}')(value)
             except AttributeError:

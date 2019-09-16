@@ -2,7 +2,6 @@ import datetime
 import time
 import unittest
 
-from golem_messages import constants
 from golem_messages import cryptography
 from golem_messages import idgenerator
 from golem_messages import utils
@@ -23,7 +22,7 @@ class TestTaskHeader(unittest.TestCase):
                 "pub_addr": "10.10.10.10",
                 "pub_port": 10101
             },
-            "market_type": constants.MarketType.BRASS_MARKET,
+            "market_type": dt_tasks.TaskHeader.MARKET_TYPE.Brass,
             "environment": "DEFAULT",
             "deadline": int(time.time() + 1201),
             "subtask_timeout": 120,
