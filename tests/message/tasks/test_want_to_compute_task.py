@@ -93,3 +93,11 @@ class WantToComputeTaskTest(unittest.TestCase, mixins.SerializationMixin):
         wtct = self.FACTORY()
         self.assertIsNotNone(wtct.header)
         self.assertIsInstance(wtct.header, MessageHeader)
+
+    def test_cpu_usage_negative_integer(self):
+        wtct = message.tasks.WantToComputeTask(cpu_usage=-1)
+        serialized = shortcuts.dump(wtct, None, None)
+        with self.assertRaises(
+            exceptions.FieldError,
+        ):
+            shortcuts.load(serialized, None, None)

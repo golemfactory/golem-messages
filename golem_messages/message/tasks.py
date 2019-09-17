@@ -242,6 +242,7 @@ class WantToComputeTask(ConcentEnabled, base.Message):
     """
     __slots__ = [
         'perf_index',         # Provider's performance; a benchmark result
+        'cpu_usage',          # Provider's cpu usage; a benchmark result
         'max_resource_size',  # P's storage size available for computation
         'max_memory_size',    # P's RAM
         'price',              # Offered price per hour in GNT WEI (10e-18)
@@ -278,6 +279,15 @@ class WantToComputeTask(ConcentEnabled, base.Message):
     def deserialize_slot(self, key, value):
         if key == 'task_header' and value is not None:
             return TaskHeader(**value)
+
+        if key == 'cpu_usage' and value is not None:
+            validators.validate_integer(key, value)
+            if value < 0:
+                raise exceptions.FieldError(
+                    "Should be equal or greater than zero",
+                    field=key,
+                    value=value,
+                )
 
         value = super().deserialize_slot(key, value)
 
