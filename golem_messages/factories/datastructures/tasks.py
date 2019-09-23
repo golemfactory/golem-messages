@@ -31,6 +31,7 @@ class TaskHeaderFactory(factory.Factory):
         ),
     )
     market_type = dt_tasks.TaskHeader.MARKET_TYPE.Brass
+    budget = factory.Faker('random_int', min=1, max=10)
     task_owner = factory.LazyAttribute(
         lambda o: dt_p2p_factories.Node(
             key=o.requestor_public_key

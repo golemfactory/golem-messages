@@ -61,6 +61,7 @@ class TaskHeader(datastructures.Container):
             ),
         ),
         'market_type': (),
+        'budget': (),
         # environment.get_id()
         'environment': (validators.validate_varchar128, ),
         'environment_prerequisites': (validators.validate_dict, ),
