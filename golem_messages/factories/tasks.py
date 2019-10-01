@@ -263,6 +263,7 @@ class ReportComputedTaskFactory(helpers.MessageFactory):
     size = factory.Faker('random_int', min=1 << 20, max=10 << 20)
     multihash = factory.Faker('text')
     secret = factory.Faker('text')
+    cpu_usage = factory.Faker('pyint')
 
 
 class AckReportComputedTaskFactory(helpers.MessageFactory):
