@@ -428,16 +428,15 @@ class TaskToCompute(
         )
 
     def validate_taskid(self) -> None:
-        for key in ('task_id', 'subtask_id'):
-            value = self.compute_task_def[key]
-            if not idgenerator.check_id_hex_seed(value, self.requestor_id):
-                raise exceptions.FieldError(
-                    "Should be generated with node == ({node:x})".format(
-                        node=idgenerator.hex_seed_to_node(self.requestor_id),
-                    ),
-                    field=key,
-                    value=value,
-                )
+        value = self.compute_task_def['task_id']
+        if not idgenerator.check_id_hex_seed(value, self.requestor_id):
+            raise exceptions.FieldError(
+                "Should be generated with node == ({node:x})".format(
+                    node=idgenerator.hex_seed_to_node(self.requestor_id),
+                ),
+                field='task_id',
+                value=value,
+            )
 
     def validate_ownership(self, concent_public_key=None):
         self.want_to_compute_task.task_header.verify(
