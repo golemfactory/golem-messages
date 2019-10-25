@@ -87,9 +87,6 @@ class TaskToComputeTest(mixins.RegisteredMessageTestMixin,
     def test_spoofed_task_id(self):
         self._test_spoofed_id('task_id')
 
-    def test_spoofed_subtask_id(self):
-        self._test_spoofed_id('subtask_id')
-
     def test_golem_id_shortcut(self):
         task_id = 'tid'
         subtask_id = 'sid'
