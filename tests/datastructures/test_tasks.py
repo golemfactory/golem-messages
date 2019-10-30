@@ -28,6 +28,7 @@ class TestTaskHeader(unittest.TestCase):
             "subtask_timeout": 120,
             "subtasks_count": 21,
             "max_price": 10,
+            "subtask_budget": 10,
             "min_version": "0.19.0",
             "estimated_memory": 0,
             "timestamp": int(time.time()),

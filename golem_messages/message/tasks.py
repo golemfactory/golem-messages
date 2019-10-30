@@ -689,7 +689,7 @@ class SubtaskResultsRejected(TaskMessage, base.AbstractReasonMessage):
 
 
 @library.register(TASK_MSG_BASE + 15)
-class TaskFailure(TaskMessage):
+class TaskFailure(TaskMessage, base.AbstractReasonMessage):
     TASK_ID_PROVIDERS = ('task_to_compute', )
     EXPECTED_OWNERS = (TaskMessage.OWNER_CHOICES.provider, )
     MSG_SLOTS = {
@@ -699,7 +699,19 @@ class TaskFailure(TaskMessage):
     __slots__ = [
         'task_to_compute',
         'err',
-    ] + base.Message.__slots__
+    ] + base.AbstractReasonMessage.__slots__
+
+    class REASON(datastructures.StringEnum):
+        ComputationError = enum.auto()
+        BudgetExceeded = enum.auto()
+        TimeExceeded = enum.auto()
+
+    DEFAULT_REASON = REASON.ComputationError
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.reason is None:
+            self.reason = self.DEFAULT_REASON
 
 
 @library.register(TASK_MSG_BASE + 16)

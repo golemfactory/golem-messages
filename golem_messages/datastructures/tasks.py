@@ -52,6 +52,7 @@ class TaskHeader(datastructures.Container):
             ),
         ),
         'deadline': (validators.validate_integer, ),
+        # subtask_timeout expressed in seconds
         'subtask_timeout': (
             validators.validate_integer,
             functools.partial(
@@ -66,9 +67,15 @@ class TaskHeader(datastructures.Container):
         'environment_prerequisites': (validators.validate_dict, ),
         'min_version': (validators.validate_version, ),
         'estimated_memory': (validators.validate_integer, ),
+
         # maximum price that this (requestor) node
         # may pay for an hour of computation
         'max_price': (validators.validate_integer, ),
+
+        # maximum GNT wei amount that the requestor node will
+        # pay for the computation of a single job / subtask
+        'subtask_budget':  (validators.validate_integer, ),
+
         'subtasks_count': (
             validators.validate_integer,
             functools.partial(
