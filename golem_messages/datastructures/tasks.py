@@ -73,8 +73,8 @@ class TaskHeader(datastructures.Container):
         'max_price': (validators.validate_integer, ),
 
         # maximum GNT wei amount that the requestor node will
-        # pay for the computation of a single job
-        'budget':  (validators.validate_integer, ),
+        # pay for the computation of a single job / subtask
+        'subtask_budget':  (validators.validate_integer, ),
 
         'subtasks_count': (
             validators.validate_integer,

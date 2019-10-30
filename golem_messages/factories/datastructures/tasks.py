@@ -39,7 +39,7 @@ class TaskHeaderFactory(factory.Factory):
     min_version = factory.LazyFunction(helpers.fake_version)
     estimated_memory = factory.Faker('random_int', max=4096)
     max_price = factory.Faker('random_int', min=10, max=50)
-    budget = factory.Faker('random_int', min=10, max=50)
+    subtask_budget = factory.Faker('random_int', min=10, max=50)
     subtasks_count = factory.Faker('random_int', min=1, max=256)
 
     @factory.post_generation
