@@ -3,14 +3,11 @@
 import datetime
 import factory
 
-from golem_messages import constants
-from golem_messages import cryptography
 from golem_messages.datastructures import masking
 from golem_messages.datastructures import tasks as dt_tasks
 from golem_messages.factories import helpers
 from golem_messages.factories.datastructures import p2p as dt_p2p_factories
 from golem_messages.factories.helpers import random_eth_pub_key
-from golem_messages.utils import encode_hex as encode_key_id
 
 
 def _date_now() -> int:
@@ -42,6 +39,7 @@ class TaskHeaderFactory(factory.Factory):
     min_version = factory.LazyFunction(helpers.fake_version)
     estimated_memory = factory.Faker('random_int', max=4096)
     max_price = factory.Faker('random_int', min=10, max=50)
+    budget = factory.Faker('random_int', min=10, max=50)
     subtasks_count = factory.Faker('random_int', min=1, max=256)
 
     @factory.post_generation

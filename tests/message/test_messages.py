@@ -195,6 +195,7 @@ class MessagesTestCase(unittest.TestCase):
         msg = message.TaskFailure(task_to_compute=ttc, err=err)
         expected = sorted([
             ['task_to_compute', helpers.single_nested(ttc)],
+            ['reason', message.TaskFailure.REASON.ComputationError],
             ['err', err],
         ])
         self.assertEqual(expected, sorted(msg.slots()))
