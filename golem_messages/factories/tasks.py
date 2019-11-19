@@ -5,6 +5,7 @@ import time
 import typing
 from contextlib import suppress
 
+from ethereum.utils import denoms
 import factory.fuzzy
 import faker
 
@@ -32,6 +33,7 @@ class WantToComputeTaskFactory(helpers.MessageFactory):
         lambda o: pubkey_to_address(o.provider_public_key))
 
     task_header = factory.SubFactory(TaskHeaderFactory)
+    price = 0.1 * denoms.ether
 
 
 class CTDBlenderExtraDataFactory(factory.DictFactory):
