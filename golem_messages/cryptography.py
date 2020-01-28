@@ -23,7 +23,11 @@ if sys.platform not in ('darwin', 'win32'):
 elif sys.platform == 'darwin':
     # FIX PATH ON OS X ()
     # https://github.com/yann2192/pyelliptic/issues/11
-    _openssl_lib_paths = ['/usr/local/Cellar/openssl/']
+    _openssl_lib_paths = [
+        '/usr/local/Cellar/openssl/',
+        '/usr/local/Cellar/openssl@1.1/'
+    ]
+
     for p in _openssl_lib_paths:
         if os.path.exists(p):
             p = os.path.join(p, os.listdir(p)[-1], 'lib')
