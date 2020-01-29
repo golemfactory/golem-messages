@@ -740,6 +740,7 @@ class CannotComputeTask(TaskMessage, base.AbstractReasonMessage):
     ] + base.AbstractReasonMessage.__slots__
 
     class REASON(datastructures.StringEnum):
+        CannotTakeWork = enum.auto()
         WrongCTD = enum.auto()
         WrongKey = enum.auto()
         WrongAddress = enum.auto()
