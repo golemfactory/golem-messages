@@ -39,7 +39,7 @@ setup(
         'bitcoin',
         'cbor==1.0.0',
         'coincurve>=7.1.0',
-        'eth-account==0.2.3',
+        'eth-account==0.5.9',
         'eth-keys==0.2.0b3',
         'eth-utils==1.0.3',
         'ethereum==1.6.1',
